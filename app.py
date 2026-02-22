@@ -1,4 +1,4 @@
-from flask import Flask, session, request, jsonify
+from flask import Flask, session, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 import secrets
@@ -73,6 +73,7 @@ AUTH_WHITELIST = {
     '/api/push/vapid-key',      # PWA 푸시 VAPID 공개키 (인증 불필요)
     '/api/find-id',             # 아이디 찾기 (비인증)
     '/api/find-password',       # 비밀번호 찾기 (비인증)
+    '/api/academies',           # 학원 목록 (강사 가입 시 사용)
 }
 
 AUTH_WHITELIST_PREFIXES = (
@@ -131,6 +132,17 @@ _TEACHER_ONLY_APIS = {
     # 학급편성, 입시
     '/api/class-maker/save',
     '/api/class-maker/delete',
+}
+
+# ── 원장 전용 API (강사/학생/학부모 접근 차단) ──
+_DIRECTOR_ONLY_APIS = {
+    '/api/academy/create',
+    '/api/academy/update',
+    '/api/academy/instructor/approve',
+    '/api/academy/class/create',
+    '/api/academy/class/update',
+    '/api/academy/class/delete',
+    '/api/academy/student/register',
 }
 
 # ── 브루트포스 방어 설정 (DB 기반) ──
@@ -256,6 +268,41 @@ def security_middleware():
                     'message': '교사만 사용할 수 있습니다.'
                 }), 403
 
+        # ── 역할 기반 접근 제어 (원장 전용 API) ──
+        if path in _DIRECTOR_ONLY_APIS:
+            if session.get('user_role') != 'director':
+                print(f"[SECURITY] 비원장 접근 차단: user={session.get('user_id')}, "
+                      f"role={session.get('user_role')}, path={path}")
+                return jsonify({
+                    'success': False,
+                    'message': '원장만 사용할 수 있습니다.'
+                }), 403
+
+        # ── 학교/학원 교차 접근 차단 ──
+        user_role = session.get('user_role', '')
+        _SCHOOL_API_PREFIXES = ('/api/homeroom/', '/api/subject/', '/api/club/',
+                                '/api/timetable', '/api/class-maker/',
+                                '/api/counsel/', '/api/schedule/')
+        _ACADEMY_API_PREFIX = '/api/academy/'
+
+        if any(path.startswith(p) for p in _SCHOOL_API_PREFIXES):
+            if user_role not in ('teacher', 'student', 'parent'):
+                print(f"[SECURITY] 비학교역할 학교API 차단: user={session.get('user_id')}, "
+                      f"role={user_role}, path={path}")
+                return jsonify({
+                    'success': False,
+                    'message': '권한이 없습니다.'
+                }), 403
+
+        if path.startswith(_ACADEMY_API_PREFIX):
+            if user_role not in ('director', 'instructor'):
+                print(f"[SECURITY] 비학원역할 학원API 차단: user={session.get('user_id')}, "
+                      f"role={user_role}, path={path}")
+                return jsonify({
+                    'success': False,
+                    'message': '권한이 없습니다.'
+                }), 403
+
         # ── [취약점 7] IDOR 방어: 학생/학부모는 본인 데이터만 조회 ──
         user_role = session.get('user_role')
         if user_role in ('student', 'parent'):
@@ -359,6 +406,7 @@ from routes.club import club_bp
 from routes.assignment import assignment_bp
 from routes.class_maker import class_maker_bp
 from routes.push import push_bp
+from routes.academy import academy_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(teacher_bp)
@@ -379,6 +427,23 @@ app.register_blueprint(club_bp)
 app.register_blueprint(assignment_bp)
 app.register_blueprint(class_maker_bp)
 app.register_blueprint(push_bp)
+app.register_blueprint(academy_bp)
+
+
+# ============================================
+# 학원 페이지 접근 제어 (nginx에서 프록시)
+# ============================================
+@app.route('/academy/director.html')
+def serve_director_page():
+    if session.get('user_role') != 'director':
+        return '접근 권한이 없습니다.', 403
+    return send_from_directory(os.path.join(app.root_path, 'academy'), 'director.html')
+
+@app.route('/academy/instructor.html')
+def serve_instructor_page():
+    if session.get('user_role') not in ('director', 'instructor'):
+        return '접근 권한이 없습니다.', 403
+    return send_from_directory(os.path.join(app.root_path, 'academy'), 'instructor.html')
 
 
 # ============================================

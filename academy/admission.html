@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 입시 상담</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.8); }
+
+        .nav-item { position: relative; transition: all 0.3s ease; }
+        .nav-item::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 0; background: linear-gradient(90deg, rgba(251, 146, 60, 0.3), transparent); transition: width 0.3s ease; }
+        .nav-item:hover::before { width: 100%; }
+        .nav-item.active { background: linear-gradient(90deg, rgba(251, 146, 60, 0.2), transparent); border-left: 3px solid #fb923c; }
+
+        .avatar-ring { background: linear-gradient(135deg, #fb923c, #f59e0b, #d97706); padding: 3px; }
+
+        .nav-wrap { position: relative; }
+        .nav-scroll-hint { position: absolute; bottom: 0; left: 0; right: 0; height: 40px; background: linear-gradient(to bottom, transparent, rgba(30,41,59,0.95)); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; pointer-events: none; transition: opacity 0.3s; }
+        .nav-scroll-hint.hidden { opacity: 0; }
+        .nav-scroll-hint i { color: rgba(148,163,184,0.7); font-size: 14px; animation: bounceDown 1.5s infinite; }
+        @keyframes bounceDown { 0%,100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+
+        /* 모바일 사이드바 드로어 */
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        #mobile-overlay.active { display: block; }
+        #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
+
+        @media (max-width: 767px) {
+            #sidebar.mobile-open { overflow-y: auto !important; }
+            #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
+            #sidebar.mobile-open #sidebar-nav { height: auto !important; overflow: visible !important; }
+            .nav-item { min-height: 52px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 15px !important; }
+            #sidebar .space-y-1 > li { margin-bottom: 4px; }
+            #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
+        }
+
+        /* 분석 타입 카드 */
+        .analysis-card { transition: all 0.3s ease; cursor: pointer; }
+        .analysis-card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
+        .analysis-card.selected { ring: 2px; }
+
+        /* 결과 영역 마크다운 스타일 */
+        .result-content h1, .result-content h2, .result-content h3 { font-weight: 700; margin-top: 1em; margin-bottom: 0.5em; }
+        .result-content h1 { font-size: 1.5em; }
+        .result-content h2 { font-size: 1.25em; }
+        .result-content h3 { font-size: 1.1em; }
+        .result-content p { margin-bottom: 0.75em; line-height: 1.7; }
+        .result-content ul, .result-content ol { padding-left: 1.5em; margin-bottom: 0.75em; }
+        .result-content li { margin-bottom: 0.3em; line-height: 1.6; }
+        .result-content table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
+        .result-content th, .result-content td { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; }
+        .result-content th { background: #f8fafc; font-weight: 600; }
+        .result-content strong { font-weight: 700; }
+
+        /* 로딩 애니메이션 */
+        .pulse-dot { animation: pulseDot 1.5s ease-in-out infinite; }
+        .pulse-dot:nth-child(2) { animation-delay: 0.3s; }
+        .pulse-dot:nth-child(3) { animation-delay: 0.6s; }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50 text-slate-800">
+
+    <div class="flex h-screen overflow-hidden">
+        <div id="mobile-overlay"></div>
+
+        <!-- ========== 사이드바 ========== -->
+        <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 hidden md:flex flex-col flex-shrink-0 shadow-2xl">
+            <!-- 로고 -->
+            <div class="p-6 border-b border-slate-700/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-orange-400 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+                        <i class="fas fa-school text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-black text-2xl text-white tracking-tight">SchoolUs</span>
+                        <p class="text-xs text-slate-400 font-medium">학원 관리 플랫폼</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 사용자 정보 -->
+            <div class="p-5 border-b border-slate-700/50 bg-slate-800/30">
+                <div class="flex items-center gap-4">
+                    <div class="avatar-ring rounded-full">
+                        <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-white font-black text-xl" id="user-avatar">D</div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white font-bold text-lg truncate" id="user-name">-</p>
+                        <span class="inline-block mt-1 px-3 py-0.5 bg-gradient-to-r from-orange-400 to-amber-600 text-white text-xs font-bold rounded-full" id="user-role-badge">-</span>
+                    </div>
+                </div>
+                <!-- 학원 포인트 -->
+                <div class="mt-4 bg-gradient-to-r from-orange-500/20 to-amber-500/20 rounded-xl p-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-slate-400 font-medium">학원 포인트</span>
+                            <div class="flex items-end gap-1">
+                                <span class="text-xl font-black text-white" id="sidebar-point">0</span>
+                                <span class="text-xs font-bold text-slate-400 mb-0.5">P</span>
+                            </div>
+                        </div>
+                        <button onclick="window.open('/templates/charge.html', '_blank')" class="px-3 py-1.5 bg-gradient-to-r from-orange-400 to-amber-600 text-white text-xs font-bold rounded-lg hover:shadow-lg transition-all">
+                            <i class="fas fa-plus-circle mr-1"></i>충전
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 네비게이션 -->
+            <div class="flex-1 nav-wrap min-h-0">
+                <nav id="sidebar-nav" class="h-full overflow-y-auto py-4">
+                    <ul class="space-y-1 px-3">
+                        <li>
+                            <a href="/academy/director.html" id="nav-dashboard" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium">
+                                <i class="fas fa-building w-6 mr-3 text-orange-400"></i> 대시보드
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/academy/admission.html" id="nav-admission" class="nav-item active flex items-center px-4 py-3 rounded-xl text-white font-medium">
+                                <i class="fas fa-graduation-cap w-6 mr-3 text-pink-400"></i> 입시상담
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                <div id="nav-scroll-hint" class="nav-scroll-hint hidden"><i class="fas fa-chevron-down"></i></div>
+            </div>
+
+            <!-- 하단 메뉴 -->
+            <div class="p-4 border-t border-slate-700/50 space-y-2">
+                <a href="/academy/mypage.html" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-orange-500/20 hover:text-orange-400 rounded-xl text-sm font-medium transition-all">
+                    <i class="fas fa-user-cog mr-2"></i> 마이페이지
+                </a>
+                <a href="#" onclick="handleLogout(); return false;" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-red-500/20 hover:text-red-400 rounded-xl text-sm font-medium transition-all">
+                    <i class="fas fa-sign-out-alt mr-2"></i> 로그아웃
+                </a>
+            </div>
+        </aside>
+
+        <!-- ========== 메인 영역 ========== -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden">
+            <!-- 상단 헤더 -->
+            <header class="bg-white/80 backdrop-blur-lg h-16 border-b border-slate-200/50 flex items-center justify-between px-6 shadow-sm z-10">
+                <div class="flex items-center gap-4">
+                    <button id="sidebar-toggle" class="md:hidden text-slate-600" onclick="toggleMobileSidebar()">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div class="flex items-center text-slate-500">
+                        <span class="text-sm font-medium">학원 관리</span>
+                        <i class="fas fa-chevron-right mx-2 text-xs text-slate-300"></i>
+                        <span class="text-sm font-bold text-slate-700">입시 상담</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:flex items-center gap-3 bg-slate-100 rounded-xl px-4 py-2">
+                        <i class="fas fa-calendar-day text-orange-500"></i>
+                        <div class="text-right">
+                            <p class="font-bold text-slate-700 text-sm" id="current-date">-</p>
+                            <p class="text-xs text-slate-400">오늘</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 메인 콘텐츠 -->
+            <main class="flex-1 overflow-y-auto p-6">
+
+                <!-- 제목 + 포인트 -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <div>
+                        <h1 class="text-2xl font-black text-slate-800">
+                            <i class="fas fa-graduation-cap text-pink-500 mr-2"></i>입시 상담
+                        </h1>
+                        <p class="text-slate-500 text-sm mt-1">AI 기반 입시 분석 서비스</p>
+                    </div>
+                    <div class="flex items-center gap-3 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl px-5 py-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-600 text-white rounded-xl flex items-center justify-center">
+                            <i class="fas fa-coins text-sm"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-400 font-bold">보유 포인트</span>
+                            <p class="text-xl font-black text-slate-800"><span id="point-balance">0</span> <span class="text-sm font-bold text-slate-400">P</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 학원 선택 -->
+                <div class="glass-card rounded-2xl p-5 shadow-lg shadow-slate-200/50 mb-6">
+                    <label class="block text-sm font-bold text-slate-600 mb-2">
+                        <i class="fas fa-building text-orange-500 mr-1"></i> 학원 선택
+                    </label>
+                    <select id="academy-select" onchange="onAcademyChange()" class="w-full sm:w-80 px-4 py-3 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white">
+                        <option value="">학원을 선택하세요</option>
+                    </select>
+                </div>
+
+                <!-- 학생 선택 -->
+                <div class="glass-card rounded-2xl p-5 shadow-lg shadow-slate-200/50 mb-6" id="student-section" style="display: none;">
+                    <label class="block text-sm font-bold text-slate-600 mb-2">
+                        <i class="fas fa-user-graduate text-purple-500 mr-1"></i> 학생 선택
+                    </label>
+                    <select id="student-select" onchange="onStudentChange()" class="w-full sm:w-80 px-4 py-3 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white">
+                        <option value="">학생을 선택하세요</option>
+                    </select>
+                    <p class="text-xs text-slate-400 mt-2" id="student-count-label"></p>
+                </div>
+
+                <!-- 분석 유형 선택 -->
+                <div id="analysis-section" style="display: none;">
+                    <h2 class="text-lg font-bold text-slate-700 mb-4">
+                        <i class="fas fa-chart-bar text-blue-500 mr-1"></i> 분석 유형 선택
+                    </h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        <!-- 수시 -->
+                        <div class="analysis-card glass-card rounded-2xl p-5 shadow-lg shadow-slate-200/50 border-2 border-transparent hover:border-blue-300" onclick="selectAnalysis('early')" id="card-early">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-600 text-white rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-file-alt text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800">수시 분석</h3>
+                                    <p class="text-xs text-slate-400">학생부 종합/교과 분석</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-400">소요 포인트</span>
+                                <span class="text-lg font-black text-blue-600">3,000 P</span>
+                            </div>
+                        </div>
+
+                        <!-- 정시 -->
+                        <div class="analysis-card glass-card rounded-2xl p-5 shadow-lg shadow-slate-200/50 border-2 border-transparent hover:border-emerald-300" onclick="selectAnalysis('regular')" id="card-regular">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-12 h-12 bg-gradient-to-br from-emerald-400 to-green-600 text-white rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-calculator text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800">정시 분석</h3>
+                                    <p class="text-xs text-slate-400">수능 성적 기반 배치 분석</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-400">소요 포인트</span>
+                                <span class="text-lg font-black text-emerald-600">3,000 P</span>
+                            </div>
+                        </div>
+
+                        <!-- 분석 -->
+                        <div class="analysis-card glass-card rounded-2xl p-5 shadow-lg shadow-slate-200/50 border-2 border-transparent hover:border-amber-300" onclick="selectAnalysis('analysis')" id="card-analysis">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-600 text-white rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-brain text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800">종합 분석</h3>
+                                    <p class="text-xs text-slate-400">AI 심층 생기부 분석</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-400">소요 포인트</span>
+                                <span class="text-lg font-black text-amber-600">10,000 P</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 분석 실행 버튼 -->
+                    <div class="flex items-center gap-3 mb-6" id="run-section" style="display: none;">
+                        <button onclick="runAnalysis()" id="run-btn" class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-400 to-amber-600 text-white font-bold rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all">
+                            <i class="fas fa-play-circle"></i> 분석 실행
+                        </button>
+                        <span class="text-sm text-slate-500" id="selected-analysis-label"></span>
+                    </div>
+                </div>
+
+                <!-- 분석 결과 영역 -->
+                <div id="result-section" style="display: none;">
+                    <div class="glass-card rounded-2xl shadow-lg shadow-slate-200/50 overflow-hidden">
+                        <!-- 결과 헤더 -->
+                        <div class="bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-4 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 bg-gradient-to-br from-orange-400 to-amber-600 text-white rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-chart-line text-sm"></i>
+                                </div>
+                                <h3 class="text-white font-bold">분석 결과</h3>
+                            </div>
+                            <span class="text-xs text-slate-400" id="result-timestamp"></span>
+                        </div>
+
+                        <!-- 로딩 -->
+                        <div id="result-loading" style="display: none;" class="p-12 text-center">
+                            <div class="flex justify-center gap-2 mb-4">
+                                <div class="w-3 h-3 bg-orange-400 rounded-full pulse-dot"></div>
+                                <div class="w-3 h-3 bg-amber-400 rounded-full pulse-dot"></div>
+                                <div class="w-3 h-3 bg-yellow-400 rounded-full pulse-dot"></div>
+                            </div>
+                            <p class="text-slate-500 font-medium">AI가 분석 중입니다...</p>
+                            <p class="text-xs text-slate-400 mt-1">약 30초~1분 소요됩니다</p>
+                        </div>
+
+                        <!-- 결과 내용 -->
+                        <div id="result-content" class="result-content p-6" style="display: none;"></div>
+
+                        <!-- 에러 -->
+                        <div id="result-error" style="display: none;" class="p-8 text-center">
+                            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-exclamation-triangle text-2xl text-red-500"></i>
+                            </div>
+                            <p class="text-red-600 font-bold" id="result-error-msg">분석 중 오류가 발생했습니다.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 빈 상태 (학원 미선택 시) -->
+                <div id="empty-state" class="text-center py-20">
+                    <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-graduation-cap text-4xl text-slate-300"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-400 mb-2">입시 상담을 시작하세요</h3>
+                    <p class="text-sm text-slate-300">학원과 학생을 선택한 후 분석을 실행할 수 있습니다</p>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+    /* ============================================
+       전역 상태
+       ============================================ */
+    let currentUser = null;
+    let academies = [];
+    let students = [];
+    let selectedAcademyId = null;
+    let selectedStudentId = null;
+    let selectedAnalysisType = null;
+    let pollingTimer = null;
+
+    const POINT_COST = { early: 3000, regular: 3000, analysis: 10000 };
+    const ANALYSIS_LABELS = { early: '수시 분석', regular: '정시 분석', analysis: '종합 분석' };
+
+    /* ============================================
+       초기화
+       ============================================ */
+    document.addEventListener('DOMContentLoaded', async () => {
+        const userStr = localStorage.getItem('schoolus_user');
+        if (!userStr) {
+            alert('로그인이 필요합니다.');
+            window.location.href = '/';
+            return;
+        }
+        currentUser = JSON.parse(userStr);
+
+        const role = currentUser.member_roll || currentUser.user_role;
+        if (role !== 'director' && role !== 'instructor') {
+            alert('원장 또는 강사 권한이 필요합니다.');
+            window.location.href = '/';
+            return;
+        }
+
+        updateCurrentDate();
+        displayUserInfo();
+        await loadAcademies();
+    });
+
+    /* ============================================
+       날짜 표시
+       ============================================ */
+    function updateCurrentDate() {
+        const now = new Date();
+        const el = document.getElementById('current-date');
+        if (el) el.textContent = now.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
+    }
+
+    /* ============================================
+       사용자 정보 표시
+       ============================================ */
+    function displayUserInfo() {
+        const name = currentUser?.member_name || '사용자';
+        const role = currentUser.member_roll || currentUser.user_role;
+        setText('user-name', name);
+        setText('user-avatar', name.charAt(0) || 'U');
+        setText('user-role-badge', role === 'director' ? '원장' : '강사');
+    }
+
+    function setText(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    }
+
+    /* ============================================
+       학원 목록 로드
+       ============================================ */
+    async function loadAcademies() {
+        try {
+            const response = await fetch('/api/academy/my-academies');
+            const data = await response.json();
+            if (!data.success) return;
+
+            academies = data.academies || [];
+            const select = document.getElementById('academy-select');
+
+            academies.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.academy_id;
+                opt.textContent = a.academy_name;
+                select.appendChild(opt);
+            });
+
+            // 학원이 1개뿐이면 자동 선택
+            if (academies.length === 1) {
+                select.value = academies[0].academy_id;
+                onAcademyChange();
+            }
+        } catch (e) {
+            console.error('학원 목록 로드 오류:', e);
+        }
+    }
+
+    /* ============================================
+       학원 변경 시
+       ============================================ */
+    async function onAcademyChange() {
+        selectedAcademyId = document.getElementById('academy-select').value;
+        selectedStudentId = null;
+        selectedAnalysisType = null;
+
+        hideElement('analysis-section');
+        hideElement('result-section');
+        hideElement('run-section');
+        clearAnalysisSelection();
+
+        if (!selectedAcademyId) {
+            hideElement('student-section');
+            showElement('empty-state');
+            setText('point-balance', '0');
+            setText('sidebar-point', '0');
+            return;
+        }
+
+        hideElement('empty-state');
+        showElement('student-section');
+
+        await Promise.all([
+            loadStudents(selectedAcademyId),
+            loadPointBalance(selectedAcademyId)
+        ]);
+    }
+
+    /* ============================================
+       학생 목록 로드
+       ============================================ */
+    async function loadStudents(academyId) {
+        const select = document.getElementById('student-select');
+        select.innerHTML = '<option value="">학생을 선택하세요</option>';
+        setText('student-count-label', '');
+
+        try {
+            const response = await fetch(`/api/academy/students?academy_id=${academyId}`);
+            const data = await response.json();
+            if (!data.success) return;
+
+            students = data.students || [];
+            students.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.member_id;
+                opt.textContent = `${s.member_name}${s.class_name ? ' (' + s.class_name + ')' : ''}`;
+                select.appendChild(opt);
+            });
+
+            setText('student-count-label', `총 ${students.length}명의 수강생`);
+        } catch (e) {
+            console.error('학생 목록 로드 오류:', e);
+        }
+    }
+
+    /* ============================================
+       포인트 잔액 로드
+       ============================================ */
+    async function loadPointBalance(academyId) {
+        try {
+            const response = await fetch(`/api/academy/point/balance?academy_id=${academyId}`);
+            const data = await response.json();
+            if (data.success) {
+                const point = (data.point || 0).toLocaleString();
+                setText('point-balance', point);
+                setText('sidebar-point', point);
+            }
+        } catch (e) {
+            console.error('포인트 로드 오류:', e);
+        }
+    }
+
+    /* ============================================
+       학생 변경 시
+       ============================================ */
+    function onStudentChange() {
+        selectedStudentId = document.getElementById('student-select').value;
+        selectedAnalysisType = null;
+        clearAnalysisSelection();
+        hideElement('run-section');
+        hideElement('result-section');
+
+        if (selectedStudentId) {
+            showElement('analysis-section');
+        } else {
+            hideElement('analysis-section');
+        }
+    }
+
+    /* ============================================
+       분석 유형 선택
+       ============================================ */
+    function selectAnalysis(type) {
+        selectedAnalysisType = type;
+        clearAnalysisSelection();
+
+        const card = document.getElementById(`card-${type}`);
+        if (card) {
+            const colors = { early: 'border-blue-500', regular: 'border-emerald-500', analysis: 'border-amber-500' };
+            card.classList.add(colors[type]);
+        }
+
+        setText('selected-analysis-label',
+            `${ANALYSIS_LABELS[type]} - ${POINT_COST[type].toLocaleString()} P 차감`
+        );
+        showElement('run-section');
+    }
+
+    function clearAnalysisSelection() {
+        ['early', 'regular', 'analysis'].forEach(t => {
+            const card = document.getElementById(`card-${t}`);
+            if (card) {
+                card.classList.remove('border-blue-500', 'border-emerald-500', 'border-amber-500');
+            }
+        });
+    }
+
+    /* ============================================
+       분석 실행
+       ============================================ */
+    async function runAnalysis() {
+        if (!selectedAcademyId || !selectedStudentId || !selectedAnalysisType) {
+            alert('학원, 학생, 분석 유형을 모두 선택해주세요.');
+            return;
+        }
+
+        const cost = POINT_COST[selectedAnalysisType];
+        const balanceText = document.getElementById('point-balance').textContent.replace(/,/g, '');
+        const currentBalance = parseInt(balanceText) || 0;
+
+        if (currentBalance < cost) {
+            alert(`포인트가 부족합니다.\n필요: ${cost.toLocaleString()} P\n보유: ${currentBalance.toLocaleString()} P`);
+            return;
+        }
+
+        if (!confirm(`${ANALYSIS_LABELS[selectedAnalysisType]}을(를) 실행하시겠습니까?\n\n차감 포인트: ${cost.toLocaleString()} P`)) {
+            return;
+        }
+
+        // UI 상태 변경
+        const btn = document.getElementById('run-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 분석 요청 중...';
+
+        showElement('result-section');
+        showElement('result-loading');
+        hideElement('result-content');
+        hideElement('result-error');
+
+        try {
+            const response = await fetch(`/api/admission/analyze/${selectedAnalysisType}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    student_id: selectedStudentId,
+                    context: 'academy',
+                    academy_id: parseInt(selectedAcademyId)
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                showError(data.message || '분석 요청에 실패했습니다.');
+                resetRunButton();
+                return;
+            }
+
+            // 폴링 시작
+            const jobId = data.job_id;
+            pollAnalysisStatus(jobId);
+
+        } catch (e) {
+            console.error('분석 요청 오류:', e);
+            showError('분석 요청 중 오류가 발생했습니다.');
+            resetRunButton();
+        }
+    }
+
+    /* ============================================
+       분석 결과 폴링
+       ============================================ */
+    function pollAnalysisStatus(jobId) {
+        if (pollingTimer) clearInterval(pollingTimer);
+
+        pollingTimer = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/admission/analyze/status/${jobId}`);
+                const data = await response.json();
+
+                if (data.status === 'pending') {
+                    // 아직 처리 중 — 계속 폴링
+                    return;
+                }
+
+                // 폴링 종료
+                clearInterval(pollingTimer);
+                pollingTimer = null;
+
+                if (data.status === 'done' && data.success) {
+                    showResult(data.result);
+                } else {
+                    showError(data.message || '분석 중 오류가 발생했습니다.');
+                }
+
+                resetRunButton();
+                // 포인트 갱신
+                loadPointBalance(selectedAcademyId);
+
+            } catch (e) {
+                console.error('폴링 오류:', e);
+                clearInterval(pollingTimer);
+                pollingTimer = null;
+                showError('결과 조회 중 오류가 발생했습니다.');
+                resetRunButton();
+            }
+        }, 2000);
+    }
+
+    /* ============================================
+       결과 표시
+       ============================================ */
+    function showResult(result) {
+        hideElement('result-loading');
+        hideElement('result-error');
+        showElement('result-content');
+
+        const content = document.getElementById('result-content');
+        const timestamp = document.getElementById('result-timestamp');
+
+        // result가 문자열이면 그대로, 객체면 JSON 또는 html 키 확인
+        let html = '';
+        if (typeof result === 'string') {
+            html = formatResultText(result);
+        } else if (result && result.html) {
+            html = result.html;
+        } else if (result && result.text) {
+            html = formatResultText(result.text);
+        } else if (result && result.analysis) {
+            html = formatResultText(result.analysis);
+        } else {
+            html = '<p class="text-slate-500">분석 결과가 없습니다.</p>';
+        }
+
+        content.innerHTML = html;
+
+        const now = new Date();
+        timestamp.textContent = now.toLocaleString('ko-KR', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    function formatResultText(text) {
+        if (!text) return '<p class="text-slate-500">분석 결과가 없습니다.</p>';
+        // 간단한 마크다운 → HTML 변환
+        let html = text
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+            .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+            .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>');
+        return '<p>' + html + '</p>';
+    }
+
+    function showError(msg) {
+        hideElement('result-loading');
+        hideElement('result-content');
+        showElement('result-error');
+        setText('result-error-msg', msg);
+    }
+
+    function resetRunButton() {
+        const btn = document.getElementById('run-btn');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-play-circle"></i> 분석 실행';
+    }
+
+    /* ============================================
+       유틸리티
+       ============================================ */
+    function showElement(id) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = '';
+    }
+
+    function hideElement(id) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    }
+
+    /* ============================================
+       모바일 사이드바
+       ============================================ */
+    function toggleMobileSidebar() {
+        document.getElementById('sidebar').classList.toggle('mobile-open');
+        document.getElementById('mobile-overlay').classList.toggle('active');
+    }
+
+    function closeMobileSidebar() {
+        document.getElementById('sidebar').classList.remove('mobile-open');
+        document.getElementById('mobile-overlay').classList.remove('active');
+    }
+
+    document.getElementById('mobile-overlay').onclick = function() {
+        closeMobileSidebar();
+    };
+
+    /* ============================================
+       사이드바 스크롤 힌트
+       ============================================ */
+    (function() {
+        const nav = document.getElementById('sidebar-nav');
+        const hint = document.getElementById('nav-scroll-hint');
+        if (!nav || !hint) return;
+        function checkScroll() {
+            const canScroll = nav.scrollHeight > nav.clientHeight;
+            const atBottom = nav.scrollHeight - nav.scrollTop - nav.clientHeight < 8;
+            if (canScroll && !atBottom) hint.classList.remove('hidden');
+            else hint.classList.add('hidden');
+        }
+        nav.addEventListener('scroll', checkScroll);
+        window.addEventListener('resize', checkScroll);
+        checkScroll();
+    })();
+
+    /* ============================================
+       로그아웃
+       ============================================ */
+    async function handleLogout() {
+        if (!confirm('로그아웃 하시겠습니까?')) return;
+        try {
+            await fetch('/logout');
+        } catch (e) {
+            // 무시
+        }
+        localStorage.removeItem('schoolus_user');
+        window.location.href = '/';
+    }
+    </script>
+</body>
+</html>

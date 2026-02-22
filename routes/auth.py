@@ -35,6 +35,33 @@ def get_schools():
         if cursor: cursor.close()
         if conn: conn.close()
 
+@auth_bp.route('/api/academies', methods=['GET'])
+def get_academies():
+    """학원 목록 조회 (강사 가입 시 학원 검색용)"""
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT academy_id, academy_name, address, tel
+            FROM academy_info
+            WHERE status = 'active'
+            ORDER BY academy_name
+        """)
+        academies = cursor.fetchall()
+
+        return jsonify({'success': True, 'academies': academies})
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': '학원 목록 조회 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
 @auth_bp.route('/api/signup', methods=['POST'])
 def signup():
     conn = None
@@ -51,10 +78,14 @@ def signup():
         password = data.get('password')
         
         member_roll = sanitize_input(data.get('member_roll'), 50)
-        
+
         member_school = sanitize_input(data.get('member_school'), 100)
         school_id = sanitize_input(data.get('school_id'), 50)
-        
+
+        # 학원 관련 필드
+        academy_name = sanitize_input(data.get('academy_name'), 100)
+        academy_id = data.get('academy_id')  # 강사용: 가입 시 선택한 학원
+
         stu_grade = sanitize_input(data.get('stu_grade'), 10)
         stu_class = sanitize_input(data.get('stu_class'), 10)
         stu_number = sanitize_input(data.get('stu_number'), 10)
@@ -69,21 +100,24 @@ def signup():
             return jsonify({'success': False, 'message': '올바른 이메일 형식을 입력해주세요.'})
         
         roles = [r.strip() for r in member_roll.split(',')]
-        valid_roles = ['teacher', 'student', 'parent']
+        valid_roles = ['teacher', 'student', 'parent', 'director', 'instructor']
         for r in roles:
             if r not in valid_roles:
                 return jsonify({'success': False, 'message': '올바른 역할을 선택해주세요.'})
-        
+
         if 'student' in roles and len(roles) > 1:
             return jsonify({'success': False, 'message': '학생은 다른 역할과 동시 선택할 수 없습니다.'})
-        
-        if set(roles) not in [{'teacher'}, {'student'}, {'parent'}, {'teacher', 'parent'}]:
+
+        if 'director' in roles and len(roles) > 1:
+            return jsonify({'success': False, 'message': '원장은 단독 선택만 가능합니다.'})
+
+        if 'instructor' in roles and len(roles) > 1:
+            return jsonify({'success': False, 'message': '강사는 단독 선택만 가능합니다.'})
+
+        if set(roles) not in [{'teacher'}, {'student'}, {'parent'}, {'teacher', 'parent'}, {'director'}, {'instructor'}]:
             return jsonify({'success': False, 'message': '올바른 역할 조합이 아닙니다.'})
         
         if ('teacher' in roles or 'student' in roles) and not member_school:
-            return jsonify({'success': False, 'message': '소속 학교를 선택해주세요.'})
-        
-        if 'teacher' in roles and not member_school:
             return jsonify({'success': False, 'message': '소속 학교를 선택해주세요.'})
         
         if not validate_phone(member_tel):
@@ -92,6 +126,14 @@ def signup():
         if not validate_birth(member_birth):
             return jsonify({'success': False, 'message': '생년월일은 YYYY-MM-DD 형식으로 입력해주세요.'})
         
+        if 'director' in roles:
+            if not academy_name:
+                return jsonify({'success': False, 'message': '학원명을 입력해주세요.'})
+
+        if 'instructor' in roles:
+            if not academy_id:
+                return jsonify({'success': False, 'message': '소속 학원을 선택해주세요.'})
+
         if 'student' in roles:
             if not all([stu_grade, stu_class, stu_number]):
                 return jsonify({'success': False, 'message': '학급 정보를 모두 입력해주세요.'})
@@ -238,6 +280,20 @@ def signup():
                 """, (login_id, member_name, c_school, c_school_id,
                       member_birth, member_tel, c_name, c_birth,
                       c_grade, c_class, c_number))
+
+        # 원장: academy_info 자동 생성
+        if 'director' in roles and academy_name:
+            cursor.execute("""
+                INSERT INTO academy_info (academy_name, director_id, address, tel)
+                VALUES (%s, %s, %s, %s)
+            """, (academy_name, login_id, member_add or '', member_tel or ''))
+
+        # 강사: academy_instructor에 가입 신청 (pending)
+        if 'instructor' in roles and academy_id:
+            cursor.execute("""
+                INSERT INTO academy_instructor (member_id, academy_id, status)
+                VALUES (%s, %s, 'pending')
+            """, (login_id, academy_id))
 
         conn.commit()
         return jsonify({'success': True, 'message': '회원가입이 완료되었습니다.'})
@@ -552,6 +608,51 @@ def login_process():
                     }
                 })
             
+            # 원장
+            elif role == 'director':
+                session['user_id'] = user['member_id']
+                session['user_name'] = user['member_name']
+                session['user_role'] = role
+
+                # 원장의 학원 목록 조회
+                cursor.execute("SELECT academy_id, academy_name FROM academy_info WHERE director_id = %s AND status = 'active'", (login_id,))
+                academies = cursor.fetchall()
+
+                return jsonify({
+                    'success': True,
+                    'user': {
+                        'member_id': user['member_id'],
+                        'member_name': user['member_name'],
+                        'member_roll': role,
+                        'redirect': '/academy/director.html'
+                    }
+                })
+
+            # 강사
+            elif role == 'instructor':
+                session['user_id'] = user['member_id']
+                session['user_name'] = user['member_name']
+                session['user_role'] = role
+
+                # 승인된 학원 확인
+                cursor.execute("""
+                    SELECT ai.academy_id, ai.academy_name, ainst.status
+                    FROM academy_instructor ainst
+                    JOIN academy_info ai ON ainst.academy_id = ai.academy_id
+                    WHERE ainst.member_id = %s
+                """, (login_id,))
+                instructor_academies = cursor.fetchall()
+
+                return jsonify({
+                    'success': True,
+                    'user': {
+                        'member_id': user['member_id'],
+                        'member_name': user['member_name'],
+                        'member_roll': role,
+                        'redirect': '/academy/instructor.html'
+                    }
+                })
+
             # 교사: 기본 응답
             else:
                 session['user_id'] = user['member_id']
@@ -559,7 +660,7 @@ def login_process():
                 session['user_role'] = role
                 session['user_school'] = user.get('member_school', '')
                 session['school_id'] = school_id
-                
+
                 return jsonify({
                     'success': True,
                     'user': {
@@ -603,7 +704,7 @@ def select_role():
         data = request.get_json()
         selected_role = sanitize_input(data.get('selected_role'), 20)
         
-        if selected_role not in ['teacher', 'parent']:
+        if selected_role not in ['teacher', 'parent', 'director', 'instructor']:
             return jsonify({'success': False, 'message': '올바른 역할을 선택해주세요.'})
         
         conn = get_db_connection()

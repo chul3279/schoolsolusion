@@ -128,8 +128,9 @@
 
                 <!-- ===== 역할 선택 (체크박스) ===== -->
                 <div class="border-l-4 border-green-500 pl-4 mb-6 mt-8"><h3 class="text-lg font-black text-slate-700">역할 선택</h3></div>
-                <p class="text-xs text-slate-500 mb-3 ml-1">교사와 학부모는 동시 선택이 가능합니다. 학생은 단독 선택만 가능합니다.</p>
-                <div class="grid grid-cols-3 gap-3">
+                <p class="text-xs text-slate-500 mb-3 ml-1">교사와 학부모는 동시 선택이 가능합니다. 학생/원장/강사는 단독 선택만 가능합니다.</p>
+                <p class="text-xs font-bold text-slate-400 mb-2 ml-1">학교</p>
+                <div class="grid grid-cols-3 gap-3 mb-4">
                     <label class="cursor-pointer">
                         <div class="bg-slate-50 border-2 border-slate-200 rounded-xl p-4 text-center transition-all hover:border-green-300">
                             <i class="fas fa-chalkboard-teacher text-2xl mb-2 text-slate-600"></i>
@@ -149,6 +150,23 @@
                             <i class="fas fa-users text-2xl mb-2 text-slate-600"></i>
                             <p class="text-xs font-bold text-slate-700 mb-2">학부모</p>
                             <input type="checkbox" id="role_parent" value="parent" onchange="handleRoleChange()" class="w-4 h-4 accent-purple-500 cursor-pointer">
+                        </div>
+                    </label>
+                </div>
+                <p class="text-xs font-bold text-slate-400 mb-2 ml-1">학원</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="cursor-pointer">
+                        <div class="bg-slate-50 border-2 border-slate-200 rounded-xl p-4 text-center transition-all hover:border-orange-300">
+                            <i class="fas fa-building text-2xl mb-2 text-slate-600"></i>
+                            <p class="text-xs font-bold text-slate-700 mb-2">원장</p>
+                            <input type="checkbox" id="role_director" value="director" onchange="handleRoleChange()" class="w-4 h-4 accent-orange-500 cursor-pointer">
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <div class="bg-slate-50 border-2 border-slate-200 rounded-xl p-4 text-center transition-all hover:border-teal-300">
+                            <i class="fas fa-user-tie text-2xl mb-2 text-slate-600"></i>
+                            <p class="text-xs font-bold text-slate-700 mb-2">강사</p>
+                            <input type="checkbox" id="role_instructor" value="instructor" onchange="handleRoleChange()" class="w-4 h-4 accent-teal-500 cursor-pointer">
                         </div>
                     </label>
                 </div>
@@ -201,6 +219,35 @@
                     </div>
                 </div>
 
+                <!-- ===== 원장: 학원명 입력 ===== -->
+                <div id="director-section" class="hidden">
+                    <div class="border-l-4 border-orange-500 pl-4 mb-6 mt-8"><h3 class="text-lg font-black text-slate-700">학원 정보</h3></div>
+                    <div class="bg-orange-50/50 border-2 border-orange-200 rounded-xl p-6">
+                        <div>
+                            <label class="block text-xs font-black text-slate-600 mb-2 uppercase">학원명 *</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><i class="fas fa-building"></i></span>
+                                <input id="academy_name" type="text" placeholder="학원명을 입력하세요" class="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-200 rounded-xl focus:border-orange-500 outline-none font-medium text-sm text-slate-700">
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1 ml-1">가입 후 추가 학원 개설도 가능합니다</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== 강사: 학원 검색/선택 ===== -->
+                <div id="instructor-section" class="hidden">
+                    <div class="border-l-4 border-teal-500 pl-4 mb-6 mt-8"><h3 class="text-lg font-black text-slate-700">소속 학원</h3></div>
+                    <div class="bg-teal-50/50 border-2 border-teal-200 rounded-xl p-6">
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 z-10"><i class="fas fa-search"></i></span>
+                            <input id="academy-search" type="text" placeholder="학원명을 검색하세요" oninput="searchAcademy(this.value)" onfocus="searchAcademy(this.value)" class="w-full pl-11 pr-4 py-3.5 bg-white border-2 border-slate-200 rounded-xl focus:border-teal-500 outline-none font-medium text-sm text-slate-700">
+                            <input type="hidden" id="selected_academy_id">
+                            <div id="academy-dropdown" class="hidden absolute z-20 w-full mt-1 bg-white rounded-xl shadow-xl school-dropdown"><div id="academy-list" class="py-2"></div></div>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2 ml-1">가입 후 원장의 승인이 필요합니다</p>
+                    </div>
+                </div>
+
                 <!-- ===== 가입 버튼 ===== -->
                 <button type="submit" class="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-black py-4 rounded-xl shadow-xl transition-all mt-8 flex justify-center items-center gap-2">
                     <span>가입하기</span><i class="fas fa-arrow-right"></i>
@@ -234,36 +281,45 @@
             const isTeacher = document.getElementById('role_teacher').checked;
             const isStudent = document.getElementById('role_student').checked;
             const isParent = document.getElementById('role_parent').checked;
+            const isDirector = document.getElementById('role_director').checked;
+            const isInstructor = document.getElementById('role_instructor').checked;
 
-            // 학생 선택 시: 교사/학부모 비활성화
-            if (isStudent) {
-                document.getElementById('role_teacher').checked = false;
-                document.getElementById('role_parent').checked = false;
-                document.getElementById('role_teacher').disabled = true;
-                document.getElementById('role_parent').disabled = true;
-                // 학생 비활성화 스타일
-                document.getElementById('role_teacher').closest('label').classList.add('opacity-40', 'pointer-events-none');
-                document.getElementById('role_parent').closest('label').classList.add('opacity-40', 'pointer-events-none');
+            const allRoleIds = ['role_teacher', 'role_student', 'role_parent', 'role_director', 'role_instructor'];
+            const schoolRoleIds = ['role_teacher', 'role_student', 'role_parent'];
+            const academyRoleIds = ['role_director', 'role_instructor'];
+
+            // 단독 선택 역할 (학생, 원장, 강사)
+            const exclusiveSelected = isStudent ? 'role_student' : isDirector ? 'role_director' : isInstructor ? 'role_instructor' : null;
+
+            if (exclusiveSelected) {
+                // 단독 선택: 나머지 모두 비활성화
+                allRoleIds.forEach(id => {
+                    if (id !== exclusiveSelected) {
+                        document.getElementById(id).checked = false;
+                        document.getElementById(id).disabled = true;
+                        document.getElementById(id).closest('label').classList.add('opacity-40', 'pointer-events-none');
+                    }
+                });
+            } else if (isTeacher || isParent) {
+                // 교사/학부모 선택 시: 학생, 원장, 강사 비활성화
+                ['role_student', 'role_director', 'role_instructor'].forEach(id => {
+                    document.getElementById(id).disabled = true;
+                    document.getElementById(id).closest('label').classList.add('opacity-40', 'pointer-events-none');
+                });
             } else {
-                document.getElementById('role_teacher').disabled = false;
-                document.getElementById('role_parent').disabled = false;
-                document.getElementById('role_teacher').closest('label').classList.remove('opacity-40', 'pointer-events-none');
-                document.getElementById('role_parent').closest('label').classList.remove('opacity-40', 'pointer-events-none');
-            }
-
-            // 교사/학부모 선택 시: 학생 비활성화
-            if (isTeacher || isParent) {
-                document.getElementById('role_student').disabled = true;
-                document.getElementById('role_student').closest('label').classList.add('opacity-40', 'pointer-events-none');
-            } else if (!isStudent) {
-                document.getElementById('role_student').disabled = false;
-                document.getElementById('role_student').closest('label').classList.remove('opacity-40', 'pointer-events-none');
+                // 아무것도 선택 안됨: 전부 활성화
+                allRoleIds.forEach(id => {
+                    document.getElementById(id).disabled = false;
+                    document.getElementById(id).closest('label').classList.remove('opacity-40', 'pointer-events-none');
+                });
             }
 
             // 섹션 표시/숨김
             const schoolSection = document.getElementById('school-section');
             const studentSection = document.getElementById('student-info-section');
             const childrenSection = document.getElementById('children-section');
+            const directorSection = document.getElementById('director-section');
+            const instructorSection = document.getElementById('instructor-section');
 
             // 교사 또는 학생: 소속 학교 표시
             if (isTeacher || isStudent) {
@@ -274,21 +330,27 @@
             }
 
             // 학생: 학급 정보 표시
-            if (isStudent) {
-                studentSection.classList.remove('hidden');
-            } else {
-                studentSection.classList.add('hidden');
-            }
+            studentSection.classList.toggle('hidden', !isStudent);
 
             // 학부모: 자녀 정보 표시
             if (isParent) {
                 childrenSection.classList.remove('hidden');
-                // 자녀 카드가 없으면 1개 추가
                 if (document.querySelectorAll('.child-card').length === 0) {
                     addChildCard();
                 }
             } else {
                 childrenSection.classList.add('hidden');
+            }
+
+            // 원장: 학원명 입력 표시
+            directorSection.classList.toggle('hidden', !isDirector);
+
+            // 강사: 학원 검색 표시
+            if (isInstructor) {
+                instructorSection.classList.remove('hidden');
+                loadAcademies();
+            } else {
+                instructorSection.classList.add('hidden');
             }
         }
 
@@ -530,6 +592,47 @@
         }
 
         // ============================================
+        // 학원 검색 (강사 가입용)
+        // ============================================
+        let academies = [];
+
+        async function loadAcademies() {
+            if (academies.length > 0) return;
+            try {
+                const response = await fetch('/api/academies');
+                const data = await response.json();
+                if (data.success) { academies = data.academies; }
+            } catch (error) { console.error('학원 목록 로드 실패:', error); }
+        }
+
+        function searchAcademy(keyword) {
+            const dropdown = document.getElementById('academy-dropdown');
+            const list = document.getElementById('academy-list');
+            if (!keyword || keyword.trim().length === 0) { dropdown.classList.add('hidden'); return; }
+
+            const filtered = academies.filter(a => a.academy_name.toLowerCase().includes(keyword.toLowerCase()));
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="px-4 py-3 text-sm text-slate-400">검색 결과가 없습니다</div>';
+                dropdown.classList.remove('hidden');
+                return;
+            }
+
+            list.innerHTML = filtered.slice(0, 10).map(a =>
+                `<div class="school-item px-4 py-3 cursor-pointer" onclick="selectAcademy(${a.academy_id}, '${a.academy_name.replace(/'/g, "\\'")}')">
+                    <p class="text-sm font-bold">${a.academy_name}</p>
+                    <p class="text-xs opacity-70">${a.address || ''}</p>
+                </div>`
+            ).join('');
+            dropdown.classList.remove('hidden');
+        }
+
+        function selectAcademy(id, name) {
+            document.getElementById('academy-search').value = name;
+            document.getElementById('selected_academy_id').value = id;
+            document.getElementById('academy-dropdown').classList.add('hidden');
+        }
+
+        // ============================================
         // 회원가입 처리
         // ============================================
         async function handleSignup(event) {
@@ -538,9 +641,11 @@
             const isTeacher = document.getElementById('role_teacher').checked;
             const isStudent = document.getElementById('role_student').checked;
             const isParent = document.getElementById('role_parent').checked;
+            const isDirector = document.getElementById('role_director').checked;
+            const isInstructor = document.getElementById('role_instructor').checked;
 
             // 역할 확인
-            if (!isTeacher && !isStudent && !isParent) {
+            if (!isTeacher && !isStudent && !isParent && !isDirector && !isInstructor) {
                 alert('역할을 1개 이상 선택해주세요.');
                 return false;
             }
@@ -550,6 +655,8 @@
             if (isTeacher) roles.push('teacher');
             if (isStudent) roles.push('student');
             if (isParent) roles.push('parent');
+            if (isDirector) roles.push('director');
+            if (isInstructor) roles.push('instructor');
             const memberRoll = roles.join(',');
 
             const password = document.getElementById('password').value;
@@ -564,6 +671,18 @@
             if (!emailRegex.test(memberEmail)) { alert('올바른 이메일 형식을 입력해주세요.'); return false; }
             if (password.length < 8) { alert('비밀번호는 8자 이상이어야 합니다.'); return false; }
             if (password !== passwordConfirm) { alert('비밀번호가 일치하지 않습니다.'); return false; }
+
+            // 원장: 학원명 필수
+            if (isDirector && !document.getElementById('academy_name').value.trim()) {
+                alert('학원명을 입력해주세요.');
+                return false;
+            }
+
+            // 강사: 학원 선택 필수
+            if (isInstructor && !document.getElementById('selected_academy_id').value) {
+                alert('소속 학원을 검색하여 선택해주세요.');
+                return false;
+            }
 
             // 교사/학생: 학교 필수
             if ((isTeacher || isStudent) && !document.getElementById('member_school').value) {
@@ -616,6 +735,16 @@
             // 학부모: 자녀 정보
             if (isParent) {
                 formData.children = children;
+            }
+
+            // 원장: 학원명
+            if (isDirector) {
+                formData.academy_name = document.getElementById('academy_name').value.trim();
+            }
+
+            // 강사: 학원 ID
+            if (isInstructor) {
+                formData.academy_id = document.getElementById('selected_academy_id').value;
             }
 
             try {

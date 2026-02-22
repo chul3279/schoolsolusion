@@ -219,6 +219,20 @@
                     </div>
                 </div>
 
+                <!-- 학원 공지사항 섹션 -->
+                <div id="academy-notice-section" class="hidden mt-6">
+                    <div class="glass-card rounded-2xl p-5 shadow-sm border border-slate-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-black text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-bullhorn text-orange-500"></i> 학원 공지사항
+                            </h3>
+                        </div>
+                        <div id="academy-notices-list" class="space-y-3">
+                            <p class="text-center text-sm text-slate-400 py-4">학원 공지사항을 불러오는 중...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" style="height: calc(100vh - 420px);">
                     <div class="glass-card rounded-2xl shadow-lg shadow-slate-200/50 flex flex-col overflow-hidden">
                         <div class="p-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
@@ -432,6 +446,7 @@
             loadTodayTimetable();
             loadNoticeList();
             loadSchedules();
+            loadAcademyNotices();
             updateNotificationBadge();
             initPushNotifications();
         });
@@ -553,6 +568,39 @@
                     } else container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-calendar-times text-2xl mb-2"></i><p class="text-xs">오늘 시간표가 없습니다.</p></div>';
                 } else container.innerHTML = '<div class="text-center py-8 text-slate-400"><i class="fas fa-info-circle text-2xl mb-2"></i><p class="text-xs">자녀 학급 정보가 없습니다.</p></div>';
             } catch (error) { container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-exclamation-circle text-2xl mb-2"></i><p class="text-xs">시간표를 불러올 수 없습니다.</p></div>'; }
+        }
+
+        /* ============================================
+           학원 공지사항 로드
+           ============================================ */
+        function escapeHtml(str) {
+            if (!str) return '';
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return str.replace(/[&<>"']/g, c => map[c]);
+        }
+
+        async function loadAcademyNotices() {
+            try {
+                const response = await fetch('/api/academy/my-notices');
+                const data = await response.json();
+                const section = document.getElementById('academy-notice-section');
+                const container = document.getElementById('academy-notices-list');
+
+                if (data.success && data.notices && data.notices.length > 0) {
+                    section.classList.remove('hidden');
+                    container.innerHTML = data.notices.map(n => `
+                        <div class="p-3 rounded-xl border border-slate-100 hover:bg-orange-50/30 transition-all">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="px-2 py-0.5 bg-orange-100 text-orange-600 text-xs font-bold rounded-full">${escapeHtml(n.academy_name || '학원')}</span>
+                                <span class="text-xs text-slate-400">${n.created_at || ''}</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm">${escapeHtml(n.title)}</h4>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.log('학원 공지 로드 오류:', e);
+            }
         }
 
         // 공지사항 로드 (school_id 기준, 전체 공개 - role 파라미터 없음)
