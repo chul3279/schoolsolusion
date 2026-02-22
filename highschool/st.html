@@ -137,7 +137,7 @@
                     <li><a href="st.html" class="nav-item active flex items-center px-4 py-3 rounded-xl text-white font-medium"><i class="fas fa-desktop w-6 mr-3 text-blue-400"></i> 대시보드</a></li>
                 </ul>
                 <ul class="space-y-1 px-3">
-                    <li><a href="st/class_activity.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-users w-6 mr-3 text-green-400"></i> 학급활동</a></li>
+                    <li><a href="st_homeroom.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-users w-6 mr-3 text-green-400"></i> 학급활동</a></li>
                     <li><a href="st/lesson_activity.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-book-reader w-6 mr-3 text-purple-400"></i> 수업활동</a></li>
                     <li><a href="/highschool/admission/admission.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-graduation-cap w-6 mr-3 text-pink-400"></i> 입시상담</a></li>
                 </ul>
@@ -278,34 +278,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- 학원 공지사항 섹션 -->
-                <div id="academy-notice-section" class="hidden mt-6">
-                    <div class="glass-card rounded-2xl p-5 shadow-sm border border-slate-100">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-black text-slate-800 flex items-center gap-2">
-                                <i class="fas fa-bullhorn text-orange-500"></i> 학원 공지사항
-                            </h3>
-                        </div>
-                        <div id="academy-notices-list" class="space-y-3">
-                            <p class="text-center text-sm text-slate-400 py-4">학원 공지사항을 불러오는 중...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 생기부 공유 요청 섹션 -->
-                <div id="record-share-section" class="hidden mt-4">
-                    <div class="glass-card rounded-2xl p-5 shadow-sm border border-orange-100 bg-orange-50/30">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-black text-slate-800 flex items-center gap-2">
-                                <i class="fas fa-file-alt text-orange-500"></i> 생기부 공유 요청
-                            </h3>
-                            <span id="pending-share-count" class="px-2 py-0.5 bg-orange-500 text-white text-xs font-bold rounded-full">0</span>
-                        </div>
-                        <div id="pending-shares-list" class="space-y-3">
-                        </div>
-                    </div>
-                </div>
             </main>
         </div>
     </div>
@@ -409,8 +381,6 @@
             loadSchedules();
             updateNotificationBadge();
             initPushNotifications();
-            loadAcademyNotices();
-            loadPendingShares();
         });
 
         function getSchoolParams() {
@@ -861,102 +831,6 @@
         }
 
         function handleLogout() { if (confirm('로그아웃 하시겠습니까?')) { clearInterval(notificationInterval); localStorage.removeItem('schoolus_user'); window.location.href = '/'; } }
-
-        /* ============================================
-           HTML 이스케이프 유틸리티
-           ============================================ */
-        function escapeHtml(str) {
-            if (!str) return '';
-            const div = document.createElement('div');
-            div.appendChild(document.createTextNode(str));
-            return div.innerHTML;
-        }
-
-        /* ============================================
-           학원 공지사항 로드
-           ============================================ */
-        async function loadAcademyNotices() {
-            try {
-                const response = await fetch('/api/academy/my-notices');
-                const data = await response.json();
-                const section = document.getElementById('academy-notice-section');
-                const container = document.getElementById('academy-notices-list');
-
-                if (data.success && data.notices && data.notices.length > 0) {
-                    section.classList.remove('hidden');
-                    container.innerHTML = data.notices.map(n => `
-                        <div class="p-3 rounded-xl border border-slate-100 hover:bg-orange-50/30 transition-all">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="px-2 py-0.5 bg-orange-100 text-orange-600 text-xs font-bold rounded-full">${escapeHtml(n.academy_name || '학원')}</span>
-                                <span class="text-xs text-slate-400">${n.created_at || ''}</span>
-                            </div>
-                            <h4 class="font-bold text-slate-800 text-sm">${escapeHtml(n.title)}</h4>
-                        </div>
-                    `).join('');
-                }
-            } catch (e) {
-                console.log('학원 공지 로드 오류:', e);
-            }
-        }
-
-        /* ============================================
-           생기부 공유 요청 로드
-           ============================================ */
-        async function loadPendingShares() {
-            try {
-                const response = await fetch('/api/academy/record/pending');
-                const data = await response.json();
-                const section = document.getElementById('record-share-section');
-                const container = document.getElementById('pending-shares-list');
-                const countEl = document.getElementById('pending-share-count');
-
-                if (data.success && data.pending && data.pending.length > 0) {
-                    section.classList.remove('hidden');
-                    countEl.textContent = data.pending.length;
-                    container.innerHTML = data.pending.map(p => `
-                        <div class="flex items-center justify-between p-3 rounded-xl border border-orange-200 bg-white">
-                            <div>
-                                <p class="font-bold text-slate-800 text-sm">${escapeHtml(p.academy_name || '학원')}</p>
-                                <p class="text-xs text-slate-500">${escapeHtml(p.file_name || '')} | 요청자: ${escapeHtml(p.requester_name || '')}</p>
-                                <p class="text-xs text-slate-400">${p.requested_at || ''}</p>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="handleShareApproval(${p.id}, 'approved')" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg transition-all">
-                                    <i class="fas fa-check mr-1"></i>승인
-                                </button>
-                                <button onclick="handleShareApproval(${p.id}, 'rejected')" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-lg transition-all">
-                                    <i class="fas fa-times mr-1"></i>거절
-                                </button>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            } catch (e) {
-                console.log('공유 요청 로드 오류:', e);
-            }
-        }
-
-        async function handleShareApproval(shareId, action) {
-            const msg = action === 'approved' ? '공유를 승인하시겠습니까?' : '공유를 거절하시겠습니까?';
-            if (!confirm(msg)) return;
-
-            try {
-                const response = await fetch('/api/academy/record/approve', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ share_id: shareId, action: action })
-                });
-                const data = await response.json();
-                if (data.success) {
-                    alert(data.message);
-                    loadPendingShares();
-                } else {
-                    alert(data.message || '처리 실패');
-                }
-            } catch (error) {
-                alert('처리 중 오류가 발생했습니다.');
-            }
-        }
 
         // 모바일 사이드바 토글
         function toggleMobileSidebar() {

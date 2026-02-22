@@ -78,10 +78,28 @@
             </div>
         </div>
 
+        <!-- 나의 출결 현황 -->
+        <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-teal-500 to-cyan-600 p-4 text-white">
+                <h3 class="font-bold"><i class="fas fa-clipboard-check mr-2"></i>나의 출결 현황</h3>
+            </div>
+            <div class="p-4">
+                <div class="grid grid-cols-5 gap-2 mb-3">
+                    <div class="text-center p-2 bg-emerald-50 rounded-xl"><p class="text-lg font-bold text-emerald-600" id="my-att-present">-</p><p class="text-xs text-slate-500">출석</p></div>
+                    <div class="text-center p-2 bg-red-50 rounded-xl"><p class="text-lg font-bold text-red-500" id="my-att-absent">-</p><p class="text-xs text-slate-500">결석</p></div>
+                    <div class="text-center p-2 bg-amber-50 rounded-xl"><p class="text-lg font-bold text-amber-500" id="my-att-late">-</p><p class="text-xs text-slate-500">지각</p></div>
+                    <div class="text-center p-2 bg-blue-50 rounded-xl"><p class="text-lg font-bold text-blue-500" id="my-att-early">-</p><p class="text-xs text-slate-500">조퇴</p></div>
+                    <div class="text-center p-2 bg-slate-50 rounded-xl"><p class="text-lg font-bold text-slate-500" id="my-att-sick">-</p><p class="text-xs text-slate-500">병결</p></div>
+                </div>
+                <div id="my-att-recent" class="space-y-1"></div>
+            </div>
+        </div>
+
         <!-- 학급 공지사항 -->
         <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
-            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-4 text-white">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-4 text-white flex items-center justify-between">
                 <h3 class="font-bold"><i class="fas fa-bullhorn mr-2"></i>학급 공지사항</h3>
+                <input type="text" id="notice-search" placeholder="검색..." oninput="searchNotices()" class="bg-white/20 text-white placeholder-white/60 rounded-lg px-3 py-1 text-sm w-32 focus:w-48 transition-all outline-none">
             </div>
             <div id="notice-list" class="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
                 <div class="text-center py-8 text-slate-300">
@@ -153,6 +171,8 @@
                         loadTeacherInfo();
                         // 상담 일정 로드
                         loadCounselSchedule();
+                        // 출결 현황 로드
+                        loadMyAttendance();
                         // 학급 공지사항 로드
                         loadHomeroomNotices();
                     } else {
@@ -232,13 +252,46 @@
             }
         }
 
-        async function loadHomeroomNotices() {
+        async function loadMyAttendance() {
+            try {
+                const params = new URLSearchParams();
+                params.append('school_id', currentUser.school_id);
+                params.append('member_id', currentUser.member_id);
+
+                const response = await fetch(`/api/attendance/my?${params.toString()}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const s = data.summary;
+                    document.getElementById('my-att-present').textContent = s.present;
+                    document.getElementById('my-att-absent').textContent = s.absent;
+                    document.getElementById('my-att-late').textContent = s.late;
+                    document.getElementById('my-att-early').textContent = s.early_leave;
+                    document.getElementById('my-att-sick').textContent = s.sick;
+
+                    const recentEl = document.getElementById('my-att-recent');
+                    if (data.recent?.length > 0) {
+                        const statusNames = {present:'출석', absent:'결석', late:'지각', early_leave:'조퇴', sick:'병결'};
+                        const statusColors = {present:'emerald', absent:'red', late:'amber', early_leave:'blue', sick:'slate'};
+                        recentEl.innerHTML = data.recent.slice(0, 5).map(r => `
+                            <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+                                <span class="text-sm text-slate-600">${r.date}</span>
+                                <span class="px-2 py-0.5 bg-${statusColors[r.status]}-100 text-${statusColors[r.status]}-600 rounded-full text-xs font-medium">${statusNames[r.status] || r.status}</span>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (error) { console.error('출결 로드 오류:', error); }
+        }
+
+        async function loadHomeroomNotices(keyword) {
             const container = document.getElementById('notice-list');
             try {
                 const params = getSchoolParams();
                 params.append('class_grade', studentInfo.class_grade);
                 params.append('class_no', studentInfo.class_no);
-                
+                if (keyword) params.append('keyword', keyword);
+
                 const response = await fetch(`/api/homeroom/notice/list?${params.toString()}`);
                 const data = await response.json();
                 
@@ -280,6 +333,14 @@
         function closeNoticeModal() {
             document.getElementById('notice-modal').classList.add('hidden');
             document.body.style.overflow = 'auto';
+        }
+
+        let noticeSearchTimer;
+        function searchNotices() {
+            clearTimeout(noticeSearchTimer);
+            noticeSearchTimer = setTimeout(() => {
+                loadHomeroomNotices(document.getElementById('notice-search').value.trim());
+            }, 300);
         }
     </script>
 </body>

@@ -23,24 +23,31 @@ def get_notice_list():
         
         cursor = conn.cursor()
         
+        keyword = sanitize_input(request.args.get('keyword'), 100)
+        keyword_filter = ""
+        keyword_params = []
+        if keyword:
+            keyword_filter = " AND (title LIKE %s OR message LIKE %s)"
+            keyword_params = [f'%{keyword}%', f'%{keyword}%']
+
         if school_id:
             query = """
                 SELECT id, member_name, title, message, created_at
                 FROM notice
-                WHERE school_id = %s
+                WHERE school_id = %s""" + keyword_filter + """
                 ORDER BY created_at DESC
                 LIMIT 50
             """
-            cursor.execute(query, (school_id,))
+            cursor.execute(query, [school_id] + keyword_params)
         else:
             query = """
                 SELECT id, member_name, title, message, created_at
                 FROM notice
-                WHERE member_school = %s
+                WHERE member_school = %s""" + keyword_filter + """
                 ORDER BY created_at DESC
                 LIMIT 50
             """
-            cursor.execute(query, (member_school,))
+            cursor.execute(query, [member_school] + keyword_params)
         
         notices = cursor.fetchall()
         

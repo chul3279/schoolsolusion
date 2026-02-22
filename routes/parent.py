@@ -57,6 +57,24 @@ def get_parent_info():
             'class_no': parent.get('class_no') or '',
             'class_num': parent.get('class_num') or ''
         }
+
+        # 자녀의 member_id 조회 (과제/출결 등에서 필요)
+        child_member_id = ''
+        try:
+            if parent.get('child_name') and parent.get('class_grade') and parent.get('class_no'):
+                cursor.execute("""
+                    SELECT sa.member_id FROM stu_all sa
+                    JOIN member m ON sa.member_id = m.member_id
+                    WHERE sa.school_id = %s AND sa.class_grade = %s AND sa.class_no = %s
+                      AND m.member_name = %s
+                    LIMIT 1
+                """, (school_id or parent.get('school_id'), parent.get('class_grade'), parent.get('class_no'), parent.get('child_name')))
+                stu = cursor.fetchone()
+                if stu:
+                    child_member_id = stu.get('member_id', '')
+        except:
+            pass
+        child['member_id'] = child_member_id
         
         school_level = ''
         region = ''

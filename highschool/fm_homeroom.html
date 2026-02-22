@@ -10,6 +10,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; }
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.8); }
+        .tab-btn.active { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .tab-panel.hidden { display: none; }
     </style>
     <!-- Google Analytics (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
@@ -49,7 +51,7 @@
     </header>
 
     <!-- 메인 컨텐츠 -->
-    <main class="max-w-4xl mx-auto p-4 space-y-6">
+    <main class="max-w-4xl mx-auto p-4 space-y-4">
         <!-- 학급 정보 카드 -->
         <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
             <div class="bg-gradient-to-r from-green-500 to-emerald-600 p-5 text-white">
@@ -66,15 +68,96 @@
             </div>
         </div>
 
-        <!-- 학급 공지사항 -->
-        <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
-            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-4 text-white">
-                <h3 class="font-bold"><i class="fas fa-bullhorn mr-2"></i>학급 공지사항</h3>
+        <!-- 탭 버튼 -->
+        <div class="flex gap-2 overflow-x-auto pb-1">
+            <button onclick="switchTab('notice')" class="tab-btn active px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition" id="tab-notice">
+                <i class="fas fa-bullhorn mr-1"></i>공지
+            </button>
+            <button onclick="switchTab('assignment')" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium bg-white text-slate-600 whitespace-nowrap transition" id="tab-assignment">
+                <i class="fas fa-tasks mr-1"></i>과제
+            </button>
+            <button onclick="switchTab('counsel')" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium bg-white text-slate-600 whitespace-nowrap transition" id="tab-counsel">
+                <i class="fas fa-comments mr-1"></i>상담
+            </button>
+            <button onclick="switchTab('attendance')" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium bg-white text-slate-600 whitespace-nowrap transition" id="tab-attendance">
+                <i class="fas fa-clipboard-check mr-1"></i>출결
+            </button>
+            <button onclick="switchTab('letter')" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium bg-white text-slate-600 whitespace-nowrap transition" id="tab-letter">
+                <i class="fas fa-envelope-open-text mr-1"></i>통신문
+            </button>
+        </div>
+
+        <!-- 공지 패널 -->
+        <div id="panel-notice" class="tab-panel">
+            <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-4 text-white flex items-center justify-between">
+                    <h3 class="font-bold"><i class="fas fa-bullhorn mr-2"></i>학급 공지사항</h3>
+                    <input type="text" id="notice-search" placeholder="검색..." oninput="searchNotices()" class="bg-white/20 text-white placeholder-white/60 rounded-lg px-3 py-1 text-sm w-32 focus:w-48 transition-all outline-none">
+                </div>
+                <div id="notice-list" class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
+                    <div class="text-center py-8 text-slate-300"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><p class="text-xs">로딩 중...</p></div>
+                </div>
             </div>
-            <div id="notice-list" class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
-                <div class="text-center py-8 text-slate-300">
-                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                    <p class="text-xs">로딩 중...</p>
+        </div>
+
+        <!-- 과제 패널 -->
+        <div id="panel-assignment" class="tab-panel hidden">
+            <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 text-white flex items-center justify-between">
+                    <h3 class="font-bold"><i class="fas fa-tasks mr-2"></i>과제 현황</h3>
+                    <input type="text" id="assignment-search" placeholder="검색..." oninput="searchAssignments()" class="bg-white/20 text-white placeholder-white/60 rounded-lg px-3 py-1 text-sm w-32 focus:w-48 transition-all outline-none">
+                </div>
+                <div id="assignment-list" class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
+                    <div class="text-center py-8 text-slate-300"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><p class="text-xs">로딩 중...</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 상담 패널 -->
+        <div id="panel-counsel" class="tab-panel hidden">
+            <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-purple-500 to-violet-600 p-4 text-white">
+                    <h3 class="font-bold"><i class="fas fa-comments mr-2"></i>상담 일정</h3>
+                </div>
+                <div id="counsel-list" class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
+                    <div class="text-center py-8 text-slate-300"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><p class="text-xs">로딩 중...</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 출결 패널 -->
+        <div id="panel-attendance" class="tab-panel hidden">
+            <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-teal-500 to-cyan-600 p-4 text-white">
+                    <h3 class="font-bold"><i class="fas fa-clipboard-check mr-2"></i>출결 현황</h3>
+                </div>
+                <div class="p-4">
+                    <!-- 이번 달 요약 -->
+                    <div id="att-summary" class="grid grid-cols-5 gap-2 mb-4">
+                        <div class="text-center p-3 bg-emerald-50 rounded-xl"><p class="text-lg font-bold text-emerald-600" id="att-present">-</p><p class="text-xs text-slate-500">출석</p></div>
+                        <div class="text-center p-3 bg-red-50 rounded-xl"><p class="text-lg font-bold text-red-500" id="att-absent">-</p><p class="text-xs text-slate-500">결석</p></div>
+                        <div class="text-center p-3 bg-amber-50 rounded-xl"><p class="text-lg font-bold text-amber-500" id="att-late">-</p><p class="text-xs text-slate-500">지각</p></div>
+                        <div class="text-center p-3 bg-blue-50 rounded-xl"><p class="text-lg font-bold text-blue-500" id="att-early">-</p><p class="text-xs text-slate-500">조퇴</p></div>
+                        <div class="text-center p-3 bg-slate-50 rounded-xl"><p class="text-lg font-bold text-slate-500" id="att-sick">-</p><p class="text-xs text-slate-500">병결</p></div>
+                    </div>
+                    <!-- 최근 이력 -->
+                    <h4 class="font-bold text-sm text-slate-600 mb-2">최근 출결 이력</h4>
+                    <div id="att-history" class="space-y-2">
+                        <p class="text-center text-sm text-slate-300 py-4">로딩 중...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 가정통신문 패널 -->
+        <div id="panel-letter" class="tab-panel hidden">
+            <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-rose-500 to-pink-600 p-4 text-white flex items-center justify-between">
+                    <h3 class="font-bold"><i class="fas fa-envelope-open-text mr-2"></i>가정통신문</h3>
+                    <input type="text" id="letter-search" placeholder="검색..." oninput="searchLetters()" class="bg-white/20 text-white placeholder-white/60 rounded-lg px-3 py-1 text-sm w-32 focus:w-48 transition-all outline-none">
+                </div>
+                <div id="letter-list" class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
+                    <div class="text-center py-8 text-slate-300"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><p class="text-xs">로딩 중...</p></div>
                 </div>
             </div>
         </div>
@@ -82,17 +165,69 @@
 
     <!-- 공지 상세 모달 -->
     <div id="notice-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeNoticeModal()"></div>
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('notice-modal')"></div>
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden max-h-[80vh] flex flex-col">
             <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-5 text-white flex-shrink-0">
-                <button onclick="closeNoticeModal()" class="absolute top-4 right-4 text-white/70 hover:text-white">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-                <h3 class="font-bold text-lg pr-8" id="modal-title">-</h3>
-                <p class="text-sm text-white/70 mt-1" id="modal-meta">-</p>
+                <button onclick="closeModal('notice-modal')" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <h3 class="font-bold text-lg pr-8" id="modal-notice-title">-</h3>
+                <p class="text-sm text-white/70 mt-1" id="modal-notice-meta">-</p>
             </div>
             <div class="p-6 overflow-y-auto flex-1">
-                <div id="modal-content" class="text-slate-700 whitespace-pre-wrap"></div>
+                <div id="modal-notice-content" class="text-slate-700 whitespace-pre-wrap"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 과제 상세 모달 -->
+    <div id="assignment-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('assignment-modal')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden max-h-[80vh] flex flex-col">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-5 text-white flex-shrink-0">
+                <button onclick="closeModal('assignment-modal')" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <h3 class="font-bold text-lg pr-8" id="modal-assign-title">-</h3>
+                <p class="text-sm text-white/70 mt-1" id="modal-assign-meta">-</p>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1">
+                <div id="modal-assign-content" class="text-slate-700 whitespace-pre-wrap mb-4"></div>
+                <div id="modal-assign-status" class="p-3 rounded-xl"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 가정통신문 상세 모달 -->
+    <div id="letter-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('letter-modal')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden max-h-[80vh] flex flex-col">
+            <div class="bg-gradient-to-r from-rose-500 to-pink-600 p-5 text-white flex-shrink-0">
+                <button onclick="closeModal('letter-modal')" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <h3 class="font-bold text-lg pr-8" id="modal-letter-title">-</h3>
+                <p class="text-sm text-white/70 mt-1" id="modal-letter-meta">-</p>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1">
+                <div id="modal-letter-content" class="text-slate-700 whitespace-pre-wrap mb-4"></div>
+                <div id="modal-letter-file" class="mb-4 hidden">
+                    <a id="modal-letter-file-link" href="#" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-lg text-sm text-slate-600 hover:bg-slate-200 transition">
+                        <i class="fas fa-paperclip"></i><span id="modal-letter-file-name"></span>
+                    </a>
+                </div>
+                <!-- 동의 응답 영역 -->
+                <div id="modal-letter-consent" class="hidden border-t pt-4">
+                    <h4 class="font-bold text-sm mb-3">동의서 응답</h4>
+                    <div id="modal-letter-already-replied" class="hidden p-3 rounded-xl bg-emerald-50 text-emerald-700 text-sm mb-3">
+                        <i class="fas fa-check-circle mr-1"></i><span id="already-reply-text"></span>
+                    </div>
+                    <div id="modal-letter-reply-form">
+                        <textarea id="letter-reply-memo" placeholder="비고 (선택)" class="w-full border rounded-xl p-3 text-sm mb-3 resize-none" rows="2"></textarea>
+                        <div class="flex gap-2">
+                            <button onclick="submitLetterReply('agreed')" class="flex-1 py-2 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 transition">
+                                <i class="fas fa-check mr-1"></i>동의
+                            </button>
+                            <button onclick="submitLetterReply('disagreed')" class="flex-1 py-2 bg-slate-400 text-white rounded-xl font-medium hover:bg-slate-500 transition">
+                                <i class="fas fa-times mr-1"></i>미동의
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -100,6 +235,8 @@
     <script>
         let currentUser = null;
         let childInfo = null;
+        let currentTab = 'notice';
+        let currentLetterId = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             const userStr = localStorage.getItem('schoolus_user');
@@ -110,7 +247,6 @@
             }
             currentUser = JSON.parse(userStr);
             document.getElementById('parent-name').textContent = (currentUser.member_name || '') + ' 학부모님';
-            
             loadParentInfo();
         });
 
@@ -121,27 +257,46 @@
             return params;
         }
 
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('active');
+                b.classList.add('bg-white', 'text-slate-600');
+            });
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+
+            const btn = document.getElementById(`tab-${tab}`);
+            btn.classList.add('active');
+            btn.classList.remove('bg-white', 'text-slate-600');
+            document.getElementById(`panel-${tab}`).classList.remove('hidden');
+        }
+
+        // ============================================
+        // 학부모 정보 로드
+        // ============================================
         async function loadParentInfo() {
             try {
                 const params = new URLSearchParams();
                 params.append('member_id', currentUser.member_id);
                 if (currentUser.school_id) params.append('school_id', currentUser.school_id);
-                
+
                 const response = await fetch(`/api/parent/info?${params.toString()}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.child) {
                     childInfo = data.child;
-                    
+
                     if (childInfo.class_grade && childInfo.class_no) {
                         document.getElementById('class-info').textContent = `${childInfo.class_grade}학년 ${childInfo.class_no}반`;
                         document.getElementById('class-title').textContent = `${childInfo.class_grade}학년 ${childInfo.class_no}반`;
                         document.getElementById('child-info').textContent = `자녀: ${childInfo.member_name || '-'}`;
-                        
-                        // 담임 정보 로드
+
                         loadTeacherInfo();
-                        // 학급 공지사항 로드
                         loadHomeroomNotices();
+                        loadAssignments();
+                        loadCounselSchedules();
+                        loadChildAttendance();
+                        loadLetters();
                     } else {
                         showNoClass();
                     }
@@ -159,7 +314,9 @@
             document.getElementById('class-title').textContent = '학급이 배정되지 않았습니다';
             document.getElementById('child-info').textContent = '';
             document.getElementById('teacher-info').textContent = '';
-            document.getElementById('notice-list').innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-sm">자녀의 학급 배정 후 이용 가능합니다.</p></div>';
+            ['notice-list','assignment-list','counsel-list','letter-list'].forEach(id => {
+                document.getElementById(id).innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-sm">자녀의 학급 배정 후 이용 가능합니다.</p></div>';
+            });
         }
 
         async function loadTeacherInfo() {
@@ -167,28 +324,28 @@
                 const params = getSchoolParams();
                 params.append('class_grade', childInfo.class_grade);
                 params.append('class_no', childInfo.class_no);
-                
                 const response = await fetch(`/api/homeroom/teacher?${params.toString()}`);
                 const data = await response.json();
-                
                 if (data.success && data.teacher_name) {
                     document.getElementById('teacher-info').textContent = `담임: ${data.teacher_name} 선생님`;
                 }
-            } catch (error) {
-                console.error('담임 정보 로드 오류:', error);
-            }
+            } catch (error) { console.error('담임 정보 로드 오류:', error); }
         }
 
-        async function loadHomeroomNotices() {
+        // ============================================
+        // 공지사항
+        // ============================================
+        async function loadHomeroomNotices(keyword) {
             const container = document.getElementById('notice-list');
             try {
                 const params = getSchoolParams();
                 params.append('class_grade', childInfo.class_grade);
                 params.append('class_no', childInfo.class_no);
-                
+                if (keyword) params.append('keyword', keyword);
+
                 const response = await fetch(`/api/homeroom/notice/list?${params.toString()}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.notices?.length > 0) {
                     container.innerHTML = data.notices.map((n, idx) => `
                         <div class="p-4 hover:bg-slate-50 transition cursor-pointer" onclick="showNoticeDetail(${idx})">
@@ -202,8 +359,6 @@
                             </div>
                         </div>
                     `).join('');
-                    
-                    // 공지사항 데이터 저장
                     window.noticeData = data.notices;
                 } else {
                     container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-inbox text-2xl mb-2"></i><p class="text-xs">학급 공지사항이 없습니다.</p></div>';
@@ -213,19 +368,326 @@
             }
         }
 
+        let noticeSearchTimer;
+        function searchNotices() {
+            clearTimeout(noticeSearchTimer);
+            noticeSearchTimer = setTimeout(() => {
+                loadHomeroomNotices(document.getElementById('notice-search').value.trim());
+            }, 300);
+        }
+
         function showNoticeDetail(idx) {
             if (!window.noticeData || !window.noticeData[idx]) return;
             const n = window.noticeData[idx];
-            
-            document.getElementById('modal-title').textContent = n.title;
-            document.getElementById('modal-meta').textContent = `${n.teacher_name} · ${n.created_at}`;
-            document.getElementById('modal-content').textContent = n.content;
+            document.getElementById('modal-notice-title').textContent = n.title;
+            document.getElementById('modal-notice-meta').textContent = `${n.teacher_name} · ${n.created_at}`;
+            document.getElementById('modal-notice-content').textContent = n.content;
             document.getElementById('notice-modal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
 
-        function closeNoticeModal() {
-            document.getElementById('notice-modal').classList.add('hidden');
+        // ============================================
+        // 과제 현황
+        // ============================================
+        async function loadAssignments(keyword) {
+            const container = document.getElementById('assignment-list');
+            try {
+                if (!childInfo.member_id) {
+                    container.innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-xs">자녀 정보를 확인할 수 없습니다.</p></div>';
+                    return;
+                }
+                const params = new URLSearchParams();
+                params.append('school_id', currentUser.school_id);
+                params.append('member_id', childInfo.member_id);
+                if (keyword) params.append('keyword', keyword);
+
+                const response = await fetch(`/api/student/my-assignments?${params.toString()}`);
+                const data = await response.json();
+
+                if (data.success && data.assignments?.length > 0) {
+                    window.assignmentData = data.assignments;
+                    container.innerHTML = data.assignments.map((a, idx) => {
+                        const now = new Date();
+                        const due = a.due_date ? new Date(a.due_date + 'T23:59:59') : null;
+                        let badge = '';
+                        if (a.submitted) {
+                            badge = '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">제출완료</span>';
+                        } else if (due && due < now) {
+                            badge = '<span class="px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-xs font-medium">미제출</span>';
+                        } else {
+                            badge = '<span class="px-2 py-0.5 bg-amber-100 text-amber-600 rounded-full text-xs font-medium">진행중</span>';
+                        }
+                        return `
+                        <div class="p-4 hover:bg-slate-50 transition cursor-pointer" onclick="showAssignmentDetail(${idx})">
+                            <div class="flex items-start gap-3">
+                                <span class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas fa-file-alt text-sm"></i></span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-slate-800 truncate">${a.title}</p>
+                                    <p class="text-xs text-slate-500 mt-1">${a.subject_name} · ${a.due_date ? '마감 ' + a.due_date : '마감 없음'}</p>
+                                </div>
+                                ${badge}
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-check-circle text-2xl mb-2"></i><p class="text-xs">등록된 과제가 없습니다.</p></div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-xs">과제를 불러올 수 없습니다.</p></div>';
+            }
+        }
+
+        let assignSearchTimer;
+        function searchAssignments() {
+            clearTimeout(assignSearchTimer);
+            assignSearchTimer = setTimeout(() => {
+                loadAssignments(document.getElementById('assignment-search').value.trim());
+            }, 300);
+        }
+
+        function showAssignmentDetail(idx) {
+            if (!window.assignmentData || !window.assignmentData[idx]) return;
+            const a = window.assignmentData[idx];
+            document.getElementById('modal-assign-title').textContent = a.title;
+            document.getElementById('modal-assign-meta').textContent = `${a.subject_name} · ${a.teacher_name} · 등록 ${a.created_at}`;
+            document.getElementById('modal-assign-content').textContent = a.description || '과제 설명 없음';
+
+            const statusEl = document.getElementById('modal-assign-status');
+            if (a.submitted) {
+                statusEl.className = 'p-3 rounded-xl bg-emerald-50';
+                statusEl.innerHTML = `<p class="text-sm font-medium text-emerald-700"><i class="fas fa-check-circle mr-1"></i>제출 완료</p>
+                    <p class="text-xs text-emerald-600 mt-1">파일: ${a.submission_file || '-'} · ${a.submission_date}</p>`;
+            } else {
+                statusEl.className = 'p-3 rounded-xl bg-red-50';
+                statusEl.innerHTML = `<p class="text-sm font-medium text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>미제출</p>
+                    <p class="text-xs text-red-500 mt-1">마감: ${a.due_date || '없음'}</p>`;
+            }
+
+            document.getElementById('assignment-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // ============================================
+        // 상담 일정
+        // ============================================
+        async function loadCounselSchedules() {
+            const container = document.getElementById('counsel-list');
+            try {
+                if (!childInfo.member_id) {
+                    container.innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-xs">자녀 정보를 확인할 수 없습니다.</p></div>';
+                    return;
+                }
+                const params = getSchoolParams();
+                params.append('class_grade', childInfo.class_grade);
+                params.append('class_no', childInfo.class_no);
+                params.append('student_id', childInfo.member_id);
+
+                const response = await fetch(`/api/homeroom/counsel-schedule/list?${params.toString()}`);
+                const data = await response.json();
+
+                if (data.success && data.schedules?.length > 0) {
+                    container.innerHTML = data.schedules.map(s => {
+                        const isPast = new Date(s.counsel_date) < new Date();
+                        const statusBadge = s.status === 'completed'
+                            ? '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">완료</span>'
+                            : isPast
+                                ? '<span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full text-xs font-medium">지남</span>'
+                                : '<span class="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs font-medium">예정</span>';
+                        const typeIcons = {phone: 'fa-phone', visit: 'fa-user', online: 'fa-video'};
+                        const typeNames = {phone: '전화', visit: '방문', online: '온라인'};
+                        return `
+                        <div class="p-4 ${isPast ? 'opacity-60' : ''}">
+                            <div class="flex items-start gap-3">
+                                <span class="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas ${typeIcons[s.counsel_type] || 'fa-comments'} text-sm"></i></span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-slate-800">${typeNames[s.counsel_type] || s.counsel_type} 상담</p>
+                                    <p class="text-xs text-slate-500 mt-1">${s.counsel_date} · ${s.memo || ''}</p>
+                                </div>
+                                ${statusBadge}
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-calendar-check text-2xl mb-2"></i><p class="text-xs">예정된 상담이 없습니다.</p></div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-xs">상담 일정을 불러올 수 없습니다.</p></div>';
+            }
+        }
+
+        // ============================================
+        // 출결 현황
+        // ============================================
+        async function loadChildAttendance() {
+            try {
+                if (!childInfo.member_id) return;
+                const params = new URLSearchParams();
+                params.append('school_id', currentUser.school_id);
+                params.append('student_id', childInfo.member_id);
+
+                const response = await fetch(`/api/attendance/child?${params.toString()}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const s = data.summary;
+                    document.getElementById('att-present').textContent = s.present;
+                    document.getElementById('att-absent').textContent = s.absent;
+                    document.getElementById('att-late').textContent = s.late;
+                    document.getElementById('att-early').textContent = s.early_leave;
+                    document.getElementById('att-sick').textContent = s.sick;
+
+                    const historyEl = document.getElementById('att-history');
+                    if (data.recent?.length > 0) {
+                        const statusNames = {present:'출석', absent:'결석', late:'지각', early_leave:'조퇴', sick:'병결'};
+                        const statusColors = {present:'emerald', absent:'red', late:'amber', early_leave:'blue', sick:'slate'};
+                        historyEl.innerHTML = data.recent.map(r => `
+                            <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+                                <span class="text-sm text-slate-600">${r.date}</span>
+                                <span class="px-2 py-0.5 bg-${statusColors[r.status]}-100 text-${statusColors[r.status]}-600 rounded-full text-xs font-medium">${statusNames[r.status] || r.status}</span>
+                            </div>
+                        `).join('');
+                    } else {
+                        historyEl.innerHTML = '<p class="text-center text-sm text-slate-300 py-4">출결 기록이 없습니다.</p>';
+                    }
+                }
+            } catch (error) {
+                console.error('출결 로드 오류:', error);
+            }
+        }
+
+        // ============================================
+        // 가정통신문
+        // ============================================
+        async function loadLetters(keyword) {
+            const container = document.getElementById('letter-list');
+            try {
+                const params = getSchoolParams();
+                params.append('class_grade', childInfo.class_grade);
+                params.append('class_no', childInfo.class_no);
+                if (keyword) params.append('keyword', keyword);
+
+                const response = await fetch(`/api/letter/list?${params.toString()}`);
+                const data = await response.json();
+
+                if (data.success && data.letters?.length > 0) {
+                    window.letterListData = data.letters;
+                    container.innerHTML = data.letters.map((l, idx) => {
+                        let badges = '';
+                        if (l.require_consent) {
+                            badges += '<span class="px-2 py-0.5 bg-rose-100 text-rose-600 rounded-full text-xs font-medium">동의필요</span>';
+                        }
+                        if (l.has_file) {
+                            badges += '<span class="px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-full text-xs"><i class="fas fa-paperclip"></i></span>';
+                        }
+                        return `
+                        <div class="p-4 hover:bg-slate-50 transition cursor-pointer" onclick="showLetterDetail(${l.id})">
+                            <div class="flex items-start gap-3">
+                                <span class="w-8 h-8 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas fa-envelope text-sm"></i></span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-slate-800 truncate">${l.title}</p>
+                                    <p class="text-xs text-slate-500 mt-1">${l.teacher_name} · ${l.created_at}</p>
+                                </div>
+                                <div class="flex flex-col gap-1 items-end">${badges}</div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-envelope-open text-2xl mb-2"></i><p class="text-xs">가정통신문이 없습니다.</p></div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-xs">통신문을 불러올 수 없습니다.</p></div>';
+            }
+        }
+
+        let letterSearchTimer;
+        function searchLetters() {
+            clearTimeout(letterSearchTimer);
+            letterSearchTimer = setTimeout(() => {
+                loadLetters(document.getElementById('letter-search').value.trim());
+            }, 300);
+        }
+
+        async function showLetterDetail(id) {
+            currentLetterId = id;
+            try {
+                const response = await fetch(`/api/letter/detail?id=${id}`);
+                const data = await response.json();
+                if (!data.success) { alert(data.message); return; }
+
+                const l = data.letter;
+                document.getElementById('modal-letter-title').textContent = l.title;
+                document.getElementById('modal-letter-meta').textContent = `${l.teacher_name} · ${l.created_at}`;
+                document.getElementById('modal-letter-content').textContent = l.content;
+
+                // 파일
+                const fileEl = document.getElementById('modal-letter-file');
+                if (l.has_file) {
+                    fileEl.classList.remove('hidden');
+                    document.getElementById('modal-letter-file-link').href = `/api/letter/download?id=${id}`;
+                    document.getElementById('modal-letter-file-name').textContent = l.file_name;
+                } else {
+                    fileEl.classList.add('hidden');
+                }
+
+                // 동의 영역
+                const consentEl = document.getElementById('modal-letter-consent');
+                if (l.require_consent) {
+                    consentEl.classList.remove('hidden');
+                    const alreadyEl = document.getElementById('modal-letter-already-replied');
+                    const formEl = document.getElementById('modal-letter-reply-form');
+
+                    if (l.my_reply) {
+                        alreadyEl.classList.remove('hidden');
+                        formEl.style.display = 'none';
+                        const statusText = l.my_reply.consent_status === 'agreed' ? '동의 완료' : '미동의';
+                        document.getElementById('already-reply-text').textContent = `${statusText} (${l.my_reply.replied_at})`;
+                    } else {
+                        alreadyEl.classList.add('hidden');
+                        formEl.style.display = '';
+                        document.getElementById('letter-reply-memo').value = '';
+                    }
+                } else {
+                    consentEl.classList.add('hidden');
+                }
+
+                document.getElementById('letter-modal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } catch (error) {
+                alert('통신문을 불러올 수 없습니다.');
+            }
+        }
+
+        async function submitLetterReply(status) {
+            if (!currentLetterId) return;
+            try {
+                const response = await fetch('/api/letter/reply', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        letter_id: currentLetterId,
+                        consent_status: status,
+                        reply_memo: document.getElementById('letter-reply-memo').value.trim(),
+                        student_id: childInfo.member_id || ''
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert(data.message);
+                    closeModal('letter-modal');
+                    loadLetters();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('응답 제출 중 오류가 발생했습니다.');
+            }
+        }
+
+        // ============================================
+        // 모달 공통
+        // ============================================
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
     </script>

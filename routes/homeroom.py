@@ -506,10 +506,18 @@ def get_homeroom_notice_list():
             teacher_filter = " AND teacher_id = %s"
             extra_params = [session.get('user_id')]
 
+        # 검색 키워드
+        keyword = sanitize_input(request.args.get('keyword'), 100)
+        keyword_filter = ""
+        keyword_params = []
+        if keyword:
+            keyword_filter = " AND (title LIKE %s OR content LIKE %s)"
+            keyword_params = [f'%{keyword}%', f'%{keyword}%']
+
         if school_id:
-            cursor.execute("SELECT id, teacher_name, title, content, category, created_at FROM homeroom_notice WHERE school_id = %s AND class_grade = %s AND class_no = %s" + teacher_filter + " ORDER BY created_at DESC LIMIT 50", [school_id, class_grade, class_no] + extra_params)
+            cursor.execute("SELECT id, teacher_name, title, content, category, created_at FROM homeroom_notice WHERE school_id = %s AND class_grade = %s AND class_no = %s" + teacher_filter + keyword_filter + " ORDER BY created_at DESC LIMIT 50", [school_id, class_grade, class_no] + extra_params + keyword_params)
         else:
-            cursor.execute("SELECT id, teacher_name, title, content, category, created_at FROM homeroom_notice WHERE member_school = %s AND class_grade = %s AND class_no = %s" + teacher_filter + " ORDER BY created_at DESC LIMIT 50", [member_school, class_grade, class_no] + extra_params)
+            cursor.execute("SELECT id, teacher_name, title, content, category, created_at FROM homeroom_notice WHERE member_school = %s AND class_grade = %s AND class_no = %s" + teacher_filter + keyword_filter + " ORDER BY created_at DESC LIMIT 50", [member_school, class_grade, class_no] + extra_params + keyword_params)
 
         notices = cursor.fetchall()
         notice_list = [{'id': n['id'], 'teacher_name': n['teacher_name'], 'title': n['title'], 'content': n['content'],
@@ -556,7 +564,7 @@ def create_homeroom_notice():
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
             (school_id, member_school, class_grade, class_no, teacher_id, teacher_name, title, content, category))
         conn.commit()
-        return jsonify({'success': True, 'message': '학급 공지사항이 등록되었습니다.'})
+        return jsonify({'success': True, 'message': '학급 공지사항이 등록되었습니다.', 'id': cursor.lastrowid})
 
     except Exception as e:
         print(f"학급 공지사항 등록 오류: {e}")
@@ -796,28 +804,37 @@ def get_counsel_log_list():
         # [보안] 교사는 담임 본인만 조회
         is_teacher = session.get('user_role') == 'teacher'
         user_id = session.get('user_id')
+
+        # 검색 키워드
+        keyword = sanitize_input(request.args.get('keyword'), 100)
+        kw_filter = ""
+        kw_params = []
+        if keyword:
+            kw_filter = " AND (content LIKE %s OR result LIKE %s OR student_name LIKE %s)"
+            kw_params = [f'%{keyword}%', f'%{keyword}%', f'%{keyword}%']
+
         if student_id:
             if school_id:
                 if is_teacher:
-                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE school_id = %s AND class_grade = %s AND class_no = %s AND teacher_id = %s AND student_id = %s ORDER BY counsel_date DESC", (school_id, class_grade, class_no, user_id, student_id))
+                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE school_id = %s AND class_grade = %s AND class_no = %s AND teacher_id = %s AND student_id = %s" + kw_filter + " ORDER BY counsel_date DESC", [school_id, class_grade, class_no, user_id, student_id] + kw_params)
                 else:
-                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE school_id = %s AND class_grade = %s AND class_no = %s AND student_id = %s ORDER BY counsel_date DESC", (school_id, class_grade, class_no, student_id))
+                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE school_id = %s AND class_grade = %s AND class_no = %s AND student_id = %s" + kw_filter + " ORDER BY counsel_date DESC", [school_id, class_grade, class_no, student_id] + kw_params)
             else:
                 if is_teacher:
-                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE member_school = %s AND class_grade = %s AND class_no = %s AND teacher_id = %s AND student_id = %s ORDER BY counsel_date DESC", (member_school, class_grade, class_no, user_id, student_id))
+                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE member_school = %s AND class_grade = %s AND class_no = %s AND teacher_id = %s AND student_id = %s" + kw_filter + " ORDER BY counsel_date DESC", [member_school, class_grade, class_no, user_id, student_id] + kw_params)
                 else:
-                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE member_school = %s AND class_grade = %s AND class_no = %s AND student_id = %s ORDER BY counsel_date DESC", (member_school, class_grade, class_no, student_id))
+                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE member_school = %s AND class_grade = %s AND class_no = %s AND student_id = %s" + kw_filter + " ORDER BY counsel_date DESC", [member_school, class_grade, class_no, student_id] + kw_params)
         else:
             if school_id:
                 if is_teacher:
-                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE school_id = %s AND class_grade = %s AND class_no = %s AND teacher_id = %s ORDER BY counsel_date DESC", (school_id, class_grade, class_no, user_id))
+                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE school_id = %s AND class_grade = %s AND class_no = %s AND teacher_id = %s" + kw_filter + " ORDER BY counsel_date DESC", [school_id, class_grade, class_no, user_id] + kw_params)
                 else:
-                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE school_id = %s AND class_grade = %s AND class_no = %s ORDER BY counsel_date DESC", (school_id, class_grade, class_no))
+                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE school_id = %s AND class_grade = %s AND class_no = %s" + kw_filter + " ORDER BY counsel_date DESC", [school_id, class_grade, class_no] + kw_params)
             else:
                 if is_teacher:
-                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE member_school = %s AND class_grade = %s AND class_no = %s AND teacher_id = %s ORDER BY counsel_date DESC", (member_school, class_grade, class_no, user_id))
+                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE member_school = %s AND class_grade = %s AND class_no = %s AND teacher_id = %s" + kw_filter + " ORDER BY counsel_date DESC", [member_school, class_grade, class_no, user_id] + kw_params)
                 else:
-                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE member_school = %s AND class_grade = %s AND class_no = %s ORDER BY counsel_date DESC", (member_school, class_grade, class_no))
+                    cursor.execute(f"SELECT {base_cols} FROM homeroom_counsel_log WHERE member_school = %s AND class_grade = %s AND class_no = %s" + kw_filter + " ORDER BY counsel_date DESC", [member_school, class_grade, class_no] + kw_params)
 
         logs = cursor.fetchall()
         log_list = [{'id': l['id'], 'student_id': l['student_id'], 'student_name': l['student_name'],

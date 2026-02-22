@@ -270,6 +270,11 @@ def get_student_assignments():
             query += " AND subject_name = %s"
             params.append(subject_name)
 
+        keyword = sanitize_input(request.args.get('keyword'), 100)
+        if keyword:
+            query += " AND (title LIKE %s OR description LIKE %s)"
+            params.extend([f'%{keyword}%', f'%{keyword}%'])
+
         query += " ORDER BY created_at DESC"
         cursor.execute(query, params)
         rows = cursor.fetchall()
