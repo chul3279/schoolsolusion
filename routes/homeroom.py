@@ -564,6 +564,14 @@ def create_homeroom_notice():
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
             (school_id, member_school, class_grade, class_no, teacher_id, teacher_name, title, content, category))
         conn.commit()
+
+        # 푸시 알림 발송
+        try:
+            from utils.push_helper import send_push_to_class
+            send_push_to_class(school_id, class_grade, class_no, '학급 공지', title, '/highschool/st_homeroom.html', ['student', 'parent'])
+        except Exception as pe:
+            print(f"[Homeroom Notice] Push error: {pe}")
+
         return jsonify({'success': True, 'message': '학급 공지사항이 등록되었습니다.', 'id': cursor.lastrowid})
 
     except Exception as e:
@@ -700,6 +708,15 @@ def create_counsel_schedule():
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'scheduled', NOW())""",
             (school_id, member_school, class_grade, class_no, teacher_id, teacher_name, student_id, student_name, class_num, counsel_date, counsel_type, memo))
         conn.commit()
+
+        # 해당 학생+학부모에게 푸시
+        if student_id:
+            try:
+                from utils.push_helper import send_push_to_student
+                send_push_to_student(school_id, student_id, '상담 일정 등록', f'{counsel_date} 상담이 예정되었습니다.', '/highschool/st_homeroom.html')
+            except Exception as pe:
+                print(f"[Counsel Schedule] Push error: {pe}")
+
         return jsonify({'success': True, 'message': '상담 일정이 등록되었습니다.'})
 
     except Exception as e:

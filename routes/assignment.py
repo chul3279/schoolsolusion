@@ -57,6 +57,13 @@ def create_assignment():
               record_year, record_semester, title, description, due_date or None))
         conn.commit()
 
+        # 푸시 알림
+        try:
+            from utils.push_helper import send_push_to_class
+            send_push_to_class(school_id, class_grade, class_no, f'새 과제 - {subject_name}', title, '/highschool/st/lesson_activity.html', ['student', 'parent'])
+        except Exception as pe:
+            print(f"[Assignment] Push error: {pe}")
+
         return jsonify({'success': True, 'message': f'과제 "{title}"이(가) 등록되었습니다.'})
 
     except Exception as e:
