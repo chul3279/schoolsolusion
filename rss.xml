@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>SchoolUs(스쿨어스) - 학교 통합 관리 플랫폼</title>
+        <link>https://www.schoolwithus.co.kr</link>
+        <atom:link href="https://www.schoolwithus.co.kr/rss.xml" rel="self" type="application/rss+xml"/>
+        <description>선생님, 학생, 학부모를 연결하는 스마트 교육 통합 플랫폼. 출결, 성적, 상담, AI 생기부까지 우리들 학교를 하나로!</description>
+        <language>ko</language>
+        <lastBuildDate>Thu, 20 Feb 2026 00:00:00 +0900</lastBuildDate>
+        <item>
+            <title>SchoolUs(스쿨어스) - 학교 통합 관리 플랫폼</title>
+            <link>https://www.schoolwithus.co.kr/</link>
+            <description>SchoolUs(스쿨어스, schoolwithus)는 선생님, 학생, 학부모를 연결하는 스마트 교육 통합 플랫폼입니다. 출결관리, 성적관리, 상담관리, 시간표, AI 생기부 작성까지 우리들 학교의 모든 업무를 하나로 관리하세요.</description>
+            <pubDate>Sat, 15 Feb 2026 00:00:00 +0900</pubDate>
+            <guid>https://www.schoolwithus.co.kr/</guid>
+        </item>
+        <item>
+            <title>SchoolUs 회원가입 - 교사, 학생, 학부모 통합 가입</title>
+            <link>https://www.schoolwithus.co.kr/signup</link>
+            <description>SchoolUs 스쿨어스 회원가입 페이지입니다. 교사, 학생, 학부모 누구나 간편하게 가입하고 학교 통합 관리 서비스를 이용하세요.</description>
+            <pubDate>Sat, 15 Feb 2026 00:00:00 +0900</pubDate>
+            <guid>https://www.schoolwithus.co.kr/signup</guid>
+        </item>
+        <item>
+            <title>SchoolUs 고객센터</title>
+            <link>https://www.schoolwithus.co.kr/support.html</link>
+            <description>SchoolUs 스쿨어스 고객센터입니다. 자주 묻는 질문, 서비스 문의, 기술 지원을 받으실 수 있습니다.</description>
+            <pubDate>Sat, 15 Feb 2026 00:00:00 +0900</pubDate>
+            <guid>https://www.schoolwithus.co.kr/support.html</guid>
+        </item>
+        <item>
+            <title>SchoolUs 이용약관</title>
+            <link>https://www.schoolwithus.co.kr/terms.html</link>
+            <description>SchoolUs 스쿨어스 서비스 이용약관입니다. 학교 통합 관리 플랫폼의 이용 조건과 규정을 확인하세요.</description>
+            <pubDate>Sat, 15 Feb 2026 00:00:00 +0900</pubDate>
+            <guid>https://www.schoolwithus.co.kr/terms.html</guid>
+        </item>
+        <item>
+            <title>SchoolUs 개인정보처리방침</title>
+            <link>https://www.schoolwithus.co.kr/privacy.html</link>
+            <description>SchoolUs 스쿨어스 개인정보처리방침입니다. 학생, 교사, 학부모의 개인정보 수집·이용·보호 정책을 확인하세요.</description>
+            <pubDate>Sat, 15 Feb 2026 00:00:00 +0900</pubDate>
+            <guid>https://www.schoolwithus.co.kr/privacy.html</guid>
+        </item>
+        <item>
+            <title>SchoolUs 환불 규정</title>
+            <link>https://www.schoolwithus.co.kr/refund_policy.html</link>
+            <description>SchoolUs 스쿨어스 환불 규정입니다. 서비스 환불 조건과 절차를 확인하세요.</description>
+            <pubDate>Sat, 15 Feb 2026 00:00:00 +0900</pubDate>
+            <guid>https://www.schoolwithus.co.kr/refund_policy.html</guid>
+        </item>
+    </channel>
+</rss>

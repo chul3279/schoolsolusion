@@ -1,0 +1,26 @@
+# SchoolUs 검색엔진 크롤러 설정
+# https://www.schoolwithus.co.kr
+
+User-agent: *
+Allow: /
+
+# 관리자/비공개 영역 차단
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login_process
+Disallow: /*.json$
+
+# 학교별 대시보드 (로그인 필요 영역)
+Disallow: /highschool/tea/
+Disallow: /highschool/st/
+Disallow: /highschool/fm/
+Disallow: /highschool/admission/
+
+# 템플릿 페이지
+Disallow: /templates/
+
+# 사이트맵 위치
+Sitemap: https://www.schoolwithus.co.kr/sitemap.xml
+
+# 크롤링 속도 제한 (초 단위)
+Crawl-delay: 1

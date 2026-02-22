@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 입시 상담</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        #mobile-overlay.active { display: block; }
+        #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
+
+        /* 모바일 큰 글씨 대응: 터치 영역 확대 + 사이드바 전체 스크롤 */
+        @media (max-width: 767px) {
+            #sidebar.mobile-open { overflow-y: auto !important; }
+            #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
+            #sidebar.mobile-open #sidebar-nav { height: auto !important; overflow: visible !important; }
+            .nav-item { min-height: 52px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 15px !important; }
+            #sidebar .space-y-1 > li { margin-bottom: 4px; }
+            #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
+            .tab-btn { min-height: 48px; padding: 12px 16px !important; font-size: 14px !important; white-space: nowrap; }
+        }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.8); }
+        
+        .nav-item { position: relative; transition: all 0.3s ease; }
+        .nav-item::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 0; background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), transparent); transition: width 0.3s ease; }
+        .nav-item:hover::before { width: 100%; }
+        .nav-item.active { background: linear-gradient(90deg, rgba(59, 130, 246, 0.2), transparent); border-left: 3px solid #3b82f6; }
+        
+        .avatar-ring { background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899); padding: 3px; }
+        
+        .tab-btn {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px 28px; font-size: 15px; font-weight: 700; color: #64748b;
+            background: #f8fafc; border: 2px solid transparent; border-bottom: none;
+            border-radius: 16px 16px 0 0; transition: all 0.3s ease; cursor: pointer;
+            min-width: 160px; position: relative;
+        }
+        .tab-btn:hover { color: #ec4899; background: #fdf2f8; border-color: #fbcfe8; }
+        .tab-btn.active { color: #be185d; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); border-color: #f9a8d4; box-shadow: 0 -4px 20px rgba(236, 72, 153, 0.15); }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #ec4899, #db2777); border-radius: 3px 3px 0 0; }
+        .tab-btn i { font-size: 24px; margin-bottom: 8px; }
+        .tab-btn .tab-label { text-align: center; line-height: 1.4; }
+        .tab-btn .point-badge { font-size: 11px; color: #f97316; font-weight: 600; margin-top: 6px; background: #fff7ed; padding: 3px 10px; border-radius: 20px; border: 1px solid #fed7aa; }
+        
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 셀렉터 스타일 */
+        .selector-group select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+        .type-toggle { transition: all 0.2s ease; }
+        .type-toggle.active {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+            color: white; border-color: #db2777;
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+        }
+        .pdf-viewer-container {
+            border: 2px solid #e2e8f0; border-radius: 12px;
+            overflow: hidden; background: #f8fafc; position: relative;
+        }
+        .pdf-viewer-container iframe { width: 100%; height: 700px; border: none; }
+        
+        .summary-content { line-height: 1.8; }
+        .summary-content h1 { font-size: 1.5rem; font-weight: 800; margin: 1.5rem 0 0.8rem; color: #1e293b; }
+        .summary-content h2 { font-size: 1.25rem; font-weight: 700; margin: 1.2rem 0 0.6rem; color: #334155; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.3rem; }
+        .summary-content h3 { font-size: 1.1rem; font-weight: 600; margin: 1rem 0 0.5rem; color: #475569; }
+        .summary-content table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; font-size: 0.9rem; }
+        .summary-content th { background: #f1f5f9; padding: 8px 12px; border: 1px solid #e2e8f0; font-weight: 600; text-align: left; }
+        .summary-content td { padding: 8px 12px; border: 1px solid #e2e8f0; }
+        .summary-content tr:hover td { background: #f8fafc; }
+        .summary-content ul, .summary-content ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+        .summary-content li { margin: 0.3rem 0; }
+        .summary-content p { margin: 0.5rem 0; }
+        .summary-content strong { color: #be185d; }
+
+        .loading-spinner {
+            display: inline-block; width: 20px; height: 20px;
+            border: 3px solid #e2e8f0; border-top-color: #ec4899;
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ═══ 입시자료 등록 서브탭 ═══ */
+        .sub-tab-btn {
+            padding: 12px 24px; font-size: 14px; font-weight: 600; color: #64748b;
+            background: white; border: 2px solid #e2e8f0; border-radius: 12px;
+            transition: all 0.25s ease; cursor: pointer; display: flex; align-items: center; gap: 10px;
+        }
+        .sub-tab-btn:hover { color: #ec4899; border-color: #fbcfe8; background: #fdf2f8; }
+        .sub-tab-btn.active {
+            color: white; background: linear-gradient(135deg, #ec4899, #db2777);
+            border-color: #db2777; box-shadow: 0 4px 16px rgba(236, 72, 153, 0.3);
+        }
+        .sub-tab-btn.active i { color: white; }
+        .sub-tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .sub-tab-content.active { display: block; }
+
+        /* 교육과정 선택 버튼 */
+        .curriculum-btn {
+            text-align: left; transition: all 0.25s ease; cursor: pointer;
+        }
+        .curriculum-btn.active-2015 {
+            background: linear-gradient(135deg, #fdf2f8, #fce7f3);
+            color: #be185d; border-color: #f9a8d4;
+            box-shadow: 0 4px 16px rgba(236, 72, 153, 0.25);
+        }
+        .curriculum-btn.active-2015 span { color: rgba(190,24,93,0.7); }
+        .curriculum-btn.active-2022 {
+            background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+            color: #3730a3; border-color: #a5b4fc;
+            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.2);
+        }
+        .curriculum-btn.active-2022 span { color: rgba(55,48,163,0.7); }
+
+        /* 폼 스타일 */
+        .form-label {
+            display: block; font-size: 13px; font-weight: 700; color: #475569;
+            margin-bottom: 6px; letter-spacing: 0.02em;
+        }
+        .form-input {
+            width: 100%; padding: 10px 14px; background: white; border: 2px solid #e2e8f0;
+            border-radius: 10px; font-size: 14px; font-weight: 500; color: #1e293b;
+            transition: all 0.2s ease; outline: none;
+        }
+        .form-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244,114,182,0.15); }
+        .form-input:disabled { background: #f1f5f9; color: #94a3b8; }
+        .form-input::placeholder { color: #94a3b8; }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px;
+        }
+
+        /* 파일 업로드 영역 */
+        .upload-zone {
+            border: 2px dashed #cbd5e1; border-radius: 16px; padding: 40px 20px;
+            text-align: center; transition: all 0.3s ease; cursor: pointer; background: #fafbfc;
+        }
+        .upload-zone:hover { border-color: #f472b6; background: #fdf2f8; }
+        .upload-zone.dragover { border-color: #ec4899; background: #fce7f3; transform: scale(1.01); }
+        .upload-zone.has-file { border-color: #10b981; background: #f0fdf4; border-style: solid; }
+
+        /* 성적 테이블 */
+        .score-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .score-table th {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9); padding: 12px 16px;
+            font-size: 13px; font-weight: 700; color: #475569; text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        .score-table th:first-child { border-radius: 12px 0 0 0; }
+        .score-table th:last-child { border-radius: 0 12px 0 0; }
+        .score-table td { padding: 8px 10px; border: 1px solid #e2e8f0; text-align: center; vertical-align: middle; }
+        .score-table td .form-input { text-align: center; padding: 8px 6px; font-size: 14px; }
+        .score-table tr:last-child td:first-child { border-radius: 0 0 0 12px; }
+        .score-table tr:last-child td:last-child { border-radius: 0 0 12px 0; }
+        .score-table .subject-cell { 
+            font-weight: 600; color: #334155; background: #f8fafc; text-align: left; padding-left: 16px; min-width: 100px;
+        }
+
+        /* 업로드된 파일 목록 */
+        .file-item {
+            display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+            background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+        .file-item:hover { border-color: #f472b6; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+
+        /* 저장 버튼 */
+        .btn-save {
+            padding: 12px 32px; font-size: 15px; font-weight: 700; color: white;
+            background: linear-gradient(135deg, #ec4899, #db2777); border: none;
+            border-radius: 12px; cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(236,72,153,0.3);
+        }
+        .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(236,72,153,0.4); }
+        .btn-save:active { transform: translateY(0); }
+        .btn-save:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-secondary {
+            padding: 10px 24px; font-size: 14px; font-weight: 600; color: #64748b;
+            background: white; border: 2px solid #e2e8f0; border-radius: 12px;
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        .btn-secondary:hover { border-color: #cbd5e1; background: #f8fafc; }
+
+        /* 안내 배너 */
+        .info-banner {
+            display: flex; align-items: flex-start; gap: 12px; padding: 16px 20px;
+            background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 1px solid #bfdbfe;
+            border-radius: 12px; margin-bottom: 24px;
+        }
+        .info-banner i { color: #3b82f6; margin-top: 2px; }
+        .info-banner p { font-size: 13px; color: #1e40af; line-height: 1.6; }
+
+        /* 이력 카드 */
+        .history-card {
+            background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+            padding: 14px 16px; transition: box-shadow 0.15s;
+        }
+        .history-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+        /* 공유 상태 배지 */
+        .badge-approved { display:inline-flex; align-items:center; padding:2px 8px; border-radius:9999px; font-size:11px; font-weight:600; background:#dcfce7; color:#16a34a; }
+        .badge-requested { display:inline-flex; align-items:center; padding:2px 8px; border-radius:9999px; font-size:11px; font-weight:600; background:#fef9c3; color:#ca8a04; }
+        .badge-private { display:inline-flex; align-items:center; padding:2px 8px; border-radius:9999px; font-size:11px; font-weight:600; background:#f1f5f9; color:#64748b; }
+        .badge-teacher { display:inline-flex; align-items:center; padding:2px 8px; border-radius:9999px; font-size:11px; font-weight:600; background:#dbeafe; color:#2563eb; }
+
+        /* 소형 버튼 */
+        .btn-xs { padding:4px 10px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; transition:background 0.15s; border:none; }
+        .btn-approve { background:#dcfce7; color:#16a34a; }
+        .btn-approve:hover { background:#bbf7d0; }
+        .btn-reject { background:#fee2e2; color:#dc2626; }
+        .btn-reject:hover { background:#fecaca; }
+        .btn-share-out { background:#dbeafe; color:#2563eb; }
+        .btn-share-out:hover { background:#bfdbfe; }
+        .btn-danger-xs { background:#fff1f2; color:#f43f5e; }
+        .btn-danger-xs:hover { background:#ffe4e6; }
+
+        /* 교사 승인 대기 패널 */
+        .pending-panel { background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 1px solid #fcd34d; border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; }
+
+        /* 분석 탭 콘텐츠 */
+        .analysis-card { background:white; border:1px solid #e2e8f0; border-radius:16px; padding:24px; }
+        .analysis-result { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-top:20px; white-space:pre-wrap; font-size:14px; line-height:1.8; color:#334155; }
+        .point-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 12px; background:#fff7ed; border:1px solid #fed7aa; border-radius:9999px; font-size:12px; font-weight:600; color:#ea580c; }
+
+        /* 학과별 행 리스트 */
+        .animate-fadeIn { animation: fadeIn 0.25s ease; }
+        .dept-row-wrap:last-child .dept-row { border-bottom: none; }
+        .dept-detail-inline { overflow: hidden; }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 text-slate-800">
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- 사이드바 -->
+        <div id="mobile-overlay"></div>
+        <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 hidden md:flex flex-col flex-shrink-0 shadow-2xl">
+            <div class="p-6 border-b border-slate-700/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-school text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-black text-2xl text-white tracking-tight">SchoolUs</span>
+                        <p class="text-xs text-slate-400 font-medium">스마트 교육 플랫폼</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 border-b border-slate-700/50 bg-slate-800/30">
+                <div class="flex items-center gap-4">
+                    <div class="avatar-ring rounded-full">
+                        <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-white font-black text-xl" id="user-avatar">U</div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white font-bold text-lg truncate" id="user-name">-</p>
+                        <p class="text-xs text-slate-400 truncate" id="user-info">-</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-4"><div id="sidebar-menu"></div></nav>
+            <div class="p-4 border-t border-slate-700/50 space-y-2">
+                <a href="../mypage.html" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-blue-500/20 hover:text-blue-400 rounded-xl text-sm font-medium transition-all">
+                    <i class="fas fa-user-cog mr-2"></i> 회원정보 수정
+                </a>
+                <a href="#" onclick="handleLogout()" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-red-500/20 hover:text-red-400 rounded-xl text-sm font-medium transition-all">
+                    <i class="fas fa-sign-out-alt mr-2"></i> 로그아웃
+                </a>
+            </div>
+        </aside>
+
+        <!-- 메인 -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden">
+            <header class="bg-white/80 backdrop-blur-lg h-16 border-b border-slate-200/50 flex items-center justify-between px-6 shadow-sm z-10">
+                <div class="flex items-center gap-4">
+                    <button id="sidebar-toggle" onclick="toggleMobileSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars text-xl"></i></button>
+                    <div class="flex items-center text-slate-500">
+                        <span class="text-sm font-medium">나의 대시보드</span>
+                        <i class="fas fa-chevron-right mx-2 text-xs text-slate-300"></i>
+                        <span class="text-sm font-bold text-pink-600">입시상담</span>
+                    </div>
+                </div>
+                <button class="relative w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition">
+                    <i class="fas fa-bell"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="mb-6">
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <h1 class="text-2xl font-black text-slate-800">진학 상담</h1>
+                        <span class="text-sm text-orange-600 font-semibold bg-orange-50 px-4 py-1.5 rounded-full border border-orange-200">
+                            <i class="fas fa-info-circle mr-1"></i>2027학년도 입시요강이 발표되면 모든 서비스를 이용하실 수 있습니다.
+                        </span>
+                    </div>
+                    <p class="text-slate-500 text-sm mt-2">대학 입시 정보, 모의고사 분석, 학생 상담 일지를 관리합니다.</p>
+                </div>
+
+                <div class="glass-card rounded-2xl shadow-lg shadow-slate-200/50 overflow-hidden">
+                    <!-- 탭 메뉴 -->
+                    <div class="flex flex-wrap gap-2 p-4 pb-0 bg-gradient-to-b from-slate-100 to-transparent">
+                        <button onclick="switchTab('university')" id="tab-university" class="tab-btn active">
+                            <i class="fas fa-university text-pink-400"></i>
+                            <span class="tab-label">대학별 입시요강</span>
+                        </button>
+                        <button onclick="switchTab('department')" id="tab-department" class="tab-btn">
+                            <i class="fas fa-book text-purple-400"></i>
+                            <span class="tab-label">학과별 입시요강</span>
+                        </button>
+                        <button onclick="switchTab('mydata')" id="tab-mydata" class="tab-btn">
+                            <i class="fas fa-folder-open text-teal-400"></i>
+                            <span class="tab-label">입시자료 등록</span>
+                        </button>
+                        <button onclick="switchTab('early')" id="tab-early" class="tab-btn">
+                            <i class="fas fa-calendar-check text-blue-400"></i>
+                            <span class="tab-label">수시지원 가능대학</span>
+                            <span class="point-badge">3,000P 차감</span>
+                        </button>
+                        <button onclick="switchTab('regular')" id="tab-regular" class="tab-btn">
+                            <i class="fas fa-calendar-alt text-green-400"></i>
+                            <span class="tab-label">정시지원 가능대학</span>
+                            <span class="point-badge">3,000P 차감</span>
+                        </button>
+                        <button onclick="switchTab('analysis')" id="tab-analysis" class="tab-btn">
+                            <i class="fas fa-chart-line text-amber-400"></i>
+                            <span class="tab-label">수시 종합 생기부 분석<br>및 입시전략</span>
+                            <span class="point-badge">10,000P 차감</span>
+                        </button>
+                    </div>
+
+                    <div class="p-6 bg-white">
+
+                        <!-- ═══════════ 대학별 입시요강 ═══════════ -->
+                        <div id="content-university" class="tab-content active">
+                            <!-- 셀렉터 -->
+                            <div class="selector-group bg-gradient-to-r from-slate-50 to-pink-50/30 rounded-xl p-5 mb-6 border border-slate-200">
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                                            <i class="fas fa-calendar mr-1 text-pink-400"></i>학년도
+                                        </label>
+                                        <select id="sel-year" onchange="onYearChange()" class="w-full px-4 py-2.5 bg-white border-2 border-slate-200 rounded-lg text-sm font-medium focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition">
+                                            <option value="">학년도 선택</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                                            <i class="fas fa-map-marker-alt mr-1 text-blue-400"></i>지역
+                                        </label>
+                                        <select id="sel-region" onchange="onRegionChange()" disabled class="w-full px-4 py-2.5 bg-white border-2 border-slate-200 rounded-lg text-sm font-medium focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition disabled:bg-slate-100 disabled:text-slate-400">
+                                            <option value="">학년도를 먼저 선택</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                                            <i class="fas fa-university mr-1 text-purple-400"></i>대학교
+                                        </label>
+                                        <select id="sel-univ" onchange="onUnivChange()" disabled class="w-full px-4 py-2.5 bg-white border-2 border-slate-200 rounded-lg text-sm font-medium focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition disabled:bg-slate-100 disabled:text-slate-400">
+                                            <option value="">지역을 먼저 선택</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                                            <i class="fas fa-file-alt mr-1 text-green-400"></i>전형
+                                        </label>
+                                        <div class="flex gap-2 mt-0.5">
+                                            <button id="btn-susi" onclick="onTypeSelect('수시')" disabled class="type-toggle flex-1 px-4 py-2.5 bg-white border-2 border-slate-200 rounded-lg text-sm font-bold text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed">수시</button>
+                                            <button id="btn-jeongsi" onclick="onTypeSelect('정시')" disabled class="type-toggle flex-1 px-4 py-2.5 bg-white border-2 border-slate-200 rounded-lg text-sm font-bold text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed">정시</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="selection-status" class="text-xs text-slate-400 flex items-center gap-2">
+                                    <span class="loading-spinner hidden" id="loading-indicator"></span>
+                                    <span id="status-text">학년도를 선택하여 입시요강을 검색하세요.</span>
+                                </div>
+                            </div>
+
+                            <!-- 결과 영역 -->
+                            <div id="result-area" class="hidden">
+                                <div id="result-header" class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center text-white">
+                                            <i class="fas fa-university text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h3 id="result-title" class="text-lg font-bold text-slate-800"></h3>
+                                            <p id="result-subtitle" class="text-xs text-slate-500"></p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="openPdfNewTab()" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition">
+                                            <i class="fas fa-external-link-alt mr-1"></i>새 탭
+                                        </button>
+                                        <button onclick="downloadPdf()" class="px-4 py-2 bg-pink-500 text-white rounded-lg text-sm font-medium hover:bg-pink-600 transition shadow-sm">
+                                            <i class="fas fa-download mr-1"></i>다운로드
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 요약 -->
+                                <div id="summary-area" class="hidden mb-6">
+                                    <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl overflow-hidden">
+                                        <div class="flex items-center justify-between px-5 py-3 bg-amber-100/50 border-b border-amber-200 cursor-pointer" onclick="toggleSummary()">
+                                            <h4 class="text-sm font-bold text-amber-800"><i class="fas fa-file-lines mr-2"></i>AI 요약 정보</h4>
+                                            <i id="summary-toggle-icon" class="fas fa-chevron-down text-amber-600 text-xs transition-transform"></i>
+                                        </div>
+                                        <div id="summary-content" class="summary-content p-5 max-h-96 overflow-y-auto"></div>
+                                    </div>
+                                </div>
+
+                                <!-- PDF 뷰어 -->
+                                <div class="pdf-viewer-container">
+                                    <div id="pdf-loading" class="absolute inset-0 flex items-center justify-center bg-white/80 z-10 hidden">
+                                        <div class="text-center">
+                                            <div class="loading-spinner mb-3" style="width:40px;height:40px;border-width:4px;"></div>
+                                            <p class="text-sm text-slate-500">PDF를 불러오는 중...</p>
+                                        </div>
+                                    </div>
+                                    <iframe id="pdf-viewer" src="about:blank"></iframe>
+                                </div>
+                            </div>
+
+                            <!-- 초기 상태 -->
+                            <div id="empty-state" class="text-center py-16">
+                                <div class="w-24 h-24 bg-gradient-to-br from-pink-100 to-pink-200 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-pink-200/50">
+                                    <i class="fas fa-university text-4xl text-pink-500"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-700 mb-3">대학별 입시요강</h3>
+                                <p class="text-slate-500">위의 선택 메뉴에서 학년도, 지역, 대학교를 선택하면<br>해당 대학의 입시요강을 확인할 수 있습니다.</p>
+                            </div>
+
+                            <!-- 데이터 없음 -->
+                            <div id="no-data-state" class="hidden text-center py-16">
+                                <div class="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <i class="fas fa-database text-4xl text-slate-400"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-500 mb-3">데이터 준비 중</h3>
+                                <p class="text-slate-400 text-sm">입시요강 데이터가 아직 준비되지 않았거나<br>데이터서버 연결을 확인해주세요.</p>
+                            </div>
+                        </div>
+
+                        <!-- ═══════════ 학과별 입시요강 ═══════════ -->
+                        <div id="content-department" class="tab-content">
+
+                            <!-- 검색 필터 -->
+                            <div class="bg-gradient-to-r from-slate-50 to-purple-50/30 rounded-xl p-5 mb-5 border border-slate-200">
+                                <!-- 계열 분류 버튼 트리 -->
+                                <div id="dept-category-tree" class="mb-4"></div>
+                                <input type="hidden" id="dept-cat-hidden" value="">
+
+                                <!-- 세부 필터 + 검색 -->
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+                                    <select id="dept-filter-uni" class="form-input form-select text-sm">
+                                        <option value="">대학 전체</option>
+                                    </select>
+                                    <select id="dept-filter-depttype" class="form-input form-select text-sm">
+                                        <option value="">학과군 전체</option>
+                                    </select>
+                                    <select id="dept-filter-year" class="form-input form-select text-sm">
+                                        <option value="">학년도 전체</option>
+                                    </select>
+                                    <select id="dept-filter-admtype" class="form-input form-select text-sm">
+                                        <option value="">수시/정시 전체</option>
+                                        <option value="수시">수시</option>
+                                        <option value="정시">정시</option>
+                                    </select>
+                                </div>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+                                    <select id="dept-filter-region" class="form-input form-select text-sm">
+                                        <option value="">지역 전체</option>
+                                    </select>
+                                    <select id="dept-filter-admcode" class="form-input form-select text-sm">
+                                        <option value="">전형 전체</option>
+                                    </select>
+                                    <button onclick="searchDepts(1)" class="px-4 py-2.5 bg-purple-500 text-white rounded-lg text-sm font-bold hover:bg-purple-600 transition col-span-2 md:col-span-1 shadow-sm">
+                                        <i class="fas fa-search mr-1"></i>검색
+                                    </button>
+                                    <button onclick="resetDeptFilters()" class="px-4 py-2.5 bg-white text-slate-500 border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 transition">
+                                        <i class="fas fa-undo mr-1"></i>초기화
+                                    </button>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input id="dept-filter-q" type="text" placeholder="대학명 또는 학과명 검색..."
+                                           onkeydown="deptSearchOnEnter(event)"
+                                           class="form-input flex-1 text-sm" style="padding:10px 14px;">
+                                    <span id="dept-result-count" class="flex items-center text-sm text-slate-500 flex-shrink-0 min-w-[70px] justify-end"></span>
+                                </div>
+                            </div>
+
+                            <!-- 결과 목록 (행 리스트) -->
+                            <div id="dept-result-area" class="min-h-[200px]">
+                                <div class="text-center py-16">
+                                    <div class="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-200/50">
+                                        <i class="fas fa-book text-3xl text-purple-500"></i>
+                                    </div>
+                                    <p class="text-slate-600 font-medium">필터를 선택하고 검색 버튼을 눌러주세요.</p>
+                                    <p class="text-slate-400 text-sm mt-1">대학·학과군·학년도·지역·계열·전형 등으로 원하는 학과를 찾을 수 있습니다.</p>
+                                </div>
+                            </div>
+
+                            <!-- 페이지네이션 -->
+                            <div id="dept-pagination" class="flex justify-center mt-5"></div>
+
+                            <!-- 상세 모달 -->
+                            <div id="dept-detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.5);">
+                                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+                                    <button onclick="closeDeptDetail()"
+                                            class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition z-10">
+                                        <i class="fas fa-times text-sm"></i>
+                                    </button>
+                                    <div id="dept-detail-body"></div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- ═══════════════════════════════════════ -->
+                        <!-- ═══════════ 입시자료 등록 ═══════════ -->
+                        <!-- ═══════════════════════════════════════ -->
+                        <div id="content-mydata" class="tab-content">
+
+                            <!-- 학생 선택 (교사용) -->
+                            <div id="mydata-student-selector" class="hidden selector-group bg-gradient-to-r from-slate-50 to-teal-50/30 rounded-xl p-5 mb-6 border border-slate-200">
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <label class="form-label"><i class="fas fa-users mr-1 text-teal-400"></i>학년</label>
+                                        <select id="mydata-grade" onchange="onMydataGradeChange()" class="form-input form-select">
+                                            <option value="">학년 선택</option>
+                                            <option value="1">1학년</option>
+                                            <option value="2">2학년</option>
+                                            <option value="3">3학년</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="form-label"><i class="fas fa-door-open mr-1 text-blue-400"></i>반</label>
+                                        <select id="mydata-class" onchange="onMydataClassChange()" disabled class="form-input form-select">
+                                            <option value="">학년을 먼저 선택</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="form-label"><i class="fas fa-user-graduate mr-1 text-purple-400"></i>학생</label>
+                                        <select id="mydata-student" onchange="onMydataStudentChange()" disabled class="form-input form-select">
+                                            <option value="">반을 먼저 선택</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <div id="mydata-student-info" class="text-sm text-slate-400 py-2.5">학생을 선택하세요</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 교사: 공유 승인 대기 패널 -->
+                            <div id="pending-approvals-panel" class="pending-panel hidden">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="font-bold text-amber-800 flex items-center gap-2">
+                                        <i class="fas fa-bell text-amber-500"></i>공유 승인 요청 대기
+                                    </h4>
+                                    <button onclick="loadPendingApprovals()" class="text-xs text-amber-600 hover:text-amber-800"><i class="fas fa-sync-alt mr-1"></i>새로고침</button>
+                                </div>
+                                <div id="pending-approvals-list"></div>
+                            </div>
+
+                            <!-- 교육과정 선택 -->
+                            <div id="curriculum-selector" class="flex flex-wrap gap-3 mb-4 p-4 bg-gradient-to-r from-indigo-50 to-pink-50/30 rounded-xl border border-indigo-100">
+                                <div class="w-full mb-1">
+                                    <p class="text-xs font-bold text-indigo-500 uppercase tracking-wider"><i class="fas fa-graduation-cap mr-1"></i>교육과정 선택</p>
+                                </div>
+                                <button onclick="onCurriculumSelect('2015')" id="cur-2015"
+                                    class="curriculum-btn flex-1 min-w-52 px-5 py-3 bg-white border-2 border-slate-200 rounded-xl text-sm font-bold text-slate-500 hover:border-pink-300 hover:text-pink-600">
+                                    <span class="block"><i class="fas fa-user-graduate mr-2 text-pink-400"></i>고3 - 2027학년도 수능</span>
+                                    <span class="text-xs font-normal text-slate-400">2015 교육과정 (선택과목, 문/이과)</span>
+                                </button>
+                                <button onclick="onCurriculumSelect('2022')" id="cur-2022"
+                                    class="curriculum-btn flex-1 min-w-52 px-5 py-3 bg-white border-2 border-slate-200 rounded-xl text-sm font-bold text-slate-500 hover:border-indigo-300 hover:text-indigo-600">
+                                    <span class="block"><i class="fas fa-users mr-2 text-indigo-400"></i>고1·2 - 2028학년도 수능~</span>
+                                    <span class="text-xs font-normal text-slate-400">2022 교육과정 (통합형, 문이과 통합)</span>
+                                </button>
+                            </div>
+
+                            <!-- 서브 탭 -->
+                            <div class="flex flex-wrap gap-3 mb-6">
+                                <button onclick="switchSubTab('record')" id="subtab-record" class="sub-tab-btn active">
+                                    <i class="fas fa-file-pdf text-rose-400"></i>
+                                    <span>생기부 올리기</span>
+                                </button>
+                                <button onclick="switchSubTab('mock')" id="subtab-mock" class="sub-tab-btn">
+                                    <i class="fas fa-clipboard-list text-indigo-400"></i>
+                                    <span>모의고사 성적</span>
+                                </button>
+                                <button onclick="switchSubTab('csat')" id="subtab-csat" class="sub-tab-btn">
+                                    <i class="fas fa-pen-fancy text-amber-500"></i>
+                                    <span>수능점수 입력</span>
+                                </button>
+                            </div>
+
+                            <!-- ─── 서브1: 생기부 올리기 ─── -->
+                            <div id="subcontent-record" class="sub-tab-content active">
+                                <div class="info-banner">
+                                    <i class="fas fa-info-circle text-lg"></i>
+                                    <div>
+                                        <p class="font-bold mb-1">생활기록부(생기부) PDF 파일을 업로드하세요.</p>
+                                        <p>나이스(NEIS)에서 다운로드한 PDF 파일을 올려주시면 AI가 분석하여 입시 상담에 활용합니다. 파일은 안전하게 암호화되어 저장됩니다.</p>
+                                    </div>
+                                </div>
+
+                                <!-- 업로드 영역 -->
+                                <div id="record-upload-zone" class="upload-zone" onclick="document.getElementById('record-file-input').click()"
+                                     ondragover="event.preventDefault(); this.classList.add('dragover')"
+                                     ondragleave="this.classList.remove('dragover')"
+                                     ondrop="handleRecordDrop(event)">
+                                    <input type="file" id="record-file-input" accept=".pdf" class="hidden" onchange="handleRecordFile(this)">
+                                    <div id="record-upload-placeholder">
+                                        <div class="w-16 h-16 bg-gradient-to-br from-rose-100 to-rose-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                            <i class="fas fa-cloud-upload-alt text-3xl text-rose-400"></i>
+                                        </div>
+                                        <p class="text-slate-600 font-bold mb-1">PDF 파일을 여기에 드래그하거나 클릭하여 선택</p>
+                                        <p class="text-slate-400 text-sm">최대 20MB, PDF 형식만 가능</p>
+                                    </div>
+                                    <div id="record-upload-selected" class="hidden">
+                                        <div class="w-16 h-16 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                            <i class="fas fa-file-pdf text-3xl text-emerald-500"></i>
+                                        </div>
+                                        <p class="text-emerald-700 font-bold mb-1" id="record-file-name">-</p>
+                                        <p class="text-emerald-500 text-sm" id="record-file-size">-</p>
+                                        <button onclick="event.stopPropagation(); clearRecordFile()" class="mt-3 text-sm text-slate-400 hover:text-red-500 transition">
+                                            <i class="fas fa-times mr-1"></i>파일 제거
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-end mt-4">
+                                    <button onclick="uploadRecord()" id="btn-upload-record" class="btn-save" disabled>
+                                        <i class="fas fa-upload mr-2"></i>생기부 업로드
+                                    </button>
+                                </div>
+
+                                <!-- 업로드 이력 -->
+                                <div class="mt-8">
+                                    <h4 class="text-sm font-bold text-slate-500 mb-3 flex items-center gap-2">
+                                        <i class="fas fa-history text-slate-400"></i>업로드 이력
+                                    </h4>
+                                    <div id="record-history" class="space-y-2">
+                                        <p class="text-sm text-slate-400 text-center py-8">업로드된 생기부가 없습니다.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ─── 서브2: 모의고사 성적 ─── -->
+                            <div id="subcontent-mock" class="sub-tab-content">
+                                <div class="info-banner">
+                                    <i class="fas fa-info-circle text-lg"></i>
+                                    <div>
+                                        <p class="font-bold mb-1">모의고사 성적을 입력하세요.</p>
+                                        <p>3월(서울시교육청), 6월(평가원), 9월(평가원) 모의고사 성적을 입력하면 성적 추이를 분석하고 지원 가능 대학을 추천합니다.</p>
+                                    </div>
+                                </div>
+
+                                <!-- 모의고사 선택 -->
+                                <div class="flex flex-wrap gap-4 mb-6">
+                                    <div>
+                                        <label class="form-label">학년도</label>
+                                        <select id="mock-year" class="form-input form-select" style="width:160px">
+                                            <option value="2026">2026학년도</option>
+                                            <option value="2025">2025학년도</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">주관기관</label>
+                                        <div class="flex gap-2">
+                                            <button onclick="selectMockOrg('local')" id="mock-org-local" class="type-toggle px-5 py-2.5 bg-white border-2 border-slate-200 rounded-lg text-sm font-bold text-slate-400">교육청</button>
+                                            <button onclick="selectMockOrg('kice')" id="mock-org-kice" class="type-toggle px-5 py-2.5 bg-white border-2 border-slate-200 rounded-lg text-sm font-bold text-slate-400">평가원</button>
+                                            <button onclick="selectMockOrg('private')" id="mock-org-private" class="type-toggle px-5 py-2.5 bg-white border-2 border-slate-200 rounded-lg text-sm font-bold text-slate-400">사설</button>
+                                        </div>
+                                    </div>
+                                    <!-- 교육청/평가원 월 선택 (동적 생성) -->
+                                    <div id="mock-month-selector" style="display:none">
+                                        <label class="form-label">시험 월</label>
+                                        <div id="mock-month-btns" class="flex gap-2"></div>
+                                    </div>
+                                    <!-- 사설 시험명·월 입력 -->
+                                    <div id="mock-private-selector" style="display:none" class="flex flex-wrap gap-3 items-end">
+                                        <div>
+                                            <label class="form-label">시험명</label>
+                                            <input type="text" id="mock-private-name" class="form-input" placeholder="예) EBS 파이널" style="width:180px">
+                                        </div>
+                                        <div>
+                                            <label class="form-label">시험 월</label>
+                                            <select id="mock-private-month" class="form-input form-select" style="width:110px">
+                                                <option value="">월 선택</option>
+                                                <option value="1">1월</option>
+                                                <option value="2">2월</option>
+                                                <option value="3">3월</option>
+                                                <option value="4">4월</option>
+                                                <option value="5">5월</option>
+                                                <option value="6">6월</option>
+                                                <option value="7">7월</option>
+                                                <option value="8">8월</option>
+                                                <option value="9">9월</option>
+                                                <option value="10">10월</option>
+                                                <option value="11">11월</option>
+                                                <option value="12">12월</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="mock-track-selector">
+                                        <label class="form-label">계열</label>
+                                        <div class="flex gap-2">
+                                            <button onclick="selectMockTrack('문과')" id="mock-mun" class="type-toggle px-5 py-2.5 bg-white border-2 border-slate-200 rounded-lg text-sm font-bold text-slate-400">문과</button>
+                                            <button onclick="selectMockTrack('이과')" id="mock-li" class="type-toggle px-5 py-2.5 bg-white border-2 border-slate-200 rounded-lg text-sm font-bold text-slate-400">이과</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 2015 교육과정 (고3) 모의고사 폼 -->
+                                <div id="mock-form-2015">
+                                <div class="overflow-x-auto">
+                                    <table class="score-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:120px">과목</th>
+                                                <th>선택과목</th>
+                                                <th style="width:100px">원점수</th>
+                                                <th style="width:100px">표준점수</th>
+                                                <th style="width:100px">백분위</th>
+                                                <th style="width:80px">등급</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="subject-cell">국어</td>
+                                                <td>
+                                                    <select id="mock-kor-choice" class="form-input form-select" style="min-width:140px">
+                                                        <option value="화법과작문">화법과 작문</option>
+                                                        <option value="언어와매체">언어와 매체</option>
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-input" id="mock-kor-raw" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock-kor-std" placeholder="0" min="0" max="200"></td>
+                                                <td><input type="number" class="form-input" id="mock-kor-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock-kor-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">수학</td>
+                                                <td>
+                                                    <select id="mock-math-choice" class="form-input form-select" style="min-width:140px">
+                                                        <option value="확률과통계">확률과 통계</option>
+                                                        <option value="미적분">미적분</option>
+                                                        <option value="기하">기하</option>
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-input" id="mock-math-raw" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock-math-std" placeholder="0" min="0" max="200"></td>
+                                                <td><input type="number" class="form-input" id="mock-math-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock-math-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">영어</td>
+                                                <td><span class="text-slate-400 text-sm">절대평가</span></td>
+                                                <td><input type="number" class="form-input" id="mock-eng-raw" placeholder="0" min="0" max="100"></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><input type="number" class="form-input" id="mock-eng-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">한국사</td>
+                                                <td><span class="text-slate-400 text-sm">필수 (절대평가)</span></td>
+                                                <td><input type="number" class="form-input" id="mock-hist-raw" placeholder="0" min="0" max="50"></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><input type="number" class="form-input" id="mock-hist-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">탐구 ①</td>
+                                                <td>
+                                                    <select id="mock-tam1-choice" class="form-input form-select" style="min-width:140px">
+                                                        <optgroup label="사회탐구">
+                                                            <option value="생활과윤리">생활과 윤리</option>
+                                                            <option value="윤리와사상">윤리와 사상</option>
+                                                            <option value="한국지리">한국지리</option>
+                                                            <option value="세계지리">세계지리</option>
+                                                            <option value="동아시아사">동아시아사</option>
+                                                            <option value="세계사">세계사</option>
+                                                            <option value="경제">경제</option>
+                                                            <option value="정치와법">정치와 법</option>
+                                                            <option value="사회문화">사회·문화</option>
+                                                        </optgroup>
+                                                        <optgroup label="과학탐구">
+                                                            <option value="물리학I">물리학Ⅰ</option>
+                                                            <option value="화학I">화학Ⅰ</option>
+                                                            <option value="생명과학I">생명과학Ⅰ</option>
+                                                            <option value="지구과학I">지구과학Ⅰ</option>
+                                                            <option value="물리학II">물리학Ⅱ</option>
+                                                            <option value="화학II">화학Ⅱ</option>
+                                                            <option value="생명과학II">생명과학Ⅱ</option>
+                                                            <option value="지구과학II">지구과학Ⅱ</option>
+                                                        </optgroup>
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-input" id="mock-tam1-raw" placeholder="0" min="0" max="50"></td>
+                                                <td><input type="number" class="form-input" id="mock-tam1-std" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock-tam1-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock-tam1-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">탐구 ②</td>
+                                                <td>
+                                                    <select id="mock-tam2-choice" class="form-input form-select" style="min-width:140px">
+                                                        <optgroup label="사회탐구">
+                                                            <option value="생활과윤리">생활과 윤리</option>
+                                                            <option value="윤리와사상">윤리와 사상</option>
+                                                            <option value="한국지리">한국지리</option>
+                                                            <option value="세계지리">세계지리</option>
+                                                            <option value="동아시아사">동아시아사</option>
+                                                            <option value="세계사">세계사</option>
+                                                            <option value="경제">경제</option>
+                                                            <option value="정치와법">정치와 법</option>
+                                                            <option value="사회문화">사회·문화</option>
+                                                        </optgroup>
+                                                        <optgroup label="과학탐구">
+                                                            <option value="물리학I">물리학Ⅰ</option>
+                                                            <option value="화학I">화학Ⅰ</option>
+                                                            <option value="생명과학I">생명과학Ⅰ</option>
+                                                            <option value="지구과학I">지구과학Ⅰ</option>
+                                                            <option value="물리학II">물리학Ⅱ</option>
+                                                            <option value="화학II">화학Ⅱ</option>
+                                                            <option value="생명과학II">생명과학Ⅱ</option>
+                                                            <option value="지구과학II">지구과학Ⅱ</option>
+                                                        </optgroup>
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-input" id="mock-tam2-raw" placeholder="0" min="0" max="50"></td>
+                                                <td><input type="number" class="form-input" id="mock-tam2-std" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock-tam2-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock-tam2-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">제2외국어/한문</td>
+                                                <td>
+                                                    <select id="mock-lang2-choice" class="form-input form-select" style="min-width:140px">
+                                                        <option value="">선택 안 함</option>
+                                                        <option value="독일어">독일어Ⅰ</option>
+                                                        <option value="프랑스어">프랑스어Ⅰ</option>
+                                                        <option value="스페인어">스페인어Ⅰ</option>
+                                                        <option value="중국어">중국어Ⅰ</option>
+                                                        <option value="일본어">일본어Ⅰ</option>
+                                                        <option value="러시아어">러시아어Ⅰ</option>
+                                                        <option value="아랍어">아랍어Ⅰ</option>
+                                                        <option value="베트남어">베트남어Ⅰ</option>
+                                                        <option value="한문">한문Ⅰ</option>
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-input" id="mock-lang2-raw" placeholder="0" min="0" max="50"></td>
+                                                <td><input type="number" class="form-input" id="mock-lang2-std" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock-lang2-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock-lang2-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="flex justify-between items-center mt-6">
+                                    <p class="text-xs text-slate-400"><i class="fas fa-exclamation-triangle mr-1 text-amber-400"></i>저장 후에도 수정이 가능합니다.</p>
+                                    <div class="flex gap-3">
+                                        <button onclick="clearMockForm()" class="btn-secondary"><i class="fas fa-eraser mr-1"></i>초기화</button>
+                                        <button onclick="saveMockScore()" class="btn-save"><i class="fas fa-save mr-2"></i>성적 저장</button>
+                                    </div>
+                                </div>
+                                </div><!-- /mock-form-2015 -->
+
+                                <!-- 2022 교육과정 (고1·2) 모의고사 폼 -->
+                                <div id="mock-form-2022" style="display:none">
+                                <div class="overflow-x-auto">
+                                    <table class="score-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:120px">과목</th>
+                                                <th>과목 정보</th>
+                                                <th style="width:100px">원점수</th>
+                                                <th style="width:100px">표준점수</th>
+                                                <th style="width:100px">백분위</th>
+                                                <th style="width:80px">등급</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="subject-cell">국어</td>
+                                                <td><span class="text-slate-600 text-sm font-medium">통합</span><br><span class="text-xs text-slate-400">(화법과언어, 독서와작문, 문학)</span></td>
+                                                <td><input type="number" class="form-input" id="mock22-kor-raw" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock22-kor-std" placeholder="0" min="0" max="200"></td>
+                                                <td><input type="number" class="form-input" id="mock22-kor-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock22-kor-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">수학</td>
+                                                <td><span class="text-slate-600 text-sm font-medium">통합</span><br><span class="text-xs text-slate-400">(대수, 미적분Ⅰ, 확률과통계)</span></td>
+                                                <td><input type="number" class="form-input" id="mock22-math-raw" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock22-math-std" placeholder="0" min="0" max="200"></td>
+                                                <td><input type="number" class="form-input" id="mock22-math-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock22-math-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">영어</td>
+                                                <td><span class="text-slate-400 text-sm">절대평가</span></td>
+                                                <td><input type="number" class="form-input" id="mock22-eng-raw" placeholder="0" min="0" max="100"></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><input type="number" class="form-input" id="mock22-eng-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">한국사</td>
+                                                <td><span class="text-slate-400 text-sm">필수 (절대평가)</span></td>
+                                                <td><input type="number" class="form-input" id="mock22-hist-raw" placeholder="0" min="0" max="50"></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><input type="number" class="form-input" id="mock22-hist-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">통합사회</td>
+                                                <td><span class="text-slate-500 text-sm font-medium">고정</span></td>
+                                                <td><input type="number" class="form-input" id="mock22-tam1-raw" placeholder="0" min="0" max="50"></td>
+                                                <td><input type="number" class="form-input" id="mock22-tam1-std" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock22-tam1-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock22-tam1-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">통합과학</td>
+                                                <td><span class="text-slate-500 text-sm font-medium">고정</span></td>
+                                                <td><input type="number" class="form-input" id="mock22-tam2-raw" placeholder="0" min="0" max="50"></td>
+                                                <td><input type="number" class="form-input" id="mock22-tam2-std" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock22-tam2-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock22-tam2-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">제2외국어/한문</td>
+                                                <td>
+                                                    <select id="mock22-lang2-choice" class="form-input form-select" style="min-width:140px">
+                                                        <option value="">선택 안 함</option>
+                                                        <option value="독일어">독일어Ⅰ</option>
+                                                        <option value="프랑스어">프랑스어Ⅰ</option>
+                                                        <option value="스페인어">스페인어Ⅰ</option>
+                                                        <option value="중국어">중국어Ⅰ</option>
+                                                        <option value="일본어">일본어Ⅰ</option>
+                                                        <option value="러시아어">러시아어Ⅰ</option>
+                                                        <option value="아랍어">아랍어Ⅰ</option>
+                                                        <option value="베트남어">베트남어Ⅰ</option>
+                                                        <option value="한문">한문Ⅰ</option>
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-input" id="mock22-lang2-raw" placeholder="0" min="0" max="50"></td>
+                                                <td><input type="number" class="form-input" id="mock22-lang2-std" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock22-lang2-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="mock22-lang2-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="flex justify-between items-center mt-6">
+                                    <p class="text-xs text-slate-400"><i class="fas fa-exclamation-triangle mr-1 text-amber-400"></i>저장 후에도 수정이 가능합니다.</p>
+                                    <div class="flex gap-3">
+                                        <button onclick="clearMockForm22()" class="btn-secondary"><i class="fas fa-eraser mr-1"></i>초기화</button>
+                                        <button onclick="saveMockScore22()" class="btn-save"><i class="fas fa-save mr-2"></i>성적 저장</button>
+                                    </div>
+                                </div>
+                                </div><!-- /mock-form-2022 -->
+
+                                <!-- 저장된 모의고사 이력 -->
+                                <div class="mt-8">
+                                    <h4 class="text-sm font-bold text-slate-500 mb-3 flex items-center gap-2">
+                                        <i class="fas fa-table text-slate-400"></i>저장된 성적 이력
+                                    </h4>
+                                    <div id="mock-history" class="space-y-2">
+                                        <p class="text-sm text-slate-400 text-center py-8">저장된 모의고사 성적이 없습니다.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ─── 서브3: 수능점수 입력 ─── -->
+                            <div id="subcontent-csat" class="sub-tab-content">
+                                <div class="info-banner">
+                                    <i class="fas fa-info-circle text-lg"></i>
+                                    <div>
+                                        <p class="font-bold mb-1">수능(대학수학능력시험) 성적을 입력하세요.</p>
+                                        <p>수능 성적표에 기재된 점수를 정확하게 입력해주세요. 정시 지원 가능 대학 분석에 활용됩니다.</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-wrap gap-4 mb-6">
+                                    <div>
+                                        <label class="form-label">수능 연도</label>
+                                        <select id="csat-year" class="form-input form-select" style="width:160px">
+                                            <option value="2026">2026학년도 수능</option>
+                                            <option value="2025">2025학년도 수능</option>
+                                        </select>
+                                    </div>
+                                    <div id="csat-track-selector">
+                                        <label class="form-label">계열</label>
+                                        <div class="flex gap-2">
+                                            <button onclick="selectCsatTrack('문과')" id="csat-mun" class="type-toggle px-5 py-2.5 bg-white border-2 border-slate-200 rounded-lg text-sm font-bold text-slate-400">문과</button>
+                                            <button onclick="selectCsatTrack('이과')" id="csat-li" class="type-toggle px-5 py-2.5 bg-white border-2 border-slate-200 rounded-lg text-sm font-bold text-slate-400">이과</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 2015 교육과정 (고3) 수능 폼 -->
+                                <div id="csat-form-2015">
+                                <div class="overflow-x-auto">
+                                    <table class="score-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:120px">과목</th>
+                                                <th>선택과목</th>
+                                                <th style="width:100px">표준점수</th>
+                                                <th style="width:100px">백분위</th>
+                                                <th style="width:80px">등급</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="subject-cell">국어</td>
+                                                <td>
+                                                    <select id="csat-kor-choice" class="form-input form-select" style="min-width:140px">
+                                                        <option value="화법과작문">화법과 작문</option>
+                                                        <option value="언어와매체">언어와 매체</option>
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-input" id="csat-kor-std" placeholder="0" min="0" max="200"></td>
+                                                <td><input type="number" class="form-input" id="csat-kor-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat-kor-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">수학</td>
+                                                <td>
+                                                    <select id="csat-math-choice" class="form-input form-select" style="min-width:140px">
+                                                        <option value="확률과통계">확률과 통계</option>
+                                                        <option value="미적분">미적분</option>
+                                                        <option value="기하">기하</option>
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-input" id="csat-math-std" placeholder="0" min="0" max="200"></td>
+                                                <td><input type="number" class="form-input" id="csat-math-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat-math-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">영어</td>
+                                                <td><span class="text-slate-400 text-sm">절대평가</span></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><input type="number" class="form-input" id="csat-eng-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">한국사</td>
+                                                <td><span class="text-slate-400 text-sm">필수 (절대평가)</span></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><input type="number" class="form-input" id="csat-hist-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">탐구 ①</td>
+                                                <td>
+                                                    <select id="csat-tam1-choice" class="form-input form-select" style="min-width:140px">
+                                                        <optgroup label="사회탐구">
+                                                            <option value="생활과윤리">생활과 윤리</option>
+                                                            <option value="윤리와사상">윤리와 사상</option>
+                                                            <option value="한국지리">한국지리</option>
+                                                            <option value="세계지리">세계지리</option>
+                                                            <option value="동아시아사">동아시아사</option>
+                                                            <option value="세계사">세계사</option>
+                                                            <option value="경제">경제</option>
+                                                            <option value="정치와법">정치와 법</option>
+                                                            <option value="사회문화">사회·문화</option>
+                                                        </optgroup>
+                                                        <optgroup label="과학탐구">
+                                                            <option value="물리학I">물리학Ⅰ</option>
+                                                            <option value="화학I">화학Ⅰ</option>
+                                                            <option value="생명과학I">생명과학Ⅰ</option>
+                                                            <option value="지구과학I">지구과학Ⅰ</option>
+                                                            <option value="물리학II">물리학Ⅱ</option>
+                                                            <option value="화학II">화학Ⅱ</option>
+                                                            <option value="생명과학II">생명과학Ⅱ</option>
+                                                            <option value="지구과학II">지구과학Ⅱ</option>
+                                                        </optgroup>
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-input" id="csat-tam1-std" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat-tam1-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat-tam1-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">탐구 ②</td>
+                                                <td>
+                                                    <select id="csat-tam2-choice" class="form-input form-select" style="min-width:140px">
+                                                        <optgroup label="사회탐구">
+                                                            <option value="생활과윤리">생활과 윤리</option>
+                                                            <option value="윤리와사상">윤리와 사상</option>
+                                                            <option value="한국지리">한국지리</option>
+                                                            <option value="세계지리">세계지리</option>
+                                                            <option value="동아시아사">동아시아사</option>
+                                                            <option value="세계사">세계사</option>
+                                                            <option value="경제">경제</option>
+                                                            <option value="정치와법">정치와 법</option>
+                                                            <option value="사회문화">사회·문화</option>
+                                                        </optgroup>
+                                                        <optgroup label="과학탐구">
+                                                            <option value="물리학I">물리학Ⅰ</option>
+                                                            <option value="화학I">화학Ⅰ</option>
+                                                            <option value="생명과학I">생명과학Ⅰ</option>
+                                                            <option value="지구과학I">지구과학Ⅰ</option>
+                                                            <option value="물리학II">물리학Ⅱ</option>
+                                                            <option value="화학II">화학Ⅱ</option>
+                                                            <option value="생명과학II">생명과학Ⅱ</option>
+                                                            <option value="지구과학II">지구과학Ⅱ</option>
+                                                        </optgroup>
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-input" id="csat-tam2-std" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat-tam2-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat-tam2-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">제2외국어/한문</td>
+                                                <td>
+                                                    <select id="csat-lang2-choice" class="form-input form-select" style="min-width:140px">
+                                                        <option value="">선택 안 함</option>
+                                                        <option value="독일어">독일어Ⅰ</option>
+                                                        <option value="프랑스어">프랑스어Ⅰ</option>
+                                                        <option value="스페인어">스페인어Ⅰ</option>
+                                                        <option value="중국어">중국어Ⅰ</option>
+                                                        <option value="일본어">일본어Ⅰ</option>
+                                                        <option value="러시아어">러시아어Ⅰ</option>
+                                                        <option value="아랍어">아랍어Ⅰ</option>
+                                                        <option value="베트남어">베트남어Ⅰ</option>
+                                                        <option value="한문">한문Ⅰ</option>
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-input" id="csat-lang2-std" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat-lang2-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat-lang2-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="flex justify-between items-center mt-6">
+                                    <p class="text-xs text-slate-400"><i class="fas fa-exclamation-triangle mr-1 text-amber-400"></i>수능 성적은 성적표를 기준으로 정확하게 입력해주세요.</p>
+                                    <div class="flex gap-3">
+                                        <button onclick="clearCsatForm()" class="btn-secondary"><i class="fas fa-eraser mr-1"></i>초기화</button>
+                                        <button onclick="saveCsatScore()" class="btn-save"><i class="fas fa-save mr-2"></i>수능점수 저장</button>
+                                    </div>
+                                </div>
+                                </div><!-- /csat-form-2015 -->
+
+                                <!-- 2022 교육과정 (고1·2) 수능 폼 -->
+                                <div id="csat-form-2022" style="display:none">
+                                <div class="overflow-x-auto">
+                                    <table class="score-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:120px">과목</th>
+                                                <th>과목 정보</th>
+                                                <th style="width:100px">표준점수</th>
+                                                <th style="width:100px">백분위</th>
+                                                <th style="width:80px">등급</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="subject-cell">국어</td>
+                                                <td><span class="text-slate-600 text-sm font-medium">통합</span><br><span class="text-xs text-slate-400">(화법과언어, 독서와작문, 문학)</span></td>
+                                                <td><input type="number" class="form-input" id="csat22-kor-std" placeholder="0" min="0" max="200"></td>
+                                                <td><input type="number" class="form-input" id="csat22-kor-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat22-kor-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">수학</td>
+                                                <td><span class="text-slate-600 text-sm font-medium">통합</span><br><span class="text-xs text-slate-400">(대수, 미적분Ⅰ, 확률과통계)</span></td>
+                                                <td><input type="number" class="form-input" id="csat22-math-std" placeholder="0" min="0" max="200"></td>
+                                                <td><input type="number" class="form-input" id="csat22-math-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat22-math-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">영어</td>
+                                                <td><span class="text-slate-400 text-sm">절대평가</span></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><input type="number" class="form-input" id="csat22-eng-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">한국사</td>
+                                                <td><span class="text-slate-400 text-sm">필수 (절대평가)</span></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><span class="text-slate-300">-</span></td>
+                                                <td><input type="number" class="form-input" id="csat22-hist-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">통합사회</td>
+                                                <td><span class="text-slate-500 text-sm font-medium">고정</span></td>
+                                                <td><input type="number" class="form-input" id="csat22-tam1-std" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat22-tam1-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat22-tam1-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">통합과학</td>
+                                                <td><span class="text-slate-500 text-sm font-medium">고정</span></td>
+                                                <td><input type="number" class="form-input" id="csat22-tam2-std" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat22-tam2-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat22-tam2-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="subject-cell">제2외국어/한문</td>
+                                                <td>
+                                                    <select id="csat22-lang2-choice" class="form-input form-select" style="min-width:140px">
+                                                        <option value="">선택 안 함</option>
+                                                        <option value="독일어">독일어Ⅰ</option>
+                                                        <option value="프랑스어">프랑스어Ⅰ</option>
+                                                        <option value="스페인어">스페인어Ⅰ</option>
+                                                        <option value="중국어">중국어Ⅰ</option>
+                                                        <option value="일본어">일본어Ⅰ</option>
+                                                        <option value="러시아어">러시아어Ⅰ</option>
+                                                        <option value="아랍어">아랍어Ⅰ</option>
+                                                        <option value="베트남어">베트남어Ⅰ</option>
+                                                        <option value="한문">한문Ⅰ</option>
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-input" id="csat22-lang2-std" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat22-lang2-pct" placeholder="0" min="0" max="100"></td>
+                                                <td><input type="number" class="form-input" id="csat22-lang2-grade" placeholder="0" min="1" max="9"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="flex justify-between items-center mt-6">
+                                    <p class="text-xs text-slate-400"><i class="fas fa-exclamation-triangle mr-1 text-amber-400"></i>수능 성적은 성적표를 기준으로 정확하게 입력해주세요.</p>
+                                    <div class="flex gap-3">
+                                        <button onclick="clearCsatForm22()" class="btn-secondary"><i class="fas fa-eraser mr-1"></i>초기화</button>
+                                        <button onclick="saveCsatScore22()" class="btn-save"><i class="fas fa-save mr-2"></i>수능점수 저장</button>
+                                    </div>
+                                </div>
+                                </div><!-- /csat-form-2022 -->
+
+                                <!-- 저장된 수능 이력 -->
+                                <div class="mt-8">
+                                    <h4 class="text-sm font-bold text-slate-500 mb-3 flex items-center gap-2">
+                                        <i class="fas fa-table text-slate-400"></i>저장된 수능 성적
+                                    </h4>
+                                    <div id="csat-history" class="space-y-2">
+                                        <p class="text-sm text-slate-400 text-center py-8">저장된 수능 성적이 없습니다.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- ═══════════ 입시자료 등록 끝 ═══════════ -->
+
+
+                        <!-- ═══════════ 수시지원 가능대학 ═══════════ -->
+                        <div id="content-early" class="tab-content">
+                            <div class="analysis-card">
+                                <div class="flex items-center gap-3 mb-5">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-calendar-check text-2xl text-blue-500"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-slate-800">수시지원 가능대학 분석</h3>
+                                        <p class="text-sm text-slate-500">업로드된 생기부를 바탕으로 수시 지원 가능 대학을 분석합니다.</p>
+                                    </div>
+                                    <span class="point-badge ml-auto"><i class="fas fa-coins"></i>3,000 포인트</span>
+                                </div>
+                                <div id="early-prereq" class="mb-5"></div>
+                                <div class="flex gap-3">
+                                    <button onclick="startAnalysis('early')" id="btn-analyze-early" class="btn-save" disabled>
+                                        <i class="fas fa-search mr-2"></i>수시 가능대학 분석 시작
+                                    </button>
+                                </div>
+                                <div id="early-result" class="hidden"></div>
+                            </div>
+                        </div>
+
+                        <!-- ═══════════ 정시지원 가능대학 ═══════════ -->
+                        <div id="content-regular" class="tab-content">
+                            <div class="analysis-card">
+                                <div class="flex items-center gap-3 mb-5">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-calendar-alt text-2xl text-green-500"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-slate-800">정시지원 가능대학 분석</h3>
+                                        <p class="text-sm text-slate-500">수능·모의고사 성적을 바탕으로 정시 지원 가능 대학을 분석합니다.</p>
+                                    </div>
+                                    <span class="point-badge ml-auto"><i class="fas fa-coins"></i>3,000 포인트</span>
+                                </div>
+                                <div id="regular-prereq" class="mb-5"></div>
+                                <div class="flex gap-3">
+                                    <button onclick="startAnalysis('regular')" id="btn-analyze-regular" class="btn-save" disabled>
+                                        <i class="fas fa-search mr-2"></i>정시 가능대학 분석 시작
+                                    </button>
+                                </div>
+                                <div id="regular-result" class="hidden"></div>
+                            </div>
+                        </div>
+
+                        <!-- ═══════════ 생기부 분석 ═══════════ -->
+                        <div id="content-analysis" class="tab-content">
+                            <div class="analysis-card">
+                                <div class="flex items-center gap-3 mb-5">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-amber-100 to-amber-200 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-robot text-2xl text-amber-500"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-slate-800">AI 생기부 종합 분석</h3>
+                                        <p class="text-sm text-slate-500">AI가 생활기록부를 분석하여 맞춤형 입시 전략을 제안합니다.</p>
+                                    </div>
+                                    <span class="point-badge ml-auto"><i class="fas fa-coins"></i>10,000 포인트</span>
+                                </div>
+                                <div id="analysis-prereq" class="mb-5"></div>
+                                <div class="flex gap-3 mb-2">
+                                    <select id="analysis-record-select" class="form-input form-select" style="max-width:320px">
+                                        <option value="">분석할 생기부를 선택하세요</option>
+                                    </select>
+                                    <button onclick="startAnalysis('analysis')" id="btn-analyze-analysis" class="btn-save" disabled>
+                                        <i class="fas fa-robot mr-2"></i>AI 분석 시작
+                                    </button>
+                                </div>
+                                <div id="analysis-result" class="hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="js/admission-core.js"></script>
+    <script src="js/admission-univ.js"></script>
+    <script src="js/admission-mydata.js"></script>
+    <script src="js/admission-history.js"></script>
+    <script src="js/admission-dept.js"></script>
+    <script>
+    function toggleMobileSidebar() {
+        document.getElementById('sidebar').classList.toggle('mobile-open');
+        document.getElementById('mobile-overlay').classList.toggle('active');
+    }
+    document.getElementById('mobile-overlay').onclick = function() {
+        document.getElementById('sidebar').classList.remove('mobile-open');
+        this.classList.remove('active');
+    };
+    </script>
+</body>
+</html>

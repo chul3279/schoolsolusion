@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 교과 및 동아리</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.8); }
+        .filter-area { overflow: visible !important; }
+        .filter-area .grid { overflow: visible !important; }
+        .filter-area .relative { overflow: visible !important; }
+        .nav-item { position: relative; transition: all 0.3s ease; }
+        .nav-item::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 0; background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), transparent); transition: width 0.3s ease; }
+        .nav-item:hover::before { width: 100%; }
+        .nav-item.active { background: linear-gradient(90deg, rgba(59, 130, 246, 0.2), transparent); border-left: 3px solid #3b82f6; }
+        .avatar-ring { background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899); padding: 3px; }
+        .tab-btn { transition: all 0.2s; }
+        .tab-btn.active { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        textarea { resize: none; }
+        textarea:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }
+
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        #mobile-overlay.active { display: block; }
+        #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
+
+        /* 모바일 큰 글씨 대응: 터치 영역 확대 + 사이드바 전체 스크롤 */
+        @media (max-width: 767px) {
+            #sidebar.mobile-open { overflow-y: auto !important; }
+            #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
+            #sidebar.mobile-open #sidebar-nav { height: auto !important; overflow: visible !important; }
+            .nav-item { min-height: 52px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 15px !important; }
+            #sidebar .space-y-1 > li { margin-bottom: 4px; }
+            #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
+            .tab-btn { min-height: 48px; padding: 12px 16px !important; font-size: 14px !important; white-space: nowrap; }
+        }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 text-slate-800">
+    <div class="flex h-screen overflow-hidden">
+        <div id="mobile-overlay"></div>
+        <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 hidden md:flex flex-col flex-shrink-0 shadow-2xl">
+            <div class="p-6 border-b border-slate-700/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-school text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-black text-2xl text-white tracking-tight">SchoolUs</span>
+                        <p class="text-xs text-slate-400 font-medium">스마트 교육 플랫폼</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 border-b border-slate-700/50 bg-slate-800/30">
+                <div class="flex items-center gap-4">
+                    <div class="avatar-ring rounded-full">
+                        <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-white font-black text-xl" id="teacher-avatar">T</div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white font-bold text-lg truncate" id="teacher-name">-</p>
+                        <p class="text-xs text-slate-400 truncate" id="teacher-info">-</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-4">
+                <ul class="space-y-1 px-3 mb-4">
+                    <li><a href="../tea.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-desktop w-6 mr-3 text-blue-400"></i> 대시보드</a></li>
+                </ul>
+                <ul class="space-y-1 px-3">
+                    <li><a href="homeroom.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-chalkboard-user w-6 mr-3 text-green-400"></i> 담임업무</a></li>
+                    <li><a href="subject.html" class="nav-item active flex items-center px-4 py-3 rounded-xl text-white font-medium"><i class="fas fa-book-open w-6 mr-3 text-purple-400"></i> 교과 및 동아리</a></li>
+                    <li><a href="/highschool/admission/admission.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-graduation-cap w-6 mr-3 text-pink-400"></i> 입시상담</a></li>
+                    <li><a href="schooladmin.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-cog w-6 mr-3 text-yellow-400"></i> 행정업무</a></li>
+                </ul>
+            </nav>
+            <div class="p-4 border-t border-slate-700/50 space-y-2">
+                <a href="../mypage.html" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-blue-500/20 hover:text-blue-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-user-cog mr-2"></i> 회원정보 수정</a>
+                <a href="#" onclick="handleLogout()" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-red-500/20 hover:text-red-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-sign-out-alt mr-2"></i> 로그아웃</a>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col h-screen overflow-hidden">
+            <header class="bg-white/80 backdrop-blur-lg h-16 border-b border-slate-200/50 flex items-center justify-between px-6 shadow-sm z-10">
+                <div class="flex items-center gap-4">
+                    <button id="sidebar-toggle" onclick="toggleMobileSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars text-xl"></i></button>
+                    <div class="flex items-center text-slate-500">
+                        <span class="text-sm font-medium">나의 대시보드</span>
+                        <i class="fas fa-chevron-right mx-2 text-xs text-slate-300"></i>
+                        <span class="text-sm font-bold text-purple-600">교과 및 동아리</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl">
+                        <i class="fas fa-coins text-amber-500"></i>
+                        <span class="text-xs font-bold text-slate-500">보유 포인트</span>
+                        <span class="text-lg font-black text-amber-600" id="userPoint">-</span>
+                        <span class="text-xs font-bold text-amber-500">P</span>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="mb-6">
+                    <h1 class="text-2xl font-black text-slate-800">교과 및 동아리 관리</h1>
+                    <p class="text-slate-500 text-sm mt-1">교과 과세특, 동아리 기록을 관리합니다.</p>
+                </div>
+
+                <div class="glass-card rounded-2xl shadow-lg shadow-slate-200/50">
+                    <div class="p-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-purple-50/30">
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="switchTab('subject')" class="tab-btn active px-5 py-2.5 rounded-xl font-bold text-sm" id="tab-subject">
+                                <i class="fas fa-book mr-1"></i>교과
+                            </button>
+                            <button onclick="switchTab('subject-base')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200" id="tab-subject-base">
+                                <i class="fas fa-database mr-1"></i>과세특 기초작업
+                            </button>
+                            <button onclick="switchTab('subject-write')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200" id="tab-subject-write">
+                                <i class="fas fa-pen-fancy mr-1"></i>과세특 작성
+                            </button>
+                            <button onclick="switchTab('club-base')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200" id="tab-club-base">
+                                <i class="fas fa-layer-group mr-1"></i>동아리 기초작업
+                            </button>
+                            <button onclick="switchTab('club-write')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200" id="tab-club-write">
+                                <i class="fas fa-edit mr-1"></i>동아리 작성
+                            </button>
+                            <button onclick="switchTab('timetable')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200" id="tab-timetable">
+                                <i class="fas fa-calendar-alt mr-1"></i>시간표
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ===== 탭1: 교과 ===== -->
+                    <div id="panel-subject" class="tab-panel active p-6">
+                        <div class="glass-card rounded-2xl shadow-lg mb-6 relative z-10">
+                            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-5 text-white rounded-t-2xl">
+                                <h3 class="font-bold text-lg"><i class="fas fa-tasks mr-2"></i>과제 출제</h3>
+                                <p class="text-sm text-white/80">과목별 과제를 출제하고 학생 제출현황을 관리합니다.</p>
+                            </div>
+                            <div class="p-6 filter-area">
+                                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                    <div class="relative">
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">과목</label>
+                                        <input type="text" id="hw-subject-search" placeholder="과목명 입력" autocomplete="off"
+                                            class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"
+                                            oninput="filterSubjectSearch('hw-subject-search','hw-subject-dropdown',this.value)" onfocus="showSubjectDropdown('hw-subject-search','hw-subject-dropdown')" />
+                                        <select id="hw-subject" onchange="loadAssignments()" class="hidden"><option value="">과목 선택</option></select>
+                                        <div id="hw-subject-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border-2 border-blue-300 rounded-xl shadow-lg max-h-48 overflow-y-auto"></div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학년</label>
+                                        <select id="hw-grade" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none">
+                                            <option value="">학년</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option>
+                                        </select>
+                                    </div>
+                                    <div class="relative">
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">반</label>
+                                        <div id="hw-class-btn" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl cursor-pointer bg-white flex items-center justify-between select-none hover:border-blue-400 transition">
+                                            <span id="hw-class-text" class="text-slate-500">반 선택</span>
+                                            <i id="hw-class-arrow" class="fas fa-chevron-down text-slate-400 text-xs transition-transform"></i>
+                                        </div>
+                                        <div id="hw-class-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border-2 border-blue-300 rounded-xl shadow-lg">
+                                            <label class="flex items-center px-4 py-2.5 hover:bg-blue-50 cursor-pointer border-b border-slate-100 font-bold text-sm">
+                                                <input type="checkbox" id="hw-class-all" class="mr-2 w-4 h-4 accent-blue-500"> 전체 선택
+                                            </label>
+                                            <div id="hw-class-options" class="max-h-48 overflow-y-auto"></div>
+                                            <div class="border-t border-slate-100 p-2">
+                                                <button type="button" id="hw-class-done-btn" class="w-full py-2 bg-blue-500 text-white text-sm font-bold rounded-lg hover:bg-blue-600 transition">선택 완료</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학년도</label>
+                                        <select id="hw-year" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none"></select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학기</label>
+                                        <select id="hw-semester" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none">
+                                            <option value="1">1학기</option><option value="2">2학기</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                                <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 text-white">
+                                    <h3 class="font-bold"><i class="fas fa-plus-circle mr-2"></i>새 과제 등록</h3>
+                                </div>
+                                <div class="p-5 space-y-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">과제 제목 <span class="text-red-400">*</span></label>
+                                        <input type="text" id="hw-title" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none" placeholder="예: 1단원 독서감상문">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">과제 설명</label>
+                                        <textarea id="hw-desc" rows="4" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none" placeholder="과제 내용, 주의사항 등"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">제출 기한</label>
+                                        <input type="date" id="hw-due" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none">
+                                    </div>
+                                    <button onclick="createAssignment()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-black py-4 rounded-xl shadow-lg hover:shadow-xl transition">
+                                        <i class="fas fa-paper-plane mr-2"></i>과제 출제
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-white">
+                                    <h3 class="font-bold"><i class="fas fa-list-check mr-2"></i>출제된 과제</h3>
+                                </div>
+                                <div class="p-5">
+                                    <div id="hw-assignment-list" class="space-y-3 max-h-[500px] overflow-y-auto">
+                                        <div class="text-center py-8 text-slate-400 text-sm"><i class="fas fa-spinner fa-spin mr-1"></i>과제 목록 로딩 중...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== 탭2: 과세특 기초작업 ===== -->
+                    <div id="panel-subject-base" class="tab-panel p-6">
+                        <div class="glass-card rounded-2xl shadow-lg mb-6 relative z-10">
+                            <div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-5 text-white rounded-t-2xl">
+                                <h3 class="font-bold text-lg"><i class="fas fa-database mr-2"></i>과세특 기초자료</h3>
+                                <p class="text-sm text-white/80">학생별 기초 자료와 과목 공통사항을 관리합니다.</p>
+                            </div>
+                            <div class="p-6 filter-area">
+                                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                    <div class="relative">
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">과목</label>
+                                        <input type="text" id="sb-subject-search" placeholder="과목명 입력" autocomplete="off"
+                                            class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none"
+                                            oninput="filterSubjectSearch('sb-subject-search','sb-subject-dropdown',this.value)" onfocus="showSubjectDropdown('sb-subject-search','sb-subject-dropdown')" />
+                                        <select id="sb-subject" onchange="onSubjectBaseFilterChange()" class="hidden"><option value="">과목 선택</option></select>
+                                        <div id="sb-subject-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border-2 border-purple-300 rounded-xl shadow-lg max-h-48 overflow-y-auto"></div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학년</label>
+                                        <select id="sb-grade" onchange="onSubjectBaseFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none">
+                                            <option value="">학년 선택</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">반</label>
+                                        <select id="sb-class" onchange="onSubjectBaseFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none">
+                                            <option value="">반 선택</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학년도</label>
+                                        <select id="sb-year" onchange="onSubjectBaseFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none"></select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학기</label>
+                                        <select id="sb-semester" onchange="onSubjectBaseFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none">
+                                            <option value="1">1학기</option><option value="2">2학기</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                                <div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 text-white">
+                                    <h3 class="font-bold"><i class="fas fa-user-edit mr-2"></i>학생별 기초자료</h3>
+                                </div>
+                                <div class="p-5">
+                                    <div class="mb-4">
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학생 선택</label>
+                                        <select id="sb-student" onchange="loadSubjectStudentBase()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none">
+                                            <option value="">학생을 선택하세요</option>
+                                        </select>
+                                    </div>
+                                    <div id="sb-form" class="hidden space-y-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 mb-2">기초 자료 내용</label>
+                                            <textarea id="sb-content" rows="8" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none" placeholder="학생의 교과 활동 내역, 수행평가 참여, 수업 태도 등 과세특 작성에 참고할 기초 자료를 입력하세요."></textarea>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 mb-2">
+                                                <i class="fas fa-paperclip mr-1"></i>첨부 파일
+                                                <span class="text-slate-400 font-normal ml-1">(PDF, HWP, DOCX, XLSX, JPG, PNG / 최대 10MB)</span>
+                                            </label>
+                                            <div class="border-2 border-dashed border-slate-200 rounded-xl p-4 hover:border-purple-400 transition" id="sb-drop-zone">
+                                                <input type="file" id="sb-file-input" multiple accept=".pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip" class="hidden" onchange="handleSubjectFiles(this)">
+                                                <div class="text-center">
+                                                    <i class="fas fa-cloud-upload-alt text-2xl text-slate-300 mb-2"></i>
+                                                    <p class="text-sm text-slate-500">파일을 드래그하거나 <button type="button" onclick="document.getElementById('sb-file-input').click()" class="text-purple-600 font-bold hover:underline">클릭하여 선택</button></p>
+                                                </div>
+                                            </div>
+                                            <div id="sb-upload-progress" class="hidden mt-2">
+                                                <div class="flex items-center gap-2 text-sm text-purple-600"><i class="fas fa-spinner fa-spin"></i><span>업로드 중...</span></div>
+                                            </div>
+                                            <div id="sb-file-list" class="mt-3 space-y-2"></div>
+                                        </div>
+                                        <button onclick="saveSubjectBase()" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-black py-4 rounded-xl shadow-lg hover:shadow-xl transition">
+                                            <i class="fas fa-save mr-2"></i>저장하기
+                                        </button>
+                                    </div>
+                                    <div id="sb-placeholder" class="text-center py-12 text-slate-400">
+                                        <i class="fas fa-hand-pointer text-3xl mb-3"></i>
+                                        <p>위에서 학생을 선택하면<br>기초자료를 입력할 수 있습니다.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                                <div class="bg-gradient-to-r from-indigo-500 to-violet-600 p-4 text-white flex justify-between items-center">
+                                    <h3 class="font-bold"><i class="fas fa-layer-group mr-2"></i>과목 공통사항</h3>
+                                    <button onclick="openSubjectCommonModal()" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition">
+                                        <i class="fas fa-plus mr-1"></i>등록
+                                    </button>
+                                </div>
+                                <div class="p-5">
+                                    <div id="sb-common-list" class="space-y-3 max-h-[500px] overflow-y-auto">
+                                        <div class="text-center py-8 text-slate-400">등록된 공통사항이 없습니다.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== 탭3: 과세특 작성 ===== -->
+                    <div id="panel-subject-write" class="tab-panel p-6">
+                        <div class="glass-card rounded-2xl shadow-lg mb-6 relative z-10">
+                            <div class="bg-gradient-to-r from-violet-500 to-purple-600 p-5 text-white rounded-t-2xl">
+                                <h3 class="font-bold text-lg"><i class="fas fa-pen-fancy mr-2"></i>과세특 작성</h3>
+                                <p class="text-sm text-white/80">학생별 과목 세부능력 및 특기사항을 작성합니다.</p>
+                            </div>
+                            <div class="p-6 filter-area">
+                                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                    <div class="relative">
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">과목</label>
+                                        <input type="text" id="sw-subject-search" placeholder="과목명 입력" autocomplete="off"
+                                            class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-violet-500 outline-none"
+                                            oninput="filterSubjectSearch('sw-subject-search','sw-subject-dropdown',this.value)" onfocus="showSubjectDropdown('sw-subject-search','sw-subject-dropdown')" />
+                                        <select id="sw-subject" onchange="onSubjectWriteFilterChange()" class="hidden"><option value="">과목 선택</option></select>
+                                        <div id="sw-subject-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border-2 border-violet-300 rounded-xl shadow-lg max-h-48 overflow-y-auto"></div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학년</label>
+                                        <select id="sw-grade" onchange="onSubjectWriteFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-violet-500 outline-none">
+                                            <option value="">학년 선택</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">반</label>
+                                        <select id="sw-class" onchange="onSubjectWriteFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-violet-500 outline-none">
+                                            <option value="">반 선택</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학년도</label>
+                                        <select id="sw-year" onchange="onSubjectWriteFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-violet-500 outline-none"></select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학기</label>
+                                        <select id="sw-semester" onchange="onSubjectWriteFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-violet-500 outline-none">
+                                            <option value="1">1학기</option><option value="2">2학기</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-1">
+                                <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                                    <div class="bg-gradient-to-r from-violet-500 to-purple-600 p-4 text-white">
+                                        <h3 class="font-bold"><i class="fas fa-users mr-2"></i>학생 목록</h3>
+                                    </div>
+                                    <div class="p-4">
+                                        <div id="sw-student-list" class="space-y-2 max-h-[600px] overflow-y-auto">
+                                            <div class="text-center py-8 text-slate-400">과목과 학급을 선택하세요.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-2">
+                                <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                                    <div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 text-white flex justify-between items-center">
+                                        <h3 class="font-bold"><i class="fas fa-pen-fancy mr-2"></i>과세특 내용</h3>
+                                        <div class="text-right">
+                                            <p class="text-xs text-white/70">바이트</p>
+                                            <p class="text-sm font-bold"><span id="sw-byte-count">0</span> / <span id="sw-byte-limit">500</span> B</p>
+                                        </div>
+                                    </div>
+                                    <div class="p-5">
+                                        <div id="sw-write-form" class="hidden space-y-4">
+                                            <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
+                                                <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold" id="sw-student-avatar">?</div>
+                                                <div>
+                                                    <p class="font-bold text-slate-800" id="sw-student-name">-</p>
+                                                    <p class="text-xs text-slate-500" id="sw-student-info">-</p>
+                                                </div>
+                                            </div>
+                                            <div class="bg-slate-50 rounded-xl p-4">
+                                                <p class="text-xs font-bold text-slate-500 mb-2"><i class="fas fa-info-circle mr-1 text-purple-500"></i>기초자료 / 공통사항 / 제출과제 참고</p>
+                                                <div id="sw-ref-data" class="text-sm text-slate-600 max-h-40 overflow-y-auto">참고할 기초자료가 없습니다.</div>
+                                            </div>
+                                            <textarea id="sw-content" rows="10" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-purple-500 outline-none" placeholder="과목별 세부능력 및 특기사항을 입력하세요..." oninput="updateSubjectWriteBytes()"></textarea>
+                                            <div class="bg-gradient-to-r from-pink-50 to-purple-50 border border-purple-200 rounded-xl p-4">
+                                                <div class="flex items-center justify-between mb-3">
+                                                    <div class="flex items-center gap-2">
+                                                        <i class="fas fa-robot text-purple-500"></i>
+                                                        <span class="text-sm font-bold text-purple-700">AI 과세특 생성</span>
+                                                        <span class="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-bold">300P</span>
+                                                    </div>
+                                                    <div class="flex items-center gap-2">
+                                                        <label class="text-xs font-bold text-slate-500">바이트 제한</label>
+                                                        <input type="number" id="sw-byte-max" value="500" min="300" max="5000" step="100" class="w-20 px-2 py-1 border border-slate-200 rounded-lg text-sm text-center focus:border-purple-400 outline-none" onchange="document.getElementById('sw-byte-limit').textContent=this.value">
+                                                    </div>
+                                                </div>
+                                                <button onclick="generateSubjectAI()" id="btn-sw-generate" class="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition">
+                                                    <i class="fas fa-magic mr-2"></i>AI로 과세특 생성하기
+                                                </button>
+                                                <p class="text-xs text-slate-400 mt-2 text-center">기초자료, 공통사항, 제출과제를 기반으로 AI가 과세특을 생성합니다.</p>
+                                                <p class="text-xs text-red-400 mt-1 text-center font-bold"><i class="fas fa-exclamation-circle mr-1"></i>학생 1인당 300포인트가 차감됩니다. (Free 사용자는 무제한)</p>
+                                            </div>
+                                            <div class="flex gap-3">
+                                                <button onclick="saveSubjectWrite('draft')" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition">
+                                                    <i class="fas fa-save mr-2"></i>임시저장
+                                                </button>
+                                                <button onclick="saveSubjectWrite('complete')" class="flex-1 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition">
+                                                    <i class="fas fa-check mr-2"></i>저장하기
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="sw-placeholder" class="text-center py-16 text-slate-400">
+                                            <i class="fas fa-hand-pointer text-3xl mb-3"></i>
+                                            <p>좌측에서 학생을 선택하면<br>과세특을 작성할 수 있습니다.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== 탭4: 동아리 기초작업 ===== -->
+                    <div id="panel-club-base" class="tab-panel p-6">
+                        <div class="glass-card rounded-2xl shadow-lg overflow-hidden mb-6">
+                            <div class="bg-gradient-to-r from-emerald-500 to-teal-600 p-5 text-white flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-bold text-lg"><i class="fas fa-layer-group mr-2"></i>동아리 기초자료</h3>
+                                    <p class="text-sm text-white/80">동아리를 등록하고 학생별 기초 자료를 관리합니다.</p>
+                                </div>
+                                <button onclick="openClubCreateModal()" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold transition">
+                                    <i class="fas fa-plus mr-1"></i>동아리 등록
+                                </button>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">동아리</label>
+                                        <select id="cb-club" onchange="onClubBaseFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none">
+                                            <option value="">동아리 선택</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학년도</label>
+                                        <select id="cb-year" onchange="onClubBaseFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none"></select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학기</label>
+                                        <select id="cb-semester" onchange="onClubBaseFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none">
+                                            <option value="1">1학기</option><option value="2">2학기</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="cb-student-area" class="hidden">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <h4 class="font-bold text-slate-700"><i class="fas fa-users mr-2 text-emerald-500"></i>소속 학생</h4>
+                                        <button onclick="openClubStudentAddModal()" class="px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition">
+                                            <i class="fas fa-user-plus mr-1"></i>학생 추가
+                                        </button>
+                                    </div>
+                                    <div id="cb-student-list" class="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto">
+                                        <span class="text-sm text-slate-400">등록된 학생이 없습니다.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                                <div class="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 text-white">
+                                    <h3 class="font-bold"><i class="fas fa-user-edit mr-2"></i>학생별 기초자료</h3>
+                                </div>
+                                <div class="p-5">
+                                    <div class="mb-4">
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학생 선택</label>
+                                        <select id="cb-student" onchange="loadClubStudentBase()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none">
+                                            <option value="">학생을 선택하세요</option>
+                                        </select>
+                                    </div>
+                                    <div id="cb-form" class="hidden space-y-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 mb-2">기초 자료 내용</label>
+                                            <textarea id="cb-content" rows="8" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none" placeholder="학생의 동아리 활동 내역, 역할, 성과 등 기초 자료를 입력하세요."></textarea>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 mb-2">
+                                                <i class="fas fa-paperclip mr-1"></i>첨부 파일
+                                                <span class="text-slate-400 font-normal ml-1">(PDF, HWP, DOCX, XLSX, JPG, PNG / 최대 10MB)</span>
+                                            </label>
+                                            <div class="border-2 border-dashed border-slate-200 rounded-xl p-4 hover:border-emerald-400 transition">
+                                                <input type="file" id="cb-file-input" multiple accept=".pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip" class="hidden" onchange="handleClubFiles(this)">
+                                                <div class="text-center">
+                                                    <i class="fas fa-cloud-upload-alt text-2xl text-slate-300 mb-2"></i>
+                                                    <p class="text-sm text-slate-500">파일을 드래그하거나 <button type="button" onclick="document.getElementById('cb-file-input').click()" class="text-emerald-600 font-bold hover:underline">클릭하여 선택</button></p>
+                                                </div>
+                                            </div>
+                                            <div id="cb-upload-progress" class="hidden mt-2">
+                                                <div class="flex items-center gap-2 text-sm text-emerald-600"><i class="fas fa-spinner fa-spin"></i><span>업로드 중...</span></div>
+                                            </div>
+                                            <div id="cb-file-list" class="mt-3 space-y-2"></div>
+                                        </div>
+                                        <button onclick="saveClubBase()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black py-4 rounded-xl shadow-lg hover:shadow-xl transition">
+                                            <i class="fas fa-save mr-2"></i>저장하기
+                                        </button>
+                                    </div>
+                                    <div id="cb-placeholder" class="text-center py-12 text-slate-400">
+                                        <i class="fas fa-hand-pointer text-3xl mb-3"></i>
+                                        <p>위에서 학생을 선택하면<br>기초자료를 입력할 수 있습니다.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                                <div class="bg-gradient-to-r from-teal-500 to-green-600 p-4 text-white flex justify-between items-center">
+                                    <h3 class="font-bold"><i class="fas fa-layer-group mr-2"></i>동아리 공통사항</h3>
+                                    <button onclick="openClubCommonModal()" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition">
+                                        <i class="fas fa-plus mr-1"></i>등록
+                                    </button>
+                                </div>
+                                <div class="p-5">
+                                    <div id="cb-common-list" class="space-y-3 max-h-[500px] overflow-y-auto">
+                                        <div class="text-center py-8 text-slate-400">등록된 공통사항이 없습니다.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== 탭5: 동아리 작성 ===== -->
+                    <div id="panel-club-write" class="tab-panel p-6">
+                        <div class="glass-card rounded-2xl shadow-lg overflow-hidden mb-6">
+                            <div class="bg-gradient-to-r from-teal-500 to-emerald-600 p-5 text-white">
+                                <h3 class="font-bold text-lg"><i class="fas fa-edit mr-2"></i>동아리 활동 기록 작성</h3>
+                                <p class="text-sm text-white/80">학생별 동아리 세부능력 및 특기사항을 작성합니다.</p>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">동아리</label>
+                                        <select id="cw-club" onchange="onClubWriteFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-teal-500 outline-none">
+                                            <option value="">동아리 선택</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학년도</label>
+                                        <select id="cw-year" onchange="onClubWriteFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-teal-500 outline-none"></select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">학기</label>
+                                        <select id="cw-semester" onchange="onClubWriteFilterChange()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-teal-500 outline-none">
+                                            <option value="1">1학기</option><option value="2">2학기</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-1">
+                                <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                                    <div class="bg-gradient-to-r from-teal-500 to-emerald-600 p-4 text-white">
+                                        <h3 class="font-bold"><i class="fas fa-users mr-2"></i>학생 목록</h3>
+                                    </div>
+                                    <div class="p-4">
+                                        <div id="cw-student-list" class="space-y-2 max-h-[600px] overflow-y-auto">
+                                            <div class="text-center py-8 text-slate-400">동아리를 선택하세요.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-2">
+                                <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                                    <div class="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 text-white flex justify-between items-center">
+                                        <h3 class="font-bold"><i class="fas fa-edit mr-2"></i>동아리 활동 기록</h3>
+                                        <div class="text-right">
+                                            <p class="text-xs text-white/70">바이트</p>
+                                            <p class="text-sm font-bold"><span id="cw-byte-count">0</span> / <span id="cw-byte-limit">500</span> B</p>
+                                        </div>
+                                    </div>
+                                    <div class="p-5">
+                                        <div id="cw-write-form" class="hidden space-y-4">
+                                            <div class="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl">
+                                                <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold" id="cw-student-avatar">?</div>
+                                                <div>
+                                                    <p class="font-bold text-slate-800" id="cw-student-name">-</p>
+                                                    <p class="text-xs text-slate-500" id="cw-student-info">-</p>
+                                                </div>
+                                            </div>
+                                            <div class="bg-slate-50 rounded-xl p-4">
+                                                <p class="text-xs font-bold text-slate-500 mb-2"><i class="fas fa-info-circle mr-1 text-emerald-500"></i>기초자료 / 공통사항 / 첨부파일 참고</p>
+                                                <div id="cw-ref-data" class="text-sm text-slate-600 max-h-40 overflow-y-auto">참고할 기초자료가 없습니다.</div>
+                                            </div>
+                                            <textarea id="cw-content" rows="10" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none" placeholder="동아리 활동 기록을 입력하세요..." oninput="updateClubWriteBytes()"></textarea>
+                                            <div class="bg-gradient-to-r from-teal-50 to-emerald-50 border border-emerald-200 rounded-xl p-4">
+                                                <div class="flex items-center justify-between mb-3">
+                                                    <div class="flex items-center gap-2">
+                                                        <i class="fas fa-robot text-emerald-500"></i>
+                                                        <span class="text-sm font-bold text-emerald-700">AI 동아리 기록 생성</span>
+                                                        <span class="text-xs bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-bold">300P</span>
+                                                    </div>
+                                                    <div class="flex items-center gap-2">
+                                                        <label class="text-xs font-bold text-slate-500">바이트 제한</label>
+                                                        <input type="number" id="cw-byte-max" value="500" min="300" max="5000" step="100" class="w-20 px-2 py-1 border border-slate-200 rounded-lg text-sm text-center focus:border-emerald-400 outline-none" onchange="document.getElementById('cw-byte-limit').textContent=this.value">
+                                                    </div>
+                                                </div>
+                                                <button onclick="generateClubAI()" id="btn-cw-generate" class="w-full py-3 bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition">
+                                                    <i class="fas fa-magic mr-2"></i>AI로 동아리 기록 생성하기
+                                                </button>
+                                                <p class="text-xs text-slate-400 mt-2 text-center">기초자료, 공통사항, 첨부파일을 기반으로 AI가 동아리 기록을 생성합니다.</p>
+                                                <p class="text-xs text-red-400 mt-1 text-center font-bold"><i class="fas fa-exclamation-circle mr-1"></i>학생 1인당 300포인트가 차감됩니다. (Free 사용자는 무제한)</p>
+                                            </div>
+                                            <div class="flex gap-3">
+                                                <button onclick="saveClubWrite('draft')" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition">
+                                                    <i class="fas fa-save mr-2"></i>임시저장
+                                                </button>
+                                                <button onclick="saveClubWrite('complete')" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition">
+                                                    <i class="fas fa-check mr-2"></i>저장하기
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="cw-placeholder" class="text-center py-16 text-slate-400">
+                                            <i class="fas fa-hand-pointer text-3xl mb-3"></i>
+                                            <p>좌측에서 학생을 선택하면<br>동아리 기록을 작성할 수 있습니다.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== 탭6: 시간표 ===== -->
+                    <div id="panel-timetable" class="tab-panel p-6">
+                        <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                            <div class="bg-gradient-to-r from-cyan-500 to-blue-600 p-5 text-white">
+                                <div class="flex justify-between items-center flex-wrap gap-3">
+                                    <div>
+                                        <h3 class="font-bold text-lg"><i class="fas fa-calendar-alt mr-2"></i>교사 시간표</h3>
+                                        <p class="text-sm text-white/80">본인의 주간 시간표를 입력하고 관리합니다.</p>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="loadTeacherTimetable()" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold transition">
+                                            <i class="fas fa-download mr-1"></i>불러오기
+                                        </button>
+                                        <button onclick="saveTeacherTimetable()" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold transition">
+                                            <i class="fas fa-save mr-1"></i>저장
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 overflow-x-auto">
+                                <table class="w-full border-collapse text-sm" id="teacher-timetable">
+                                    <thead>
+                                        <tr>
+                                            <th class="border border-slate-200 bg-slate-50 p-2 w-16 text-slate-500">교시</th>
+                                            <th class="border border-slate-200 bg-blue-50 p-2 text-blue-700 font-bold">월</th>
+                                            <th class="border border-slate-200 bg-blue-50 p-2 text-blue-700 font-bold">화</th>
+                                            <th class="border border-slate-200 bg-blue-50 p-2 text-blue-700 font-bold">수</th>
+                                            <th class="border border-slate-200 bg-blue-50 p-2 text-blue-700 font-bold">목</th>
+                                            <th class="border border-slate-200 bg-blue-50 p-2 text-blue-700 font-bold">금</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="teacher-tt-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 과목 공통사항 등록 모달 -->
+    <div id="subject-common-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-500 to-violet-600 p-5 text-white">
+                <h3 class="font-bold text-lg"><i class="fas fa-plus-circle mr-2"></i>과목 공통사항 등록</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">활동 유형</label>
+                    <select id="sc-modal-type" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none">
+                        <option value="수행평가">수행평가</option><option value="프로젝트">프로젝트</option><option value="토론">토론</option>
+                        <option value="발표">발표</option><option value="실험">실험</option><option value="기타">기타</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">활동 날짜</label>
+                    <input type="date" id="sc-modal-date" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">제목</label>
+                    <input type="text" id="sc-modal-title" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none" placeholder="활동 제목을 입력하세요">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">내용</label>
+                    <textarea id="sc-modal-content" rows="5" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none" placeholder="활동 내용을 입력하세요"></textarea>
+                </div>
+            </div>
+            <div class="flex gap-3 p-6 pt-0">
+                <button onclick="closeSubjectCommonModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">취소</button>
+                <button onclick="submitSubjectCommon()" class="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-violet-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition">등록</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 동아리 등록 모달 -->
+    <div id="club-create-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-emerald-500 to-teal-600 p-5 text-white">
+                <h3 class="font-bold text-lg"><i class="fas fa-plus-circle mr-2"></i>동아리 등록</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">동아리명 <span class="text-red-400">*</span></label>
+                    <input type="text" id="cc-create-name" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none" placeholder="예: 독서토론반, 코딩동아리">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">동아리 설명</label>
+                    <textarea id="cc-create-desc" rows="3" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none" placeholder="동아리 활동 목적, 내용 등을 입력하세요"></textarea>
+                </div>
+            </div>
+            <div class="flex gap-3 p-6 pt-0">
+                <button onclick="closeClubCreateModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">취소</button>
+                <button onclick="submitClubCreate()" class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition">등록</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 동아리 학생 추가 모달 -->
+    <div id="club-student-add-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-emerald-500 to-teal-600 p-5 text-white">
+                <h3 class="font-bold text-lg"><i class="fas fa-user-plus mr-2"></i>학생 추가</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">학년</label>
+                        <select id="cs-add-grade" onchange="searchClubStudents()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none">
+                            <option value="">선택</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">반</label>
+                        <select id="cs-add-class" onchange="searchClubStudents()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none">
+                            <option value="">선택</option>
+                            <option value="1">1반</option><option value="2">2반</option><option value="3">3반</option>
+                            <option value="4">4반</option><option value="5">5반</option><option value="6">6반</option>
+                            <option value="7">7반</option><option value="8">8반</option><option value="9">9반</option>
+                            <option value="10">10반</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="cs-search-result" class="max-h-[300px] overflow-y-auto space-y-2">
+                    <div class="text-center py-8 text-slate-400 text-sm">학년/반을 선택하면 학생 목록이 표시됩니다.</div>
+                </div>
+            </div>
+            <div class="flex gap-3 p-6 pt-0">
+                <button onclick="closeClubStudentAddModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 동아리 공통사항 등록 모달 -->
+    <div id="club-common-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-teal-500 to-green-600 p-5 text-white">
+                <h3 class="font-bold text-lg"><i class="fas fa-plus-circle mr-2"></i>동아리 공통사항 등록</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">활동 유형</label>
+                    <select id="cc-modal-type" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-teal-500 outline-none">
+                        <option value="정기활동">정기활동</option><option value="대회">대회</option><option value="발표">발표</option>
+                        <option value="봉사">봉사</option><option value="견학">견학</option><option value="기타">기타</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">활동 날짜</label>
+                    <input type="date" id="cc-modal-date" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-teal-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">제목</label>
+                    <input type="text" id="cc-modal-title" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-teal-500 outline-none" placeholder="활동 제목을 입력하세요">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">내용</label>
+                    <textarea id="cc-modal-content" rows="5" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-teal-500 outline-none" placeholder="활동 내용을 입력하세요"></textarea>
+                </div>
+            </div>
+            <div class="flex gap-3 p-6 pt-0">
+                <button onclick="closeClubCommonModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">취소</button>
+                <button onclick="submitClubCommon()" class="flex-1 py-3 bg-gradient-to-r from-teal-500 to-green-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition">등록</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 제출현황 모달 -->
+    <div id="submission-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-5 text-white">
+                <h3 class="font-bold text-lg"><i class="fas fa-file-arrow-up mr-2"></i>제출 현황</h3>
+                <p class="text-sm text-white/80" id="submission-modal-title">-</p>
+            </div>
+            <div class="p-6">
+                <div id="submission-list" class="space-y-3 max-h-[400px] overflow-y-auto">
+                    <div class="text-center py-8 text-slate-400">로딩 중...</div>
+                </div>
+            </div>
+            <div class="flex gap-3 p-6 pt-0">
+                <button onclick="document.getElementById('submission-modal').classList.add('hidden')" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="subject.js?v=20260221a"></script>
+    <script>
+    // ==================== 교사 시간표 ====================
+    const TT_DAYS = ['월','화','수','목','금'];
+    const TT_MAX_PERIOD = 7;
+    let ttGridInitialized = false;
+
+    function sanitizeTTInput(str) {
+        return str.replace(/[<>\"\';\\\\/]/g, '').trim();
+    }
+    function sanitizeTTNum(str) {
+        return str.replace(/[^0-9]/g, '');
+    }
+
+    function initTeacherTTGrid() {
+        const tbody = document.getElementById('teacher-tt-body');
+        let html = '';
+        for (let p = 1; p <= TT_MAX_PERIOD; p++) {
+            html += `<tr>`;
+            html += `<td class="border border-slate-200 bg-slate-50 p-2 text-center font-bold text-slate-500">${p}</td>`;
+            for (const day of TT_DAYS) {
+                html += `<td class="border border-slate-200 p-1">
+                    <input type="text" placeholder="과목" maxlength="30" data-day="${day}" data-period="${p}" data-field="subject"
+                        class="w-full px-2 py-1 text-sm border border-slate-200 rounded focus:border-cyan-400 outline-none mb-1"
+                        oninput="this.value=sanitizeTTInput(this.value)">
+                    <div class="flex gap-1">
+                        <input type="text" placeholder="학년" maxlength="1" inputmode="numeric" data-day="${day}" data-period="${p}" data-field="grade"
+                            class="w-12 px-1 py-1 text-xs border border-slate-200 rounded focus:border-cyan-400 outline-none text-center text-slate-500"
+                            oninput="this.value=sanitizeTTNum(this.value)">
+                        <input type="text" placeholder="반" maxlength="2" inputmode="numeric" data-day="${day}" data-period="${p}" data-field="classno"
+                            class="flex-1 px-1 py-1 text-xs border border-slate-200 rounded focus:border-cyan-400 outline-none text-center text-slate-500"
+                            oninput="this.value=sanitizeTTNum(this.value)">
+                    </div>
+                </td>`;
+            }
+            html += `</tr>`;
+        }
+        tbody.innerHTML = html;
+        ttGridInitialized = true;
+    }
+
+    async function loadTeacherTimetable() {
+        if (!userInfo.member_name) { alert('교사 정보가 없습니다.'); return; }
+        try {
+            const params = new URLSearchParams();
+            if (userInfo.school_id) params.append('school_id', userInfo.school_id);
+            if (userInfo.member_school) params.append('member_school', userInfo.member_school);
+            params.append('member_name', userInfo.member_name);
+            const res = await fetch(`/api/timetable/teacher/week?${params.toString()}`);
+            const data = await res.json();
+            if (!data.success) { alert('시간표 불러오기 실패: ' + (data.message || '')); return; }
+
+            if (!ttGridInitialized) initTeacherTTGrid();
+            // 초기화
+            const tbody = document.getElementById('teacher-tt-body');
+            tbody.querySelectorAll('input').forEach(inp => inp.value = '');
+
+            (data.timetable || []).forEach(row => {
+                const day = row.day_of_week || row[0];
+                const period = row.period || row[1];
+                const subject = row.subject || row[2] || '';
+                const grade = row.grade || row[3] || '';
+                const classNo = row.class_no || row[4] || '';
+
+                const subjectInp = tbody.querySelector(`input[data-day="${day}"][data-period="${period}"][data-field="subject"]`);
+                const gradeInp = tbody.querySelector(`input[data-day="${day}"][data-period="${period}"][data-field="grade"]`);
+                const classNoInp = tbody.querySelector(`input[data-day="${day}"][data-period="${period}"][data-field="classno"]`);
+                if (subjectInp) subjectInp.value = subject;
+                if (gradeInp) gradeInp.value = grade;
+                if (classNoInp) classNoInp.value = classNo;
+            });
+
+            alert(`시간표를 불러왔습니다. (${data.count || 0}건)`);
+        } catch (e) {
+            console.error('시간표 불러오기 오류:', e);
+            alert('시간표 불러오기 중 오류가 발생했습니다.');
+        }
+    }
+
+    async function saveTeacherTimetable() {
+        if (!userInfo.member_name) { alert('교사 정보가 없습니다.'); return; }
+        const tbody = document.getElementById('teacher-tt-body');
+        const inputs = tbody.querySelectorAll('input[data-field="subject"]');
+        const timetable = [];
+        inputs.forEach(inp => {
+            const day = inp.dataset.day;
+            const period = parseInt(inp.dataset.period);
+            const subject = inp.value.trim();
+            const gradeInp = tbody.querySelector(`input[data-day="${day}"][data-period="${period}"][data-field="grade"]`);
+            const classNoInp = tbody.querySelector(`input[data-day="${day}"][data-period="${period}"][data-field="classno"]`);
+            const grade = gradeInp ? gradeInp.value.trim() : '';
+            const class_no = classNoInp ? classNoInp.value.trim() : '';
+            if (subject) {
+                timetable.push({ day_of_week: day, period, subject, grade, class_no });
+            }
+        });
+
+        if (timetable.length === 0) {
+            if (!confirm('입력된 과목이 없습니다. 기존 시간표를 모두 삭제하시겠습니까?')) return;
+        }
+
+        try {
+            const res = await fetch('/api/timetable/teacher/save-manual', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    school_id: userInfo.school_id,
+                    member_school: userInfo.member_school,
+                    member_name: userInfo.member_name,
+                    timetable
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(data.message || '저장되었습니다.');
+            } else {
+                alert('저장 실패: ' + (data.message || ''));
+            }
+        } catch (e) {
+            console.error('시간표 저장 오류:', e);
+            alert('시간표 저장 중 오류가 발생했습니다.');
+        }
+    }
+
+    // switchTab 호출 시 시간표 그리드 초기화
+    const _origSwitchTab = switchTab;
+    switchTab = function(tabName) {
+        _origSwitchTab(tabName);
+        if (tabName === 'timetable' && !ttGridInitialized) initTeacherTTGrid();
+    };
+
+    function toggleMobileSidebar() {
+        document.getElementById('sidebar').classList.toggle('mobile-open');
+        document.getElementById('mobile-overlay').classList.toggle('active');
+    }
+    document.getElementById('mobile-overlay').onclick = function() {
+        document.getElementById('sidebar').classList.remove('mobile-open');
+        this.classList.remove('active');
+    };
+    </script>
+</body>
+</html>

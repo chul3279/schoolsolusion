@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 회원가입</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <script src="core/db_engine.js"></script>
+
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .role-card.selected { border-color: #2563EB; background-color: #EFF6FF; color: #2563EB; ring: 2px solid #2563EB; }
+        
+        /* 부드러운 토글 애니메이션 */
+        #parent-section { transition: all 0.3s ease-in-out; overflow: hidden; max-height: 0; opacity: 0; }
+        #parent-section.open { max-height: 500px; opacity: 1; margin-top: 1.5rem; }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        
+        <div class="mb-8 text-center cursor-pointer" onclick="location.href='index.html'">
+            <i class="fas fa-school text-blue-600 text-3xl mb-2"></i>
+            <h2 class="text-3xl font-extrabold text-slate-900">School<span class="text-blue-600">Us</span></h2>
+            <p class="mt-2 text-sm text-slate-600">학교 생활의 시작, 회원가입</p>
+        </div>
+
+        <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl space-y-5">
+            
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">가입 유형을 선택해주세요</label>
+                <div class="grid grid-cols-3 gap-3">
+                    <div onclick="selectRole('student')" id="role-student" class="role-card border rounded-xl p-3 text-center cursor-pointer hover:border-blue-300 transition">
+                        <i class="fas fa-user-graduate text-xl mb-1"></i>
+                        <p class="text-xs font-bold">학생</p>
+                    </div>
+                    <div onclick="selectRole('teacher')" id="role-teacher" class="role-card border rounded-xl p-3 text-center cursor-pointer hover:border-blue-300 transition">
+                        <i class="fas fa-chalkboard-teacher text-xl mb-1"></i>
+                        <p class="text-xs font-bold">선생님</p>
+                    </div>
+                    <div onclick="selectRole('parent')" id="role-parent" class="role-card border rounded-xl p-3 text-center cursor-pointer hover:border-blue-300 transition">
+                        <i class="fas fa-user-friends text-xl mb-1"></i>
+                        <p class="text-xs font-bold">학부모</p>
+                    </div>
+                </div>
+                <input type="hidden" id="reg-role">
+            </div>
+
+            <div class="relative">
+                <label class="block text-sm font-bold text-slate-700 mb-1">소속 학교</label>
+                <div class="relative">
+                    <input type="text" id="school-search" placeholder="학교명을 검색하세요 (예: 성문)" 
+                        class="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm"
+                        onkeyup="searchSchool(this.value)">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fas fa-search"></i></span>
+                </div>
+                <ul id="school-list" class="hidden absolute z-10 w-full bg-white border border-slate-200 rounded-lg mt-1 shadow-lg max-h-40 overflow-y-auto"></ul>
+                <input type="hidden" id="reg-school-type">
+                <input type="hidden" id="reg-school-id">
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">이름</label>
+                    <input type="text" id="reg-name" placeholder="실명을 입력하세요" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">아이디</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="reg-id" placeholder="사용할 아이디" class="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                        <button onclick="checkIdDuplication()" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg text-xs font-bold border hover:bg-slate-200 whitespace-nowrap">중복확인</button>
+                    </div>
+                    <p id="id-msg" class="text-[10px] mt-1 ml-1"></p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">비밀번호</label>
+                    <input type="password" id="reg-pw" placeholder="4자리 이상" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">생년월일</label>
+                        <input type="date" id="reg-birth" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">연락처</label>
+                        <input type="text" id="reg-phone" placeholder="010-0000-0000" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">주소</label>
+                    <input type="text" id="reg-address" placeholder="시/구/동 까지만 입력" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                </div>
+            </div>
+
+            <div id="parent-section" class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                <div class="flex items-center gap-2 mb-3 text-indigo-700">
+                    <i class="fas fa-child"></i>
+                    <h3 class="font-bold text-sm">자녀 정보 입력</h3>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">자녀 학교명</label>
+                        <input type="text" id="child-school" placeholder="예: 성문고등학교" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">자녀 이름</label>
+                            <input type="text" id="child-name" placeholder="이름" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">자녀 학번</label>
+                            <input type="text" id="child-id" placeholder="예: 20301" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="handleRegister()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95">
+                가입 완료
+            </button>
+
+            <p class="text-center text-xs text-slate-500 mt-4">
+                이미 계정이 있으신가요? <a href="index.html" class="text-blue-600 font-bold hover:underline">로그인하기</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const schoolDB = [
+            { name: "성문고등학교", type: "highschool", id: "sungmoon" },
+            { name: "시범중학교", type: "middleschool", id: "sibeom" }
+        ];
+        let isIdChecked = false;
+
+        async function init() {
+            await initSQL();
+            // 기존 테이블이 있으면 유지하고, 없으면 생성. 
+            // 단, 새로운 컬럼(birth, address 등)을 위해 ALTER TABLE 시도
+            runQuery(`CREATE TABLE IF NOT EXISTS global_users (
+                login_id TEXT PRIMARY KEY, password TEXT, name TEXT, 
+                school_type TEXT, school_id TEXT, role TEXT,
+                birth_date TEXT, phone TEXT, address TEXT, child_info TEXT
+            )`);
+
+            // 기존에 테이블이 이미 생성되어 있을 경우를 대비해 컬럼 추가 (에러 무시)
+            try { runQuery("ALTER TABLE global_users ADD COLUMN birth_date TEXT"); } catch(e){}
+            try { runQuery("ALTER TABLE global_users ADD COLUMN phone TEXT"); } catch(e){}
+            try { runQuery("ALTER TABLE global_users ADD COLUMN address TEXT"); } catch(e){}
+            try { runQuery("ALTER TABLE global_users ADD COLUMN child_info TEXT"); } catch(e){}
+        }
+
+        function selectRole(role) {
+            document.querySelectorAll('.role-card').forEach(el => el.classList.remove('selected'));
+            document.getElementById(`role-${role}`).classList.add('selected');
+            document.getElementById('reg-role').value = role;
+
+            // 학부모 선택 시 자녀 정보 섹션 열기
+            const pSection = document.getElementById('parent-section');
+            if (role === 'parent') pSection.classList.add('open');
+            else pSection.classList.remove('open');
+        }
+
+        function searchSchool(keyword) {
+            const listEl = document.getElementById('school-list');
+            if(keyword.length < 1) { listEl.classList.add('hidden'); return; }
+
+            const filtered = schoolDB.filter(s => s.name.includes(keyword));
+            listEl.innerHTML = '';
+            
+            if(filtered.length === 0) { listEl.classList.add('hidden'); return; }
+
+            filtered.forEach(s => {
+                const li = document.createElement('li');
+                li.className = "px-4 py-3 hover:bg-blue-50 cursor-pointer text-sm text-slate-700 border-b last:border-0";
+                li.innerHTML = `<span class="font-bold text-blue-600">${s.name}</span> <span class="text-xs text-slate-400">(${s.type})</span>`;
+                li.onclick = () => {
+                    document.getElementById('school-search').value = s.name;
+                    document.getElementById('reg-school-type').value = s.type;
+                    document.getElementById('reg-school-id').value = s.id;
+                    listEl.classList.add('hidden');
+                };
+                listEl.appendChild(li);
+            });
+            listEl.classList.remove('hidden');
+        }
+
+        function checkIdDuplication() {
+            const id = document.getElementById('reg-id').value.trim();
+            const msg = document.getElementById('id-msg');
+            if(id.length < 3) {
+                msg.innerText = "아이디는 3글자 이상이어야 합니다.";
+                msg.className = "text-[10px] mt-1 ml-1 text-red-500";
+                return;
+            }
+
+            const res = runQuery("SELECT login_id FROM global_users WHERE login_id = ?", [id]);
+            if(res.length > 0) {
+                msg.innerText = "이미 사용 중인 아이디입니다.";
+                msg.className = "text-[10px] mt-1 ml-1 text-red-500";
+                isIdChecked = false;
+            } else {
+                msg.innerText = "사용 가능한 아이디입니다.";
+                msg.className = "text-[10px] mt-1 ml-1 text-green-600 font-bold";
+                isIdChecked = true;
+            }
+        }
+
+        // 아이디 입력 변경 시 중복체크 초기화
+        document.getElementById('reg-id').addEventListener('input', () => {
+            isIdChecked = false;
+            document.getElementById('id-msg').innerText = "";
+        });
+
+        async function handleRegister() {
+            const role = document.getElementById('reg-role').value;
+            const schoolType = document.getElementById('reg-school-type').value;
+            const schoolId = document.getElementById('reg-school-id').value;
+            const name = document.getElementById('reg-name').value.trim();
+            const id = document.getElementById('reg-id').value.trim();
+            const pw = document.getElementById('reg-pw').value.trim();
+            const birth = document.getElementById('reg-birth').value;
+            const phone = document.getElementById('reg-phone').value;
+            const address = document.getElementById('reg-address').value;
+
+            // 필수값 체크
+            if(!role) return alert("가입 유형(학생/선생님/학부모)을 선택해주세요.");
+            if(!schoolId) return alert("소속 학교를 검색하여 선택해주세요.");
+            if(!name || !id || !pw || !birth || !phone || !address) return alert("모든 필수 정보를 입력해주세요.");
+            if(!isIdChecked) return alert("아이디 중복 확인을 해주세요.");
+
+            // 학부모일 경우 자녀 정보 체크
+            let childInfo = "";
+            if (role === 'parent') {
+                const cSchool = document.getElementById('child-school').value;
+                const cName = document.getElementById('child-name').value;
+                const cId = document.getElementById('child-id').value;
+                if(!cSchool || !cName || !cId) return alert("학부모님은 자녀 정보를 입력해야 합니다.");
+                
+                // 자녀 정보를 JSON 문자열로 저장
+                childInfo = JSON.stringify({ school: cSchool, name: cName, studentId: cId });
+            }
+
+            // DB 저장
+            try {
+                runQuery(`INSERT INTO global_users (login_id, password, name, school_type, school_id, role, birth_date, phone, address, child_info) 
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+                          [id, pw, name, schoolType, schoolId, role, birth, phone, address, childInfo]);
+
+                alert("회원가입이 완료되었습니다!\n로그인 화면으로 이동합니다.");
+                window.location.href = "index.html";
+            } catch(e) {
+                console.error(e);
+                alert("회원가입 중 오류가 발생했습니다.");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

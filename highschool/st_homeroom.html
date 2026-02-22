@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 학급활동</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.8); }
+    </style>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-slate-50 to-green-50 text-slate-800 min-h-screen">
+
+    <!-- 헤더 -->
+    <header class="bg-white/80 backdrop-blur-lg border-b border-slate-200/50 shadow-sm sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="st.html" class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="font-bold text-slate-800">학급활동</h1>
+                    <p class="text-xs text-slate-500" id="class-info">-</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="student-name" class="text-sm font-medium text-slate-700"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="max-w-4xl mx-auto p-4 space-y-6">
+        <!-- 학급 정보 카드 -->
+        <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-green-500 to-emerald-600 p-5 text-white">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                        <i class="fas fa-chalkboard-user text-3xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold" id="class-title">-</h2>
+                        <p class="text-sm text-white/80" id="teacher-info">담임: -</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 담임 상담 일정 -->
+        <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 text-white">
+                <h3 class="font-bold"><i class="fas fa-calendar-check mr-2"></i>나의 상담 일정</h3>
+            </div>
+            <div id="counsel-schedule-list" class="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
+                <div class="text-center py-8 text-slate-300">
+                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                    <p class="text-xs">로딩 중...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 학급 공지사항 -->
+        <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-4 text-white">
+                <h3 class="font-bold"><i class="fas fa-bullhorn mr-2"></i>학급 공지사항</h3>
+            </div>
+            <div id="notice-list" class="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+                <div class="text-center py-8 text-slate-300">
+                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                    <p class="text-xs">로딩 중...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 공지 상세 모달 -->
+    <div id="notice-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeNoticeModal()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden max-h-[80vh] flex flex-col">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-5 text-white flex-shrink-0">
+                <button onclick="closeNoticeModal()" class="absolute top-4 right-4 text-white/70 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+                <h3 class="font-bold text-lg pr-8" id="modal-title">-</h3>
+                <p class="text-sm text-white/70 mt-1" id="modal-meta">-</p>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1">
+                <div id="modal-content" class="text-slate-700 whitespace-pre-wrap"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let studentInfo = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const userStr = localStorage.getItem('schoolus_user');
+            if (!userStr) {
+                alert('로그인이 필요합니다.');
+                window.location.href = '/';
+                return;
+            }
+            currentUser = JSON.parse(userStr);
+            document.getElementById('student-name').textContent = currentUser.member_name || '';
+            
+            loadStudentInfo();
+        });
+
+        function getSchoolParams() {
+            const params = new URLSearchParams();
+            if (currentUser.school_id) params.append('school_id', currentUser.school_id);
+            if (currentUser.member_school) params.append('member_school', currentUser.member_school);
+            return params;
+        }
+
+        async function loadStudentInfo() {
+            try {
+                const params = new URLSearchParams();
+                params.append('member_id', currentUser.member_id);
+                if (currentUser.school_id) params.append('school_id', currentUser.school_id);
+                
+                const response = await fetch(`/api/student/info?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success && data.student) {
+                    studentInfo = data.student;
+                    
+                    if (studentInfo.class_grade && studentInfo.class_no) {
+                        document.getElementById('class-info').textContent = `${studentInfo.class_grade}학년 ${studentInfo.class_no}반`;
+                        document.getElementById('class-title').textContent = `${studentInfo.class_grade}학년 ${studentInfo.class_no}반`;
+                        
+                        // 담임 정보 로드
+                        loadTeacherInfo();
+                        // 상담 일정 로드
+                        loadCounselSchedule();
+                        // 학급 공지사항 로드
+                        loadHomeroomNotices();
+                    } else {
+                        showNoClass();
+                    }
+                } else {
+                    showNoClass();
+                }
+            } catch (error) {
+                console.error('학생 정보 로드 오류:', error);
+                showNoClass();
+            }
+        }
+
+        function showNoClass() {
+            document.getElementById('class-info').textContent = '학급 미배정';
+            document.getElementById('class-title').textContent = '학급이 배정되지 않았습니다';
+            document.getElementById('teacher-info').textContent = '';
+            document.getElementById('counsel-schedule-list').innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-sm">학급 배정 후 이용 가능합니다.</p></div>';
+            document.getElementById('notice-list').innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-sm">학급 배정 후 이용 가능합니다.</p></div>';
+        }
+
+        async function loadTeacherInfo() {
+            try {
+                const params = getSchoolParams();
+                params.append('class_grade', studentInfo.class_grade);
+                params.append('class_no', studentInfo.class_no);
+                
+                const response = await fetch(`/api/homeroom/teacher?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success && data.teacher_name) {
+                    document.getElementById('teacher-info').textContent = `담임: ${data.teacher_name} 선생님`;
+                }
+            } catch (error) {
+                console.error('담임 정보 로드 오류:', error);
+            }
+        }
+
+        async function loadCounselSchedule() {
+            const container = document.getElementById('counsel-schedule-list');
+            try {
+                const params = getSchoolParams();
+                params.append('class_grade', studentInfo.class_grade);
+                params.append('class_no', studentInfo.class_no);
+                params.append('student_id', currentUser.member_id);
+                
+                const response = await fetch(`/api/homeroom/counsel-schedule/list?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success && data.schedules?.length > 0) {
+                    container.innerHTML = data.schedules.map(s => {
+                        const isPast = new Date(s.counsel_date) < new Date();
+                        return `
+                            <div class="p-4 ${isPast ? 'bg-slate-50' : 'bg-blue-50'}">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 ${isPast ? 'bg-slate-200' : 'bg-blue-100'} rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-comments ${isPast ? 'text-slate-400' : 'text-blue-500'}"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-bold text-slate-800">${s.counsel_type}</p>
+                                        <p class="text-sm text-slate-500">${s.counsel_date}</p>
+                                        ${s.memo ? `<p class="text-xs text-slate-400 mt-1">${s.memo}</p>` : ''}
+                                    </div>
+                                    <span class="px-3 py-1 ${s.status === 'scheduled' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'} rounded-full text-xs font-bold">
+                                        ${s.status === 'scheduled' ? '예정' : '완료'}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-calendar-xmark text-2xl mb-2"></i><p class="text-xs">예정된 상담이 없습니다.</p></div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-xs">상담 일정을 불러올 수 없습니다.</p></div>';
+            }
+        }
+
+        async function loadHomeroomNotices() {
+            const container = document.getElementById('notice-list');
+            try {
+                const params = getSchoolParams();
+                params.append('class_grade', studentInfo.class_grade);
+                params.append('class_no', studentInfo.class_no);
+                
+                const response = await fetch(`/api/homeroom/notice/list?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success && data.notices?.length > 0) {
+                    container.innerHTML = data.notices.map((n, idx) => `
+                        <div class="p-4 hover:bg-slate-50 transition cursor-pointer" onclick="showNoticeDetail(${idx})">
+                            <div class="flex items-start gap-3">
+                                <span class="w-8 h-8 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">${data.notices.length - idx}</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-slate-800 truncate">${n.title}</p>
+                                    <p class="text-xs text-slate-500 mt-1">${n.teacher_name} · ${n.created_at}</p>
+                                </div>
+                                <i class="fas fa-chevron-right text-slate-300 mt-2"></i>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    // 공지사항 데이터 저장
+                    window.noticeData = data.notices;
+                } else {
+                    container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-inbox text-2xl mb-2"></i><p class="text-xs">학급 공지사항이 없습니다.</p></div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-xs">공지사항을 불러올 수 없습니다.</p></div>';
+            }
+        }
+
+        function showNoticeDetail(idx) {
+            if (!window.noticeData || !window.noticeData[idx]) return;
+            const n = window.noticeData[idx];
+            
+            document.getElementById('modal-title').textContent = n.title;
+            document.getElementById('modal-meta').textContent = `${n.teacher_name} · ${n.created_at}`;
+            document.getElementById('modal-content').textContent = n.content;
+            document.getElementById('notice-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeNoticeModal() {
+            document.getElementById('notice-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 시간표 작성 도구</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .step-btn { position: relative; color: #64748b; font-weight: 500; transition: all 0.2s; }
+        .step-btn.active { color: #4f46e5; font-weight: 800; }
+        .step-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 3px; background: #4f46e5; border-radius: 3px 3px 0 0; }
+
+        th { background: #f8fafc; color: #64748b; padding: 12px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; text-align: center; font-size: 0.85rem; font-weight: 700; }
+        td { border-bottom: 1px solid #e2e8f0; padding: 0; text-align: center; font-size: 0.9rem; height: 45px; }
+        
+        .edit-input { 
+            width: 100%; height: 100%; border: none; padding: 8px; text-align: center; 
+            background: transparent; transition: background 0.2s; outline: none;
+        }
+        .edit-input:focus { background: #eef2ff; }
+        .form-input { border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; width: 100%; font-size: 0.9rem; transition: border-color 0.2s; }
+        .form-input:focus { border-color: #4f46e5; outline: none; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+        .tt-grid { display: grid; grid-template-columns: 50px repeat(5, 1fr); border: 1px solid #e2e8f0; background: #fff; }
+        .tt-head { background: #f8fafc; color: #64748b; font-weight: bold; text-align: center; padding: 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; }
+        .tt-cell { border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; min-height: 80px; position: relative; padding: 4px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .period-badge { background: #f1f5f9; color: #94a3b8; font-weight: bold; display: flex; align-items: center; justify-content: center; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+        .block-item { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 6px; margin: 2px; border-radius: 6px; cursor: grab; font-size: 0.8rem; font-weight: 600; width: 95%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        
+        /* 자동완성 드롭다운 */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .autocomplete-dropdown.show { display: block; }
+        .autocomplete-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+        }
+        .autocomplete-item:hover { background: #eef2ff; }
+        .autocomplete-item:last-child { border-bottom: none; }
+        .autocomplete-item .match { color: #4f46e5; font-weight: bold; }
+
+        @media print {
+            aside, header, .step-btn, button, label, select, input, #mobile-overlay, #lockOverlay, #paymentModal, .no-print { display: none !important; }
+            @page { size: landscape; margin: 10mm; }
+            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; height: auto !important; overflow: visible !important; }
+            main, .flex-1, .h-screen, .max-w-7xl, .h-\[600px\], .h-\[700px\], .min-h-\[700px\] { height: auto !important; overflow: visible !important; width: 100% !important; max-width: none !important; }
+            #step-3 { display: block !important; }
+            #step-3 > .flex.justify-between { display: none !important; }
+            #step-3 > .flex.gap-6 { display: block !important; height: auto !important; }
+            #step-3 > .flex.gap-6 > .w-64 { display: none !important; }
+            #step-3 > .flex.gap-6 > .flex-1 { width: 100% !important; }
+            .tt-grid { border: 2px solid #333 !important; }
+            .tt-head { background: #f0f0f0 !important; border: 1px solid #333 !important; font-weight: bold !important; }
+            .tt-cell { border: 1px solid #999 !important; }
+            .block-item { border: 1px solid #666 !important; background: #f8f8f8 !important; color: #333 !important; }
+            .print-title { display: block !important; }
+        }
+
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        #mobile-overlay.active { display: block; }
+        #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
+
+        /* 모바일 큰 글씨 대응: 터치 영역 확대 + 사이드바 전체 스크롤 */
+        @media (max-width: 767px) {
+            #sidebar.mobile-open { overflow-y: auto !important; }
+            #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
+            #sidebar.mobile-open #sidebar-nav { height: auto !important; overflow: visible !important; }
+            .nav-item { min-height: 52px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 15px !important; }
+            #sidebar .space-y-1 > li { margin-bottom: 4px; }
+            #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
+            .tab-btn { min-height: 48px; padding: 12px 16px !important; font-size: 14px !important; white-space: nowrap; }
+        }
+    </style>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen flex overflow-hidden">
+
+    <div id="mobile-overlay"></div>
+    <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 flex-col flex-shrink-0 hidden md:flex shadow-2xl">
+        <div class="p-6 border-b border-slate-700/50">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                    <i class="fas fa-school text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-black text-2xl text-white tracking-tight">SchoolUs</span>
+                    <p class="text-xs text-slate-400 font-medium">스마트 교육 플랫폼</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li><a href="../tea.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-desktop w-6 mr-3"></i> 나의 대시보드</a></li>
+                <li class="px-6 pt-6 pb-2 text-xs font-bold uppercase text-slate-500">반편성 · 시간표</li>
+                <li><a href="classtime_maker_base.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-database w-6 mr-3"></i> 기초데이터 관리</a></li>
+                <li><a href="class_maker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-layer-group w-6 mr-3"></i> 반편성</a></li>
+                <li><a href="#" class="flex items-center px-6 py-3 bg-slate-800 text-white border-l-4 border-blue-500"><i class="fas fa-edit w-6 mr-3 text-green-400"></i> <span class="font-medium">시간표 작성</span></a></li>
+                <li><a href="timetablechange.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-calendar-alt w-6 mr-3"></i> 시간표 조회/변경</a></li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-slate-700">
+            <a href="../tea.html" class="flex items-center justify-center w-full py-2 bg-slate-800 hover:bg-slate-700 rounded text-sm transition"><i class="fas fa-arrow-left mr-2"></i> 메인으로 돌아가기</a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        
+        <header class="bg-white h-16 border-b flex items-center justify-between px-8 shadow-sm z-30 flex-shrink-0">
+            <div class="flex items-center gap-4">
+                <button id="sidebar-toggle" onclick="toggleMobileSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars text-xl"></i></button>
+                <h2 class="text-xl font-bold text-slate-800">시간표 데이터 관리 및 작성</h2>
+                <span id="userSchoolBadge" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold"></span>
+                <span id="paymentBadge" class="hidden bg-red-100 text-red-700 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2">
+                    <i class="fas fa-lock"></i> 결제가 필요합니다
+                    <button onclick="showPaymentModal()" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-xs font-bold ml-1">결제하기</button>
+                </span>
+                <span id="verifiedBadge" class="hidden bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+                    <i class="fas fa-check-circle mr-1"></i> 이용 가능
+                </span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 px-3 py-1.5 rounded-full">
+                    <i class="fas fa-coins text-amber-500"></i>
+                    <span id="userPoint" class="font-bold text-amber-700 text-sm">0</span>
+                    <span class="text-amber-600 text-xs">P</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div id="userAvatar" class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">T</div>
+                    <span id="userName" class="text-sm font-medium text-slate-700 hidden md:block"></span>
+                </div>
+                <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition flex items-center">
+                    <i class="fas fa-file-excel mr-2"></i> 결과 시트 저장
+                </button>
+            </div>
+        </header>
+        
+        <!-- 결제 모달 -->
+        <div id="paymentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+            <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-coins text-amber-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">시간표 작성 기능 결제</h3>
+                    <p class="text-slate-500 mb-6">시간표 작성 기능을 이용하려면<br><strong class="text-amber-600">50,000 포인트</strong>가 필요합니다.</p>
+                    <div class="bg-slate-50 rounded-xl p-4 mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-slate-500">현재 보유 포인트</span>
+                            <span id="modalCurrentPoint" class="font-bold text-slate-800">0 P</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500">결제 후 잔여</span>
+                            <span id="modalAfterPoint" class="font-bold text-amber-600">0 P</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="closePaymentModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-bold transition">취소</button>
+                        <button onclick="processPayment()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-xl font-bold transition">
+                            <i class="fas fa-check mr-2"></i>결제하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 작업 불가 오버레이 -->
+        <div id="lockOverlay" class="hidden absolute inset-0 bg-white bg-opacity-80 z-10 flex items-center justify-center" style="top: 64px;">
+            <div class="text-center p-8">
+                <i class="fas fa-lock text-6xl text-slate-300 mb-4"></i>
+                <h3 class="text-xl font-bold text-slate-600 mb-2">결제가 필요합니다</h3>
+                <p class="text-slate-500 mb-4">시간표 작성 기능을 이용하려면 결제가 필요합니다.</p>
+                <button onclick="showPaymentModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-xl font-bold transition">
+                    <i class="fas fa-coins mr-2"></i>50,000P 결제하기
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white border-b px-8 z-20">
+            <div class="flex space-x-8">
+                <button onclick="goStep(1)" id="btn-step-1" class="step-btn active py-4 text-sm">1. 기본 정보 (교사/과목)</button>
+                <button onclick="goStep(2)" id="btn-step-2" class="step-btn py-4 text-sm">2. 수업 묶음 (Block)</button>
+                <button onclick="goStep(3)" id="btn-step-3" class="step-btn py-4 text-sm">3. 시간표 배치</button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-8 bg-slate-50">
+            <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-8 min-h-[700px]">
+
+                <div id="step-1" class="fade-in block space-y-6">
+                    
+                    <!-- 교사 명단 관리 -->
+                    <div class="border-b border-slate-100 pb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center">
+                                <i class="fas fa-chalkboard-teacher mr-2 text-indigo-600"></i>교사 명단 관리
+                                <span id="teacherCount" class="ml-3 bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs">0명</span>
+                            </h3>
+                            <div class="flex gap-2">
+                                <button onclick="loadTeachersFromDB()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center transition">
+                                    <i class="fas fa-database mr-2"></i> DB 불러오기
+                                </button>
+                                <label for="excelInput" class="cursor-pointer bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-4 py-2 rounded-lg text-sm font-bold flex items-center transition">
+                                    <i class="fas fa-upload mr-2"></i> 엑셀 업로드
+                                </label>
+                                <input type="file" id="excelInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileUpload(event)">
+                                <button onclick="downloadTemplate()" class="bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 px-4 py-2 rounded-lg text-sm font-bold flex items-center transition">
+                                    <i class="fas fa-file-download mr-2"></i> 양식 다운로드
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 학년별 학급수 설정 -->
+                        <div class="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 mb-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1 text-center">1학년 학급수</label>
+                                <input type="number" id="grade1_cnt" class="form-input text-center h-8" value="0">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1 text-center">2학년 학급수</label>
+                                <input type="number" id="grade2_cnt" class="form-input text-center h-8" value="0">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1 text-center">3학년 학급수</label>
+                                <input type="number" id="grade3_cnt" class="form-input text-center h-8" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 교과목 관리 -->
+                    <div class="border-b border-slate-100 pb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center">
+                                <i class="fas fa-book mr-2 text-green-600"></i>교과목 관리
+                                <span id="subjectCount" class="ml-3 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs">0개</span>
+                            </h3>
+                            <div class="flex gap-2">
+                                <button onclick="loadSubjectsFromDB()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center transition">
+                                    <i class="fas fa-database mr-2"></i> 교과목 DB 불러오기
+                                </button>
+                                <label for="subjectInput" class="cursor-pointer bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 px-4 py-2 rounded-lg text-sm font-bold flex items-center transition">
+                                    <i class="fas fa-file-import mr-2"></i> 엑셀 업로드
+                                </label>
+                                <input type="file" id="subjectInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleSubjectUpload(event)">
+                                <button onclick="downloadSubjectTemplate()" class="bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 px-4 py-2 rounded-lg text-sm font-bold flex items-center transition">
+                                    <i class="fas fa-file-download mr-2"></i> 양식 다운로드
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 교과목 미리보기 -->
+                        <div id="subjectPreview" class="bg-green-50 p-3 rounded-lg border border-green-200 hidden">
+                            <div class="text-sm text-green-700 font-medium mb-2">불러온 교과목 목록:</div>
+                            <div id="subjectTags" class="flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 이전 DB 불러오기 / DB에 저장하기 -->
+                    <div class="border-b border-slate-100 pb-6">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center">
+                                <i class="fas fa-save mr-2 text-purple-600"></i>작업 저장/불러오기
+                            </h3>
+                            <div class="flex gap-2">
+                                <button onclick="loadFromTimetableTea()" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center transition">
+                                    <i class="fas fa-cloud-download-alt mr-2"></i> 이전 DB 불러오기
+                                </button>
+                                <button onclick="saveToTimetableTea()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center transition">
+                                    <i class="fas fa-cloud-upload-alt mr-2"></i> DB에 저장하기
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 교사 개별 추가 -->
+                    <div class="bg-indigo-50/50 p-5 rounded-xl border border-indigo-200">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-user-plus text-indigo-500"></i>
+                            <span class="text-sm font-bold text-indigo-700">교사 개별 추가</span>
+                            <span class="text-xs text-indigo-400">— 아래 정보를 입력하고 추가 버튼을 누르세요</span>
+                        </div>
+                        <div class="flex gap-3 items-end">
+                            <div class="flex-1">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">성명</label>
+                                <input type="text" id="tName" class="form-input" placeholder="교사명" list="teacherNameSuggestions" autocomplete="off">
+                            </div>
+                            <div class="flex-1 relative">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">담당과목</label>
+                                <input type="text" id="tSubject" class="form-input" placeholder="과목명 (자동완성)" autocomplete="off" oninput="filterSubjects(this)" onfocus="showSubjectDropdown(this)">
+                                <div id="subjectDropdown" class="autocomplete-dropdown"></div>
+                            </div>
+                            <div class="w-28">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">학년</label>
+                                <select id="tGrade" class="form-input">
+                                    <option value="">선택</option>
+                                    <option value="1">1학년</option>
+                                    <option value="2">2학년</option>
+                                    <option value="3">3학년</option>
+                                </select>
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">담당반 (예: 1, 2, 3)</label>
+                                <input type="text" id="tClasses" class="form-input" placeholder="1, 2, 3" oninput="autoCalcClassCount(this.value, 'tClassCount')">
+                            </div>
+                            <div class="w-20">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">학급수</label>
+                                <input type="number" id="tClassCount" value="0" class="form-input">
+                            </div>
+                            <div class="w-20">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">반별시수</label>
+                                <input type="number" id="tUnitHours" value="4" class="form-input">
+                            </div>
+                            <button onclick="addTeacher()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-bold h-[42px] transition shadow-sm flex items-center gap-2 whitespace-nowrap">
+                                <i class="fas fa-plus"></i> 추가
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 교사 목록 테이블 -->
+                    <div class="overflow-hidden border border-slate-200 rounded-xl h-[350px] overflow-y-auto shadow-sm">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-50 sticky top-0 z-10">
+                                <tr>
+                                    <th style="width:50px">No</th>
+                                    <th style="width:12%">성명</th>
+                                    <th style="width:18%">담당과목</th>
+                                    <th style="width:8%">학년</th>
+                                    <th>담당반</th>
+                                    <th style="width:8%">학급수</th>
+                                    <th style="width:8%">반별시간</th>
+                                    <th style="width:8%">총 시수</th>
+                                    <th style="width:60px">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teacherListBody"></tbody>
+                        </table>
+                        <div id="emptyMsg" class="flex flex-col items-center justify-center py-16 text-slate-400">
+                            <i class="fas fa-inbox fa-3x mb-4 opacity-30"></i>
+                            <span>등록된 교사 데이터가 없습니다.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="step-2" class="hidden fade-in space-y-6">
+                    <div class="border-b pb-4"><h2 class="text-xl font-bold text-slate-800">수업 묶음(Block) 생성</h2><p class="text-slate-500 text-sm mt-1">이동 수업이나 분반 수업을 하나의 블록으로 묶어 배치합니다.</p></div>
+                    <div class="flex gap-8 h-[600px]">
+                        <div class="w-1/3 space-y-4 bg-slate-50 p-6 rounded-xl border border-slate-200 h-full flex flex-col">
+                            <input type="text" id="blockName" placeholder="묶음 명칭 (예: 1학년 영어A/B)" class="form-input font-bold">
+                            <div class="flex-1 flex flex-col">
+                                <label class="text-xs font-bold text-slate-500 mb-2">대상 교사 선택 (다중 선택)</label>
+                                <select id="subjectSelect" multiple class="form-input flex-1 h-full"></select>
+                            </div>
+                            <button onclick="createBlock()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-bold shadow-sm transition">블록 생성하기</button>
+                        </div>
+                        <div class="w-2/3 h-full overflow-y-auto" id="blockList"></div>
+                    </div>
+                </div>
+
+                <div id="step-3" class="hidden fade-in space-y-4">
+                    <div class="print-title hidden text-center mb-4">
+                        <h2 class="text-2xl font-bold" id="printTitle"></h2>
+                        <p class="text-sm text-slate-500" id="printDate"></p>
+                    </div>
+                    <div class="flex justify-between items-center border-b pb-4">
+                        <h2 class="text-xl font-bold text-slate-800">시간표 배치</h2>
+                        <div class="flex gap-2">
+                            <button onclick="printTimetable()" class="text-xs bg-slate-600 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg font-bold transition">
+                                <i class="fas fa-print mr-1"></i> 인쇄
+                            </button>
+                            <button onclick="clearTimetable()" class="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-lg font-bold transition">
+                                <i class="fas fa-trash-alt mr-1"></i> 초기화
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex gap-6 h-[600px]">
+                        <div class="w-64 bg-slate-50 border border-slate-200 rounded-xl p-4 overflow-y-auto flex-shrink-0">
+                            <h4 class="text-sm font-bold text-slate-500 mb-3 uppercase tracking-wider">Available Blocks</h4>
+                            <div id="draggableBlocks" class="space-y-2"></div>
+                        </div>
+                        <div class="flex-1 overflow-auto bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+                            <div class="tt-grid rounded-lg overflow-hidden">
+                                <div class="tt-head bg-slate-100"></div>
+                                <div class="tt-head">월</div><div class="tt-head">화</div><div class="tt-head">수</div><div class="tt-head">목</div><div class="tt-head">금</div>
+                                <div id="timetableBody" style="display: contents;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <datalist id="teacherNameSuggestions"></datalist>
+
+    <script>
+        let teachers = []; 
+        let blocks = []; 
+        let schedule = {}; 
+        let standardSubjects = []; // 교과목 목록 (메모리에 저장)
+        let currentUser = null;
+        let isVerified = false;
+        let currentPointValue = 0;
+
+        const DB_MAP = {
+            name: ['member_name', '성명', '이름', 'name'],
+            subject: ['subject', '담당과목', '과목'],
+            grade: ['grade', '학년'],
+            classes: ['class_no', '담당학급', '반'],
+            classCount: ['class_count', '담당학급수', '학급수', 'class_conut'],
+            unitHours: ['hours', '시수', '반별시간']
+        };
+
+        // ==========================================
+        // 초기화
+        // ==========================================
+        async function initUserInfo() {
+            const userStr = localStorage.getItem('schoolus_user');
+            if (!userStr) { alert('로그인이 필요합니다.'); window.location.href = '/'; return; }
+            currentUser = JSON.parse(userStr);
+            
+            const schoolBadge = document.getElementById('userSchoolBadge');
+            if (currentUser.member_school) { schoolBadge.textContent = currentUser.member_school; }
+            else { schoolBadge.textContent = '학교 미설정'; }
+            
+            const userName = document.getElementById('userName');
+            const userAvatar = document.getElementById('userAvatar');
+            if (currentUser.member_name) {
+                if (userName) userName.textContent = currentUser.member_name + ' 선생님';
+                if (userAvatar) userAvatar.textContent = currentUser.member_name.charAt(0);
+            }
+            
+            await loadUserPoint();
+            await checkVerification();
+        }
+        
+        async function loadUserPoint() {
+            try {
+                const url = `/api/teacher/info?member_id=${encodeURIComponent(currentUser.member_id)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.success && data.teacher) {
+                    displayPoint(data.teacher.point);
+                    if (data.teacher.school_id && !currentUser.school_id) {
+                        currentUser.school_id = data.teacher.school_id;
+                        localStorage.setItem('schoolus_user', JSON.stringify(currentUser));
+                    }
+                }
+            } catch (error) { console.error('포인트 로드 오류:', error); }
+        }
+        
+        function displayPoint(point) {
+            const el = document.getElementById('userPoint');
+            if (!el) return;
+            if (point === 'free' || point === 'Free') { el.textContent = 'Free'; currentPointValue = 'free'; }
+            else if (point === null || point === undefined || point === '') { el.textContent = '0'; currentPointValue = 0; }
+            else { const num = parseInt(point); currentPointValue = isNaN(num) ? 0 : num; el.textContent = currentPointValue.toLocaleString(); }
+        }
+        
+        async function checkVerification() {
+            try {
+                let url = '/api/verification/check?';
+                if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
+                else url += `member_id=${encodeURIComponent(currentUser.member_id)}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success && data.verified) {
+                    isVerified = true;
+                    document.getElementById('paymentBadge').classList.add('hidden');
+                    document.getElementById('verifiedBadge').classList.remove('hidden');
+                    document.getElementById('lockOverlay').classList.add('hidden');
+                } else {
+                    isVerified = false;
+                    document.getElementById('paymentBadge').classList.remove('hidden');
+                    document.getElementById('verifiedBadge').classList.add('hidden');
+                    document.getElementById('lockOverlay').classList.remove('hidden');
+                    if (currentPointValue === 'free') await processPayment();
+                }
+            } catch (error) { console.error('결제 상태 확인 오류:', error); }
+        }
+        
+        function showPaymentModal() {
+            const modal = document.getElementById('paymentModal');
+            const currentPointEl = document.getElementById('modalCurrentPoint');
+            const afterPointEl = document.getElementById('modalAfterPoint');
+            
+            if (currentPointValue === 'free') { currentPointEl.textContent = 'Free (무료)'; afterPointEl.textContent = 'Free (무료)'; }
+            else {
+                currentPointEl.textContent = currentPointValue.toLocaleString() + ' P';
+                const afterPoint = currentPointValue - 50000;
+                afterPointEl.textContent = afterPoint.toLocaleString() + ' P';
+                if (afterPoint < 0) { afterPointEl.classList.add('text-red-600'); afterPointEl.classList.remove('text-amber-600'); }
+                else { afterPointEl.classList.remove('text-red-600'); afterPointEl.classList.add('text-amber-600'); }
+            }
+            modal.classList.remove('hidden');
+        }
+        
+        function closePaymentModal() { document.getElementById('paymentModal').classList.add('hidden'); }
+        
+        async function processPayment() {
+            try {
+                const response = await fetch('/api/verification/pay', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ school_id: currentUser.school_id || null, member_id: currentUser.member_id, member_school: currentUser.member_school })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert(data.message); closePaymentModal();
+                    isVerified = true;
+                    document.getElementById('paymentBadge').classList.add('hidden');
+                    document.getElementById('verifiedBadge').classList.remove('hidden');
+                    document.getElementById('lockOverlay').classList.add('hidden');
+                    if (data.new_point !== undefined) {
+                        currentPointValue = data.new_point;
+                        document.getElementById('userPoint').textContent = currentPointValue === 'free' ? 'Free' : currentPointValue.toLocaleString();
+                    }
+                } else { alert(data.message); }
+            } catch (error) { console.error('결제 처리 오류:', error); alert('결제 처리 중 오류가 발생했습니다.'); }
+        }
+
+        // ==========================================
+        // 교과목 관리
+        // ==========================================
+        async function loadSubjectsFromDB() {
+            if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
+            try {
+                let url = '/api/timetable-data/list?';
+                if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
+                else if (currentUser.member_school) url += `member_school=${encodeURIComponent(currentUser.member_school)}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    const subjects = new Set();
+                    data.data.forEach(d => { if (d.subject && d.subject.trim()) subjects.add(d.subject.trim()); });
+                    standardSubjects = Array.from(subjects).sort((a, b) => a.localeCompare(b, 'ko'));
+                    updateSubjectCount();
+                    showSubjectPreview();
+                    alert(`DB에서 ${standardSubjects.length}개 교과목을 불러왔습니다.`);
+                } else { alert(data.message || '교과목 불러오기 실패'); }
+            } catch (error) { console.error('교과목 DB 오류:', error); alert('DB 연결 오류: ' + error.message); }
+        }
+        
+        function handleSubjectUpload(e) {
+            if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); e.target.value = ''; return; }
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const data = new Uint8Array(ev.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+                let subjIdx = -1;
+                const headers = jsonData[0] || [];
+                headers.forEach((h, i) => { const str = String(h||'').toLowerCase(); if (str.includes('subject') || str.includes('과목')) subjIdx = i; });
+                if (subjIdx === -1) subjIdx = 0;
+                const subjects = new Set();
+                for (let i = 1; i < jsonData.length; i++) { const val = String(jsonData[i][subjIdx] || '').trim(); if (val) subjects.add(val); }
+                standardSubjects = Array.from(subjects).sort((a, b) => a.localeCompare(b, 'ko'));
+                updateSubjectCount();
+                showSubjectPreview();
+                alert(`엑셀에서 ${standardSubjects.length}개 교과목을 불러왔습니다.`);
+                e.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function updateSubjectCount() { document.getElementById('subjectCount').textContent = standardSubjects.length + '개'; }
+        
+        function showSubjectPreview() {
+            const preview = document.getElementById('subjectPreview');
+            const tags = document.getElementById('subjectTags');
+            if (standardSubjects.length > 0) {
+                preview.classList.remove('hidden');
+                const maxShow = 20;
+                let html = standardSubjects.slice(0, maxShow).map(s => `<span class="bg-white px-2 py-1 rounded border border-green-300 text-xs text-green-700">${s}</span>`).join('');
+                if (standardSubjects.length > maxShow) html += `<span class="text-green-600 text-xs">...외 ${standardSubjects.length - maxShow}개</span>`;
+                tags.innerHTML = html;
+            } else { preview.classList.add('hidden'); }
+        }
+        
+        // 교과목 자동완성 필터링 (순서 무관 부분 매칭)
+        function filterSubjects(input) {
+            const query = input.value.toLowerCase().trim();
+            const dropdown = document.getElementById('subjectDropdown');
+            if (!query || standardSubjects.length === 0) { dropdown.classList.remove('show'); return; }
+            
+            const filtered = standardSubjects.filter(subj => {
+                const lower = subj.toLowerCase();
+                let idx = 0;
+                for (const char of query) { idx = lower.indexOf(char, idx); if (idx === -1) return false; idx++; }
+                return true;
+            }).slice(0, 10);
+            
+            if (filtered.length > 0) {
+                dropdown.innerHTML = filtered.map(subj => {
+                    let lower = subj.toLowerCase(), lastIdx = 0, result = '';
+                    for (const char of query) {
+                        const idx = lower.indexOf(char, lastIdx);
+                        if (idx !== -1) { result += subj.substring(lastIdx, idx) + `<span class="match">${subj[idx]}</span>`; lastIdx = idx + 1; }
+                    }
+                    result += subj.substring(lastIdx);
+                    return `<div class="autocomplete-item" onclick="selectSubject('${subj}')">${result}</div>`;
+                }).join('');
+                dropdown.classList.add('show');
+            } else { dropdown.classList.remove('show'); }
+        }
+        
+        function showSubjectDropdown(input) { if (standardSubjects.length > 0 && input.value.trim()) filterSubjects(input); }
+        function selectSubject(subject) { document.getElementById('tSubject').value = subject; document.getElementById('subjectDropdown').classList.remove('show'); }
+        
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#tSubject') && !e.target.closest('#subjectDropdown')) document.getElementById('subjectDropdown').classList.remove('show');
+            // 테이블 내 드롭다운도 닫기
+            document.querySelectorAll('.autocomplete-dropdown').forEach(dd => { if (!e.target.closest('.autocomplete-dropdown') && !e.target.classList.contains('edit-input')) dd.classList.remove('show'); });
+        });
+
+        // ==========================================
+        // 교사 명단 관리
+        // ==========================================
+        async function loadTeachersFromDB() {
+            if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
+            try {
+                let url = '/api/teachers/list?';
+                if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
+                else if (currentUser.member_school) url += `member_school=${encodeURIComponent(currentUser.member_school)}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    teachers = [];
+                    data.data.forEach(t => {
+                        teachers.push({
+                            id: t.id || Date.now() + Math.random(), name: t.member_name || '', subject: '',
+                            grade: t.class_grade || '', classes: t.class_no || '',
+                            classCount: t.class_no ? String(t.class_no).split(/[, ]+/).filter(x => x.trim()).length : 0,
+                            unitHours: 4, totalHours: 0, department: t.department || ''
+                        });
+                    });
+                    teachers.forEach(t => { t.totalHours = (parseInt(t.classCount) || 0) * (parseInt(t.unitHours) || 0); });
+                    sortTeachers(); renderTeacherList();
+                    alert(`DB에서 ${data.count}명의 교사를 불러왔습니다.`);
+                } else { alert(data.message || '교사 목록을 불러올 수 없습니다.'); }
+            } catch (error) { console.error('교사 목록 로드 오류:', error); alert('교사 목록 로드 중 오류가 발생했습니다.'); }
+        }
+        
+        async function loadFromTimetableTea() {
+            if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
+            try {
+                let url = '/api/timetable-tea/list?';
+                if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
+                else if (currentUser.member_school) url += `member_school=${encodeURIComponent(currentUser.member_school)}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    teachers = [];
+                    
+                    data.data.forEach(t => {
+                        // DB에서 그대로 불러오기 (class_no는 "1, 2, 3" 형태, class_conut은 DB값 사용)
+                        const classCount = t.class_conut || 0;  // DB의 class_conut 우선
+                        const unitHours = t.hours || 4;
+                        
+                        teachers.push({
+                            id: t.id || Date.now() + Math.random(),
+                            name: t.member_name || '',
+                            subject: t.subject || '',
+                            grade: t.grade || '',
+                            classes: t.class_no || '',  // "1, 2, 3" 그대로
+                            classCount: classCount,
+                            unitHours: unitHours,
+                            totalHours: classCount * unitHours
+                        });
+                    });
+                    
+                    sortTeachers(); renderTeacherList();
+                    alert(`이전 작업에서 ${teachers.length}개의 데이터를 불러왔습니다.`);
+                } else { alert(data.message || '이전 작업을 불러올 수 없습니다.'); }
+            } catch (error) { console.error('이전 작업 로드 오류:', error); alert('이전 작업 로드 중 오류가 발생했습니다.'); }
+        }
+        
+        async function saveToTimetableTea() {
+            if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
+            if (teachers.length === 0) { alert('저장할 교사 데이터가 없습니다.'); return; }
+            if (!confirm(`${teachers.length}개의 교사-과목 데이터를 timetable_tea에 저장하시겠습니까?\n(기존 데이터는 삭제됩니다)`)) return;
+            
+            try {
+                // 각 교사-과목 조합을 하나의 레코드로 저장 (class_no는 "1, 2, 3" 그대로)
+                const timetableData = teachers.map(t => ({
+                    member_name: t.name,
+                    subject: t.subject,
+                    grade: t.grade,
+                    class_no: t.classes,  // "1, 2, 3" 그대로 저장
+                    class_conut: t.classCount,  // 입력한 학급수 그대로 저장
+                    hours: t.unitHours
+                }));
+                
+                const response = await fetch('/api/timetable-tea/save', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ school_id: currentUser.school_id, member_school: currentUser.member_school, data: timetableData })
+                });
+                const data = await response.json();
+                if (data.success) { alert(data.message); } else { alert('저장 실패: ' + data.message); }
+            } catch (error) { console.error('저장 오류:', error); alert('저장 중 오류가 발생했습니다.'); }
+        }
+
+        // ==========================================
+        // 기존 함수들
+        // ==========================================
+        function sortTeachers() { teachers.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko')); }
+
+        function goStep(n) {
+            if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
+            document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-step-${n}`).classList.add('active');
+            for (let i = 1; i <= 3; i++) document.getElementById(`step-${i}`).classList.add('hidden');
+            document.getElementById(`step-${n}`).classList.remove('hidden');
+            if (n === 2) updateSubjectSelect();
+            if (n === 3) renderDraggablePalette();
+        }
+
+        function autoCalcClassCount(val, targetId) { if (!val) return; const count = val.split(/[, ]+/).filter(x => x.trim() !== '').length; if (count > 0) document.getElementById(targetId).value = count; }
+        
+        function downloadTemplate() {
+            const headers = ['member_name', 'subject', 'grade', 'class_no', 'class_count', 'hours'];
+            const sampleData = [headers, ['홍길동', '국어', '1', '1, 2, 3', '3', '4'], ['김철수', '수학', '2', '1, 2', '2', '4']];
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(sampleData);
+            XLSX.utils.book_append_sheet(wb, ws, "교사명단");
+            XLSX.writeFile(wb, "timetable_teacher_template.xlsx");
+        }
+
+        function downloadSubjectTemplate() {
+            const headers = ['subject'];
+            const sampleData = [headers, ['국어'], ['수학I'], ['영어'], ['한국사'], ['물리학I']];
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(sampleData);
+            XLSX.utils.book_append_sheet(wb, ws, "교과목");
+            XLSX.writeFile(wb, "timetable_subject_template.xlsx");
+        }
+
+        function handleFileUpload(e) {
+            if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); e.target.value = ''; return; }
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const data = new Uint8Array(ev.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+                let headerIdx = -1;
+                for (let i = 0; i < Math.min(20, jsonData.length); i++) { const rowStr = (jsonData[i] || []).join(' ').toLowerCase(); if (rowStr.includes('성명') || rowStr.includes('이름') || rowStr.includes('member_name')) { headerIdx = i; break; } }
+                if (headerIdx === -1) headerIdx = 0;
+                const headers = jsonData[headerIdx] || [];
+                const col = { name: -1, subj: -1, grade: -1, cls: -1, cnt: -1, hrs: -1 };
+                headers.forEach((h, i) => { const cleanH = String(h || '').toLowerCase().replace(/[\s_]/g, ''); if (col.name < 0 && DB_MAP.name.some(k => cleanH.includes(k))) col.name = i; if (col.subj < 0 && DB_MAP.subject.some(k => cleanH.includes(k))) col.subj = i; if (col.grade < 0 && DB_MAP.grade.some(k => cleanH.includes(k))) col.grade = i; if (col.cls < 0 && DB_MAP.classes.some(k => cleanH.includes(k))) col.cls = i; if (col.cnt < 0 && DB_MAP.classCount.some(k => cleanH.includes(k))) col.cnt = i; if (col.hrs < 0 && DB_MAP.unitHours.some(k => cleanH.includes(k))) col.hrs = i; });
+                for (let i = headerIdx + 1; i < jsonData.length; i++) {
+                    const row = jsonData[i]; if (!row || row.length === 0) continue;
+                    const clsStr = col.cls >= 0 ? String(row[col.cls] || '') : '';
+                    const autoCnt = clsStr ? clsStr.split(/[, ]+/).filter(x => x.trim() !== '').length : 0;
+                    const manualCnt = col.cnt >= 0 ? parseInt(row[col.cnt]) : null;
+                    const finalCnt = (manualCnt !== null && !isNaN(manualCnt)) ? manualCnt : (autoCnt || 0);
+                    const uHrs = col.hrs >= 0 ? (parseInt(row[col.hrs]) || 0) : 4;
+                    teachers.push({ id: Date.now() + Math.random(), name: col.name >= 0 ? (row[col.name] || '') : '', subject: col.subj >= 0 ? (row[col.subj] || '') : '', grade: col.grade >= 0 ? String(row[col.grade] || '') : '', classes: clsStr, classCount: finalCnt, unitHours: uHrs, totalHours: finalCnt * uHrs });
+                }
+                sortTeachers(); renderTeacherList();
+                alert('명단을 가나다순으로 불러왔습니다.'); e.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function updateTeacherSuggestions() { const dl = document.getElementById('teacherNameSuggestions'); if (!dl) return; const uniqueNames = [...new Set(teachers.map(t => t.name))]; dl.innerHTML = uniqueNames.map(n => `<option value="${n}">`).join(''); }
+
+        function renderTeacherList() {
+            updateTeacherSuggestions();
+            document.getElementById('teacherCount').textContent = teachers.length + '명';
+            const tb = document.getElementById('teacherListBody'); tb.innerHTML = '';
+            if (teachers.length === 0) { document.getElementById('emptyMsg').style.display = 'flex'; return; }
+            document.getElementById('emptyMsg').style.display = 'none';
+
+            teachers.forEach((t, i) => {
+                const row = document.createElement('tr'); row.className = "hover:bg-slate-50 transition";
+                row.innerHTML = `
+                    <td class="text-slate-400 font-medium">${i + 1}</td>
+                    <td><input type="text" class="edit-input font-bold text-slate-700" value="${t.name}" onchange="updateTeacher(${i}, 'name', this.value)"></td>
+                    <td class="relative">
+                        <input type="text" class="edit-input text-slate-600" value="${t.subject}" oninput="filterSubjectsInline(this, ${i})" onfocus="showInlineDropdown(this, ${i})" onchange="updateTeacher(${i}, 'subject', this.value)">
+                        <div id="dropdown-${i}" class="autocomplete-dropdown"></div>
+                    </td>
+                    <td><select class="edit-input text-slate-600" onchange="updateTeacher(${i}, 'grade', this.value)"><option value="" ${t.grade === '' ? 'selected' : ''}>선택</option><option value="1" ${String(t.grade).includes('1') ? 'selected' : ''}>1학년</option><option value="2" ${String(t.grade).includes('2') ? 'selected' : ''}>2학년</option><option value="3" ${String(t.grade).includes('3') ? 'selected' : ''}>3학년</option></select></td>
+                    <td><input type="text" class="edit-input text-slate-600" value="${t.classes}" placeholder="예: 1, 2, 3" onchange="updateTeacher(${i}, 'classes', this.value)"></td>
+                    <td><input type="number" class="edit-input text-slate-600" value="${t.classCount}" onchange="updateTeacher(${i}, 'classCount', this.value)"></td>
+                    <td><input type="number" class="edit-input text-slate-600" value="${t.unitHours}" onchange="updateTeacher(${i}, 'unitHours', this.value)"></td>
+                    <td class="font-bold text-indigo-600 bg-indigo-50">${t.totalHours}</td>
+                    <td><button onclick="teachers.splice(${i},1);renderTeacherList();" class="text-red-400 hover:text-red-600 w-full h-full"><i class="fas fa-trash"></i></button></td>
+                `;
+                tb.appendChild(row);
+            });
+        }
+        
+        // 테이블 내 과목 자동완성
+        function filterSubjectsInline(input, idx) {
+            const query = input.value.toLowerCase().trim();
+            const dropdown = document.getElementById(`dropdown-${idx}`);
+            if (!query || standardSubjects.length === 0) { dropdown.classList.remove('show'); return; }
+            const filtered = standardSubjects.filter(subj => { const lower = subj.toLowerCase(); let i = 0; for (const char of query) { i = lower.indexOf(char, i); if (i === -1) return false; i++; } return true; }).slice(0, 8);
+            if (filtered.length > 0) { dropdown.innerHTML = filtered.map(subj => `<div class="autocomplete-item" onclick="selectSubjectInline('${subj}', ${idx})">${subj}</div>`).join(''); dropdown.classList.add('show'); }
+            else { dropdown.classList.remove('show'); }
+        }
+        function showInlineDropdown(input, idx) { if (standardSubjects.length > 0 && input.value.trim()) filterSubjectsInline(input, idx); }
+        function selectSubjectInline(subject, idx) { teachers[idx].subject = subject; renderTeacherList(); }
+
+        function updateTeacher(idx, field, val) {
+            teachers[idx][field] = val;
+            if (field === 'classes') { const count = val.split(/[, ]+/).filter(x => x.trim() !== '').length; if (count > 0) teachers[idx].classCount = count; }
+            teachers[idx].totalHours = (parseInt(teachers[idx].classCount) || 0) * (parseInt(teachers[idx].unitHours) || 0);
+            if (field === 'name') sortTeachers();
+            renderTeacherList();
+        }
+
+        function addTeacher() {
+            if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
+            const name = document.getElementById('tName').value, sub = document.getElementById('tSubject').value, grade = document.getElementById('tGrade').value;
+            const cls = document.getElementById('tClasses').value, cnt = parseInt(document.getElementById('tClassCount').value) || 0, unit = parseInt(document.getElementById('tUnitHours').value) || 0;
+            if (!name) return alert('교사 성명을 입력하세요.');
+            teachers.push({ id: Date.now() + Math.random(), name, subject: sub, grade, classes: cls, classCount: cnt, unitHours: unit, totalHours: cnt * unit });
+            sortTeachers();
+            document.getElementById('tName').value = ''; document.getElementById('tSubject').value = ''; document.getElementById('tClasses').value = ''; document.getElementById('tClassCount').value = 0;
+            renderTeacherList();
+        }
+
+        function initTimetable() { const con = document.getElementById('timetableBody'); con.innerHTML = ''; for (let p = 1; p <= 7; p++) { con.innerHTML += `<div class="tt-cell period-badge">${p}</div>`; for (let d = 0; d < 5; d++) { con.innerHTML += `<div id="${d}-${p}" class="tt-cell bg-white transition hover:bg-indigo-50" ondrop="drop(event)" ondragover="event.preventDefault()"></div>`; } } }
+
+        function renderDraggablePalette() { document.getElementById('draggableBlocks').innerHTML = blocks.map(b => `<div draggable="true" ondragstart="event.dataTransfer.setData('text','${b.id}')" class="bg-white border border-slate-200 p-3 rounded-lg mb-2 cursor-move shadow-sm text-sm font-bold text-slate-700 hover:shadow-md hover:border-indigo-300 hover:text-indigo-600 transition flex items-center"><i class="fas fa-grip-vertical mr-2 text-slate-300"></i> ${b.name}</div>`).join(''); }
+
+        function drop(ev) { ev.preventDefault(); const bid = ev.dataTransfer.getData('text'); const blk = blocks.find(b => b.id === bid); let tgt = ev.target; while (tgt && !tgt.classList.contains('tt-cell')) { tgt = tgt.parentElement; } if (!tgt) return; tgt.innerHTML = `<div class="block-item">${blk.name}</div>`; schedule[tgt.id] = bid; }
+
+        function updateSubjectSelect() { document.getElementById('subjectSelect').innerHTML = teachers.map(t => `<option value="${t.id}">${t.name} - ${t.subject} (${t.totalHours}h)</option>`).join(''); }
+
+        function createBlock() { if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; } const name = document.getElementById('blockName').value; const opts = Array.from(document.getElementById('subjectSelect').selectedOptions); if (!name || !opts.length) return alert('묶음 명칭과 과목을 선택하세요.'); const subjs = opts.map(o => { const t = teachers.find(x => x.id == o.value); return { tId: t.id, subject: t.subject, teacherName: t.name }; }); blocks.push({ id: 'blk' + Date.now(), name, subjects: subjs }); renderBlockList(); }
+
+        function renderBlockList() { document.getElementById('blockList').innerHTML = blocks.map(b => `<div class="bg-white border border-slate-200 p-4 rounded-lg mb-3 flex justify-between items-center shadow-sm hover:shadow transition"><div><div class="font-bold text-slate-800 text-lg mb-1">${b.name}</div><div class="text-sm text-slate-500"><i class="fas fa-users mr-1"></i> ${b.subjects.map(s => s.teacherName).join(', ')}</div></div><button onclick="blocks=blocks.filter(x=>x.id!='${b.id}');renderBlockList()" class="text-red-400 hover:text-red-600 p-2"><i class="fas fa-trash-alt"></i></button></div>`).join(''); }
+
+        function clearTimetable() { schedule = {}; initTimetable(); }
+
+        function printTimetable() {
+            const school = currentUser.member_school || '';
+            document.getElementById('printTitle').textContent = `${school} 시간표`;
+            const now = new Date();
+            document.getElementById('printDate').textContent = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} 출력`;
+            setTimeout(() => window.print(), 200);
+        }
+
+        function exportToExcel() {
+            if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
+            const headers = ['id', 'member_name', 'member_school', 'member_birth', 'grade', 'class_no', 'class_count', 'hours', 'day_of_week', 'period', 'subject'];
+            const ws_data = [headers];
+            teachers.forEach(t => { ws_data.push([t.id || '', t.name || '', currentUser.member_school || '', '', t.grade || '', t.classes || '', t.classCount || '', t.unitHours || '', '', '', t.subject || '']); });
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            XLSX.utils.book_append_sheet(wb, ws, "Teachers");
+            XLSX.writeFile(wb, "schoolus_timetable_data.xlsx");
+        }
+        
+        initUserInfo();
+        initTimetable();
+
+        function toggleMobileSidebar() {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+            document.getElementById('mobile-overlay').classList.toggle('active');
+        }
+        document.getElementById('mobile-overlay').onclick = function() {
+            document.getElementById('sidebar').classList.remove('mobile-open');
+            this.classList.remove('active');
+        };
+    </script>
+</body>
+</html>

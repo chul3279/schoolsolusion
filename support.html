@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>고객센터 - SchoolUs(스쿨어스)</title>
+    <meta name="description" content="SchoolUs(스쿨어스) 고객센터입니다. 자주 묻는 질문, 서비스 문의, 기술 지원을 받으실 수 있습니다.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.schoolwithus.co.kr/support.html">
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        
+        @keyframes slide-in {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .animate-slide-in {
+            animation: slide-in 0.3s ease-out;
+        }
+    </style>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- 헤더 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-xl flex items-center justify-center">
+                    <i class="fas fa-school"></i>
+                </div>
+                <span class="font-bold text-xl">School<span class="text-blue-600">Us</span></span>
+            </a>
+            <a href="/" class="text-gray-500 hover:text-gray-700 text-sm">
+                <i class="fas fa-home mr-1"></i> 홈으로
+            </a>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="flex-1 max-w-4xl mx-auto px-6 py-12 w-full">
+        
+        <!-- 상단 안내 -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 md:p-12 text-white mb-8 shadow-xl">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-3xl">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-black">고객센터</h1>
+                    <p class="text-blue-100">무엇이든 물어보세요. 빠르게 답변드리겠습니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 연락처 카드 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fas fa-phone-alt"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-900">전화 문의</h3>
+                        <p class="text-sm text-gray-500">빠른 상담이 필요할 때</p>
+                    </div>
+                </div>
+                <a href="tel:010-5291-6965" class="block text-2xl font-black text-green-600 hover:text-green-700 transition-colors">
+                    010-5291-6965
+                </a>
+                <p class="text-sm text-gray-500 mt-2">
+                    <i class="fas fa-clock mr-1"></i> 평일 09:00 ~ 18:00 (주말/공휴일 휴무)
+                </p>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-900">이메일 문의</h3>
+                        <p class="text-sm text-gray-500">상세한 문의가 필요할 때</p>
+                    </div>
+                </div>
+                <a href="mailto:free327912@gmail.com" class="block text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors break-all">
+                    free327912@gmail.com
+                </a>
+                <p class="text-sm text-gray-500 mt-2">
+                    <i class="fas fa-reply mr-1"></i> 영업일 기준 24시간 이내 답변
+                </p>
+            </div>
+        </div>
+
+        <!-- FAQ 섹션 -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 md:p-12 mb-8">
+            <h2 class="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
+                <i class="fas fa-question-circle text-purple-600"></i>
+                자주 묻는 질문 (FAQ)
+            </h2>
+            
+            <div class="space-y-4">
+                <!-- FAQ 아이템 1 -->
+                <details class="group border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <span class="font-bold text-gray-800">회원가입은 어떻게 하나요?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="p-5 text-gray-600 text-sm leading-relaxed border-t border-gray-200">
+                        <p>SchoolUs 메인 화면에서 <strong>"통합 로그인"</strong> 버튼 클릭 후, 하단의 <strong>"회원가입"</strong> 링크를 클릭하시면 됩니다.</p>
+                        <p class="mt-2">회원가입 시 필요한 정보:</p>
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li>이름, 생년월일, 전화번호, 주소</li>
+                            <li>아이디, 비밀번호</li>
+                            <li>소속 학교, 역할 선택 (교사/학생/학부모)</li>
+                            <li>학생: 학년, 반, 번호</li>
+                            <li>학부모: 자녀 정보</li>
+                        </ul>
+                    </div>
+                </details>
+                
+                <!-- FAQ 아이템 2 -->
+                <details class="group border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <span class="font-bold text-gray-800">아이디/비밀번호를 잊어버렸어요.</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="p-5 text-gray-600 text-sm leading-relaxed border-t border-gray-200">
+                        <p>로그인 화면에서 <strong>"아이디 찾기"</strong> 또는 <strong>"비밀번호 찾기"</strong>를 클릭하시면 가입 시 등록한 정보를 통해 찾으실 수 있습니다.</p>
+                        <p class="mt-2">찾기 기능을 이용하시기 어려운 경우, 고객센터로 연락 주시면 본인 확인 후 안내해 드리겠습니다.</p>
+                    </div>
+                </details>
+                
+                <!-- FAQ 아이템 3 -->
+                <details class="group border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <span class="font-bold text-gray-800">포인트는 어떻게 충전하나요?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="p-5 text-gray-600 text-sm leading-relaxed border-t border-gray-200">
+                        <p>로그인 후 메인 화면에서 <strong>"포인트 충전"</strong> 버튼을 클릭하시면 됩니다.</p>
+                        <p class="mt-2">충전 가능 금액: 1,000P / 5,000P / 10,000P / 50,000P / 직접 입력</p>
+                        <p class="mt-2">결제 방법: 신용카드, 계좌이체, 간편결제 등 (추후 제공 예정)</p>
+                    </div>
+                </details>
+                
+                <!-- FAQ 아이템 4 -->
+                <details class="group border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <span class="font-bold text-gray-800">회원정보를 수정하고 싶어요.</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="p-5 text-gray-600 text-sm leading-relaxed border-t border-gray-200">
+                        <p>로그인 후 사이드바(왼쪽 메뉴)에서 <strong>"회원정보 수정"</strong>을 클릭하시면 됩니다.</p>
+                        <p class="mt-2">수정 가능한 정보:</p>
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li>이름, 생년월일, 전화번호, 주소</li>
+                            <li>학부모: 자녀 이름, 자녀 생년월일</li>
+                            <li>비밀번호 변경</li>
+                        </ul>
+                        <p class="mt-2 text-orange-600"><i class="fas fa-exclamation-circle mr-1"></i> 아이디와 소속 학교는 변경할 수 없습니다.</p>
+                    </div>
+                </details>
+                
+                <!-- FAQ 아이템 5 -->
+                <details class="group border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <span class="font-bold text-gray-800">회원 탈퇴는 어떻게 하나요?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="p-5 text-gray-600 text-sm leading-relaxed border-t border-gray-200">
+                        <p>회원 탈퇴를 원하시는 경우, 고객센터로 연락 주시기 바랍니다.</p>
+                        <p class="mt-2"><strong>전화:</strong> 010-5291-6965</p>
+                        <p><strong>이메일:</strong> free327912@gmail.com</p>
+                        <p class="mt-3 text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i> 탈퇴 시 모든 데이터가 삭제되며, 복구가 불가능합니다.</p>
+                    </div>
+                </details>
+                
+                <!-- FAQ 아이템 6 -->
+                <details class="group border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <span class="font-bold text-gray-800">서비스 이용 중 오류가 발생했어요.</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="p-5 text-gray-600 text-sm leading-relaxed border-t border-gray-200">
+                        <p>서비스 이용 중 오류가 발생한 경우, 다음 정보와 함께 고객센터로 연락 주시면 빠르게 해결해 드리겠습니다.</p>
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li>아이디 (또는 이름, 학교)</li>
+                            <li>오류 발생 일시</li>
+                            <li>오류 내용 (가능하면 화면 캡처)</li>
+                            <li>사용 중인 기기/브라우저 정보</li>
+                        </ul>
+                    </div>
+                </details>
+                
+                <!-- FAQ 아이템 7 -->
+                <details class="group border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <span class="font-bold text-gray-800">학교 등록은 어떻게 하나요?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="p-5 text-gray-600 text-sm leading-relaxed border-t border-gray-200">
+                        <p>현재 등록되지 않은 학교의 경우, 고객센터로 문의해 주시면 학교 정보를 등록해 드립니다.</p>
+                        <p class="mt-2">필요한 정보:</p>
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li>학교명 (정확한 명칭)</li>
+                            <li>학교 주소</li>
+                            <li>학교급 (초등학교/중학교/고등학교/특수학교)</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <!-- 문의하기 폼 -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+            <h2 class="text-2xl font-black text-gray-900 mb-6 flex items-center gap-3">
+                <i class="fas fa-paper-plane text-blue-600"></i>
+                문의하기
+            </h2>
+            <p class="text-gray-600 mb-6">FAQ에서 원하는 답변을 찾지 못하셨나요? 아래 양식을 작성해 주시면 빠르게 답변드리겠습니다.</p>
+            
+            <form id="contact-form" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">이름 *</label>
+                        <input type="text" id="contact-name" required placeholder="홍길동" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">이메일 *</label>
+                        <input type="email" id="contact-email" required placeholder="example@email.com" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">문의 유형 *</label>
+                    <select id="contact-type" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                        <option value="">선택해 주세요</option>
+                        <option value="account">회원가입/로그인 문제</option>
+                        <option value="service">서비스 이용 문의</option>
+                        <option value="payment">결제/포인트 문의</option>
+                        <option value="error">오류/버그 신고</option>
+                        <option value="suggestion">제안/건의사항</option>
+                        <option value="other">기타</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">제목 *</label>
+                    <input type="text" id="contact-subject" required placeholder="문의 제목을 입력해 주세요" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">문의 내용 *</label>
+                    <textarea id="contact-message" required rows="6" placeholder="문의하실 내용을 상세히 작성해 주세요." class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none"></textarea>
+                </div>
+                
+                <div class="flex items-start gap-3">
+                    <input type="checkbox" id="contact-agree" required class="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <label for="contact-agree" class="text-sm text-gray-600">
+                        <a href="privacy.html" class="text-blue-600 font-bold hover:underline">개인정보처리방침</a>에 동의하며, 문의 답변을 위해 개인정보(이름, 이메일)가 수집·이용되는 것에 동의합니다. *
+                    </label>
+                </div>
+                
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-paper-plane"></i>
+                    문의 접수하기
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="bg-slate-900 text-slate-400 py-8">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <div class="flex justify-center gap-4 mb-4 text-sm">
+                <a href="terms.html" class="hover:text-white transition-colors">이용약관</a>
+                <span class="text-slate-600">|</span>
+                <a href="privacy.html" class="font-bold text-blue-400">개인정보처리방침</a>
+                <span class="text-slate-600">|</span>
+                <a href="support.html" class="text-white font-bold">고객센터</a>
+            </div>
+            <p class="text-xs">© 2025 SchoolUs by 어스 정보. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // ============================================
+        // 고객센터 문의 제출 (DB 저장)
+        // ============================================
+        document.getElementById('contact-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            
+            // 버튼 비활성화
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 제출 중...';
+            
+            try {
+                // 폼 데이터 수집
+                const formData = {
+                    customer_name: document.getElementById('contact-name').value.trim(),
+                    customer_email: document.getElementById('contact-email').value.trim(),
+                    customer_phone: '', // 전화번호 필드가 있다면 추가
+                    type_code: document.getElementById('contact-type').value,
+                    subject: document.getElementById('contact-subject').value.trim(),
+                    message: document.getElementById('contact-message').value.trim(),
+                    privacy_agreed: document.getElementById('contact-agree').checked
+                };
+                
+                // API 호출
+                const response = await fetch('/api/support/inquiry', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 성공 알림
+                    showAlert('success', '문의가 접수되었습니다!', `문의번호: #${result.inquiry_id}\n빠른 시일 내에 답변드리겠습니다.`);
+                    
+                    // 폼 초기화
+                    this.reset();
+                    
+                    // 페이지 상단으로 스크롤
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    // 오류 알림
+                    showAlert('error', '오류가 발생했습니다', result.message);
+                }
+                
+            } catch (error) {
+                console.error('문의 제출 오류:', error);
+                showAlert('error', '오류가 발생했습니다', '문의 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            } finally {
+                // 버튼 복원
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            }
+        });
+
+        // ============================================
+        // 알림 표시 함수
+        // ============================================
+        function showAlert(type, title, message) {
+            const alertDiv = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            
+            alertDiv.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-4 rounded-xl shadow-2xl z-50 max-w-md animate-slide-in`;
+            alertDiv.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <i class="fas ${icon} text-2xl mt-1"></i>
+                    <div class="flex-1">
+                        <h4 class="font-bold text-lg mb-1">${title}</h4>
+                        <p class="text-sm whitespace-pre-line">${message}</p>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            class="ml-2 hover:bg-white hover:bg-opacity-20 rounded-lg p-1 transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // 7초 후 자동 제거
+            setTimeout(() => {
+                if (alertDiv.parentElement) {
+                    alertDiv.remove();
+                }
+            }, 7000);
+        }
+
+        // ============================================
+        // 이메일 검증
+        // ============================================
+        document.getElementById('contact-email').addEventListener('blur', function() {
+            const email = this.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            if (email && !emailRegex.test(email)) {
+                this.classList.add('border-red-500');
+                this.classList.remove('border-gray-300');
+            } else {
+                this.classList.remove('border-red-500');
+                this.classList.add('border-gray-300');
+            }
+        });
+
+        // ============================================
+        // 문자 수 카운터
+        // ============================================
+        const messageField = document.getElementById('contact-message');
+        const maxLength = 2000;
+        
+        const counterDiv = document.createElement('div');
+        counterDiv.className = 'text-sm text-gray-500 mt-1 text-right';
+        counterDiv.innerHTML = `<span id="char-count">0</span> / ${maxLength.toLocaleString()}자`;
+        messageField.parentElement.appendChild(counterDiv);
+        
+        messageField.addEventListener('input', function() {
+            const length = this.value.length;
+            const charCount = document.getElementById('char-count');
+            
+            if (charCount) {
+                charCount.textContent = length.toLocaleString();
+            }
+            
+            if (length > maxLength) {
+                this.value = this.value.substring(0, maxLength);
+                if (charCount) {
+                    charCount.textContent = maxLength.toLocaleString();
+                }
+            }
+            
+            // 글자 수에 따른 색상 변경
+            if (length > maxLength * 0.9) {
+                counterDiv.classList.add('text-orange-500');
+                counterDiv.classList.remove('text-gray-500');
+            } else if (length === maxLength) {
+                counterDiv.classList.add('text-red-500');
+                counterDiv.classList.remove('text-orange-500', 'text-gray-500');
+            } else {
+                counterDiv.classList.remove('text-red-500', 'text-orange-500');
+                counterDiv.classList.add('text-gray-500');
+            }
+        });
+
+        console.log('SchoolUs 고객센터 페이지 로드 완료');
+    </script>
+</body>
+</html>

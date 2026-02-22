@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 결제 완료</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .success-animation {
+            animation: scaleIn 0.5s ease-out;
+        }
+        
+        @keyframes scaleIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full">
+        <!-- 처리 중 -->
+        <div id="processing-view" class="bg-white rounded-2xl shadow-xl p-8 text-center">
+            <div class="w-20 h-20 mx-auto mb-6 bg-blue-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-spinner loading-spinner text-4xl text-blue-500"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">결제 처리 중...</h1>
+            <p class="text-slate-500">잠시만 기다려주세요.</p>
+        </div>
+
+        <!-- 성공 -->
+        <div id="success-view" class="hidden bg-white rounded-2xl shadow-xl p-8 text-center">
+            <div class="w-20 h-20 mx-auto mb-6 bg-green-100 rounded-full flex items-center justify-center success-animation">
+                <i class="fas fa-check text-4xl text-green-500"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">결제가 완료되었습니다!</h1>
+            <p class="text-slate-500 mb-6">포인트가 정상적으로 충전되었습니다.</p>
+            
+            <div class="bg-slate-50 rounded-xl p-4 mb-6">
+                <div class="flex justify-between items-center mb-3 pb-3 border-b border-slate-200">
+                    <span class="text-slate-500">충전 금액</span>
+                    <span class="text-xl font-bold text-blue-600" id="charged-amount">0원</span>
+                </div>
+                <div class="flex justify-between items-center mb-3 pb-3 border-b border-slate-200">
+                    <span class="text-slate-500">주문번호</span>
+                    <span class="text-sm font-mono text-slate-700" id="order-id">-</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500">충전 후 포인트</span>
+                    <span class="text-xl font-bold text-green-600" id="new-point">0P</span>
+                </div>
+            </div>
+            
+            <button onclick="goBack()" class="w-full gradient-bg text-white py-3 rounded-xl font-bold hover:shadow-lg transition">
+                <i class="fas fa-arrow-left mr-2"></i>돌아가기
+            </button>
+        </div>
+
+        <!-- 실패 -->
+        <div id="error-view" class="hidden bg-white rounded-2xl shadow-xl p-8 text-center">
+            <div class="w-20 h-20 mx-auto mb-6 bg-red-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-times text-4xl text-red-500"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">결제 처리 실패</h1>
+            <p class="text-slate-500 mb-4" id="error-message">오류가 발생했습니다.</p>
+            
+            <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-left">
+                <p class="text-sm text-red-700" id="error-detail"></p>
+            </div>
+            
+            <div class="space-y-3">
+                <button onclick="retryPayment()" class="w-full gradient-bg text-white py-3 rounded-xl font-bold hover:shadow-lg transition">
+                    <i class="fas fa-redo mr-2"></i>다시 시도
+                </button>
+                <button onclick="goBack()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-200 transition">
+                    <i class="fas fa-arrow-left mr-2"></i>돌아가기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // URL 파라미터 파싱
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentKey = urlParams.get('paymentKey');
+        const orderId = urlParams.get('orderId');
+        const amount = urlParams.get('amount');
+        const memberId = urlParams.get('member_id');
+        const paymentType = urlParams.get('paymentType');
+
+        // 페이지 로드 시 결제 승인 처리
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('결제 성공 페이지 로드');
+            console.log('paymentKey:', paymentKey);
+            console.log('orderId:', orderId);
+            console.log('amount:', amount);
+            console.log('memberId:', memberId);
+            
+            if (!paymentKey || !orderId || !amount) {
+                showError('필수 결제 정보가 누락되었습니다.', '결제 정보를 확인할 수 없습니다. 충전 페이지에서 다시 시도해주세요.');
+                return;
+            }
+            
+            // 결제 승인 요청
+            confirmPayment();
+        });
+
+        // 결제 승인 API 호출
+        async function confirmPayment() {
+            try {
+                console.log('결제 승인 요청 시작...');
+                
+                const response = await fetch('/api/payment/confirm', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        paymentKey: paymentKey,
+                        orderId: orderId,
+                        amount: parseInt(amount),
+                        member_id: memberId
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('결제 승인 응답:', data);
+                
+                if (data.success) {
+                    showSuccess(data);
+                } else {
+                    showError('결제 승인 실패', data.message || '결제 승인 처리 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('결제 승인 오류:', error);
+                showError('서버 오류', '서버와 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            }
+        }
+
+        // 성공 화면 표시
+        function showSuccess(data) {
+            document.getElementById('processing-view').classList.add('hidden');
+            document.getElementById('success-view').classList.remove('hidden');
+            
+            document.getElementById('charged-amount').textContent = parseInt(amount).toLocaleString() + '원';
+            document.getElementById('order-id').textContent = orderId.length > 20 ? orderId.substring(0, 20) + '...' : orderId;
+            document.getElementById('new-point').textContent = (data.new_point || 0).toLocaleString() + 'P';
+            
+            // localStorage 업데이트
+            const userStr = localStorage.getItem('schoolus_user');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    user.member_point = data.new_point || 0;
+                    localStorage.setItem('schoolus_user', JSON.stringify(user));
+                } catch (e) {
+                    console.error('사용자 정보 업데이트 오류:', e);
+                }
+            }
+        }
+
+        // 에러 화면 표시
+        function showError(title, detail) {
+            document.getElementById('processing-view').classList.add('hidden');
+            document.getElementById('error-view').classList.remove('hidden');
+            document.getElementById('error-message').textContent = title;
+            document.getElementById('error-detail').textContent = detail;
+        }
+
+        // 다시 시도
+        function retryPayment() {
+            window.location.href = '/templates/charge.html';
+        }
+
+        // 돌아가기
+        function goBack() {
+            // 사용자 역할에 따라 다른 페이지로 이동
+            const userStr = localStorage.getItem('schoolus_user');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    if (user.member_roll === 'teacher') {
+                        window.location.href = '/highschool/tea.html';
+                    } else if (user.member_roll === 'student') {
+                        window.location.href = '/highschool/st.html';
+                    } else if (user.member_roll === 'parent') {
+                        window.location.href = '/highschool/fm.html';
+                    } else {
+                        window.location.href = '/';
+                    }
+                } catch (e) {
+                    window.location.href = '/';
+                }
+            } else {
+                window.location.href = '/';
+            }
+        }
+    </script>
+</body>
+</html>

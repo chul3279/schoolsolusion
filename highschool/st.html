@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 학생 대시보드</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.8); }
+        
+        .nav-item { position: relative; transition: all 0.3s ease; }
+        .nav-item::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 0; background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), transparent); transition: width 0.3s ease; }
+        .nav-item:hover::before { width: 100%; }
+        .nav-item.active { background: linear-gradient(90deg, rgba(59, 130, 246, 0.2), transparent); border-left: 3px solid #3b82f6; }
+        
+        .tab-btn { @apply px-5 py-3 text-sm font-bold text-slate-400 border-b-2 border-transparent hover:text-blue-500 transition-all duration-300 cursor-pointer; }
+        .tab-btn.active { @apply text-blue-600 border-blue-600 bg-blue-50/50; }
+        
+        .point-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .charge-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); transition: all 0.3s ease; }
+        .charge-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4); }
+        .avatar-ring { background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899); padding: 3px; }
+        
+        .stat-card { transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-4px); }
+
+        /* 모바일 사이드바 드로어 */
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        #mobile-overlay.active { display: block; }
+        #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
+
+        /* 모바일 큰 글씨 대응: 터치 영역 확대 + 사이드바 전체 스크롤 */
+        @media (max-width: 767px) {
+            #sidebar.mobile-open { overflow-y: auto !important; }
+            #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
+            #sidebar.mobile-open #sidebar-nav { height: auto !important; overflow: visible !important; }
+            .nav-item { min-height: 52px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 15px !important; }
+            #sidebar .space-y-1 > li { margin-bottom: 4px; }
+            #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
+            .tab-btn { min-height: 48px; padding: 12px 16px !important; font-size: 14px !important; white-space: nowrap; }
+        }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+        .cal-day-header { @apply text-xs font-bold text-slate-400 py-2; }
+        .cal-cell { @apply h-10 flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all duration-200 relative text-sm font-medium; background: white; }
+        .cal-cell:hover { @apply bg-slate-100 shadow-sm; transform: scale(1.05); }
+        .cal-cell.today { @apply bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30; }
+        .cal-cell.today .schedule-dot { background: white; }
+        .cal-cell.selected { @apply ring-2 ring-indigo-500 ring-offset-1; }
+        .cal-cell.other-month { @apply text-slate-300 bg-slate-50; }
+        .schedule-dot { position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: #6366f1; border-radius: 50%; }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 text-slate-800">
+
+    <div class="flex h-screen overflow-hidden">
+        <div id="mobile-overlay"></div>
+        <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 hidden md:flex flex-col flex-shrink-0 shadow-2xl">
+            <div class="p-6 border-b border-slate-700/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-school text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-black text-2xl text-white tracking-tight">SchoolUs</span>
+                        <p class="text-xs text-slate-400 font-medium">스마트 교육 플랫폼</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-5 border-b border-slate-700/50 bg-slate-800/30">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center">
+                        <i class="fas fa-building text-white text-sm"></i>
+                    </div>
+                    <div id="school-name-display" class="text-sm font-bold text-white truncate">-</div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="avatar-ring rounded-full">
+                        <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-white font-black text-xl" id="user-avatar">S</div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white font-bold text-lg truncate" id="user-name">-</p>
+                        <p class="text-xs text-slate-400 truncate" id="user-info">-</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4 point-card rounded-xl p-4 text-white relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+                    <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8"></div>
+                    <div class="relative">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-medium text-white/80">보유 포인트</span>
+                            <i class="fas fa-coins text-yellow-300"></i>
+                        </div>
+                        <div class="flex items-end gap-1">
+                            <span class="text-2xl font-black" id="user-point">0</span>
+                            <span class="text-sm font-bold mb-0.5">P</span>
+                        </div>
+                        <button onclick="openChargeModal()" class="mt-3 w-full charge-btn text-white text-xs font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2">
+                            <i class="fas fa-plus-circle"></i> 포인트 충전
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-4">
+                <ul class="space-y-1 px-3 mb-4">
+                    <li><a href="st.html" class="nav-item active flex items-center px-4 py-3 rounded-xl text-white font-medium"><i class="fas fa-desktop w-6 mr-3 text-blue-400"></i> 대시보드</a></li>
+                </ul>
+                <ul class="space-y-1 px-3">
+                    <li><a href="st/class_activity.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-users w-6 mr-3 text-green-400"></i> 학급활동</a></li>
+                    <li><a href="st/lesson_activity.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-book-reader w-6 mr-3 text-purple-400"></i> 수업활동</a></li>
+                    <li><a href="/highschool/admission/admission.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-graduation-cap w-6 mr-3 text-pink-400"></i> 입시상담</a></li>
+                </ul>
+            </nav>
+            
+            <div class="p-4 border-t border-slate-700/50 space-y-2">
+                <a href="mypage.html" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-blue-500/20 hover:text-blue-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-user-cog mr-2"></i> 회원정보 수정</a>
+                <a href="#" onclick="handleLogout()" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-red-500/20 hover:text-red-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-sign-out-alt mr-2"></i> 로그아웃</a>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col h-screen overflow-hidden">
+            <header class="bg-white/80 backdrop-blur-lg h-16 border-b border-slate-200/50 flex items-center justify-between px-6 shadow-sm z-10">
+                <div class="flex items-center gap-4">
+                    <button id="sidebar-toggle" onclick="toggleMobileSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars text-xl"></i></button>
+                    <div class="flex items-center text-slate-500">
+                        <span class="text-sm font-medium" id="current-semester-label"></span>
+                        <i class="fas fa-chevron-right mx-2 text-xs text-slate-300"></i>
+                        <span class="text-sm font-bold text-slate-700">나의 대시보드</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:flex items-center gap-3 bg-slate-100 rounded-xl px-4 py-2">
+                        <i class="fas fa-calendar-day text-blue-500"></i>
+                        <div class="text-right">
+                            <p class="font-bold text-slate-700 text-sm" id="current-date">-</p>
+                            <p class="text-xs text-slate-400">오늘</p>
+                        </div>
+                    </div>
+                    <button class="relative w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition">
+                        <i class="fas fa-bell"></i>
+                        <span id="notification-badge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">0</span>
+                    </button>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="mb-6">
+                    <h1 class="text-2xl font-black text-slate-800" id="welcome-message">환영합니다!</h1>
+                    <p class="text-slate-500 text-sm mt-1">오늘도 즐거운 학교 생활 되세요 ✨</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+                    <div class="stat-card glass-card rounded-2xl p-5 shadow-lg shadow-slate-200/50 flex items-center justify-between hover:shadow-xl">
+                        <div>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">다음 수업</p>
+                            <h3 class="text-xl font-black text-slate-800" id="next-class-subject">-</h3>
+                            <p class="text-sm text-blue-600 font-semibold" id="next-class-time">일정 없음</p>
+                        </div>
+                        <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-blue-500/30"><i class="fas fa-chalkboard-teacher"></i></div>
+                    </div>
+                    
+                    <div class="stat-card glass-card rounded-2xl p-5 shadow-lg shadow-slate-200/50 flex items-center justify-between hover:shadow-xl">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">오늘의 급식</p>
+                            <h3 class="text-lg font-black text-slate-800 mb-2">중식</h3>
+                            <div id="meal-menu" class="space-y-0.5 overflow-y-auto max-h-16"><p class="text-xs text-slate-500">로딩중...</p></div>
+                        </div>
+                        <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-green-500/30"><i class="fas fa-utensils"></i></div>
+                    </div>
+                    
+                    <div class="stat-card glass-card rounded-2xl p-5 shadow-lg shadow-slate-200/50 flex items-center justify-between hover:shadow-xl cursor-pointer" onclick="location.href='/highschool/st/lesson_activity.html'">
+                        <div>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">과제</p>
+                            <h3 class="text-xl font-black text-slate-800">과제함</h3>
+                            <p class="text-sm text-orange-500 font-semibold">바로가기 →</p>
+                        </div>
+                        <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-orange-500/30"><i class="fas fa-tasks"></i></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" style="height: calc(100vh - 320px);">
+                    <div class="glass-card rounded-2xl shadow-lg shadow-slate-200/50 flex flex-col overflow-hidden">
+                        <div class="flex border-b border-slate-100 px-2 pt-2 gap-1 bg-slate-50/50">
+                            <button onclick="loadTodayTimetable('my')" id="btn-tt-my" class="tab-btn active rounded-t-xl"><i class="fas fa-user-clock mr-2"></i>나의 시간표</button>
+                            <button onclick="loadTodayTimetable('class')" id="btn-tt-class" class="tab-btn rounded-t-xl"><i class="fas fa-users mr-2"></i>우리반</button>
+                        </div>
+                        <div class="p-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+                            <div class="flex items-center justify-between">
+                                <div><p class="text-xs text-white/70 font-medium">오늘</p><p class="text-lg font-black" id="today-day">-</p></div>
+                                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><i class="fas fa-calendar-day"></i></div>
+                            </div>
+                        </div>
+                        <div class="flex-1 p-4 overflow-auto bg-white"><div id="today-timetable" class="space-y-2"></div></div>
+                    </div>
+
+                    <!-- 공지사항 (학생: 등록 버튼 없음) -->
+                    <div class="glass-card rounded-2xl shadow-lg shadow-slate-200/50 flex flex-col overflow-hidden">
+                        <div class="p-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white">
+                            <div onclick="location.href='notice.html'" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
+                                <i class="fas fa-bullhorn"></i>
+                                <span class="font-bold">공지사항</span>
+                                <i class="fas fa-chevron-right text-xs opacity-60"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1 overflow-auto p-4 bg-white"><div id="notice-list" class="space-y-3"></div></div>
+                    </div>
+
+                    <!-- 학급활동 -->
+                    <div onclick="location.href='st_homeroom.html'" class="glass-card rounded-2xl shadow-lg shadow-slate-200/50 p-5 cursor-pointer hover:shadow-xl transition group">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                                    <i class="fas fa-chalkboard-user text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800">학급활동</h3>
+                                    <p class="text-sm text-slate-500">학급 공지, 상담 일정</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right text-slate-300 group-hover:text-green-500 transition"></i>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl shadow-lg shadow-slate-200/50 flex flex-col overflow-hidden">
+                        <div class="p-5 pb-3 bg-gradient-to-r from-indigo-500 to-purple-600">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-white flex items-center text-lg"><i class="far fa-calendar-alt mr-2"></i>일정</h3>
+                                <button onclick="openScheduleModal()" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition"><i class="fas fa-plus text-sm"></i></button>
+                            </div>
+                            <div class="flex justify-between items-center bg-white/10 rounded-xl px-4 py-2">
+                                <button onclick="changeMonth(-1)" class="text-white/70 hover:text-white transition"><i class="fas fa-chevron-left"></i></button>
+                                <span id="cal-title" class="text-sm font-bold text-white">-</span>
+                                <button onclick="changeMonth(1)" class="text-white/70 hover:text-white transition"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                        <div class="p-4 flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 to-white">
+                            <div class="calendar-grid mb-2">
+                                <div class="cal-day-header text-red-400">일</div><div class="cal-day-header">월</div><div class="cal-day-header">화</div><div class="cal-day-header">수</div><div class="cal-day-header">목</div><div class="cal-day-header">금</div><div class="cal-day-header text-blue-400">토</div>
+                            </div>
+                            <div id="calendar-body" class="calendar-grid mb-4"></div>
+                            <div class="border-t border-slate-100 pt-4">
+                                <p class="text-xs font-bold text-slate-500 mb-3 flex items-center"><i class="fas fa-list-ul mr-2 text-indigo-500"></i><span id="selected-date-title">오늘의 일정</span></p>
+                                <div id="selected-date-list" class="space-y-2 max-h-32 overflow-y-auto">
+                                    <div class="text-center py-6 text-slate-300"><i class="fas fa-inbox text-2xl mb-2"></i><p class="text-xs font-medium">일정이 없습니다.</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 일정 등록 모달 (학생: self만) -->
+    <div id="schedule-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div class="modal-overlay absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeScheduleModal()"></div>
+        <div class="modal-content glass-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden border border-white/50">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-white">
+                <button onclick="closeScheduleModal()" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center"><i class="far fa-calendar-plus text-2xl"></i></div>
+                    <div><h2 id="schedule-modal-title" class="text-xl font-black">내 일정 등록</h2><p id="schedule-modal-desc" class="text-sm text-white/80">개인 일정을 추가하세요</p></div>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">일정 제목</label>
+                    <input type="text" id="schedule-title" placeholder="일정 제목" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none font-medium text-slate-700">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">날짜 및 시간</label>
+                    <input type="datetime-local" id="schedule-date" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none font-medium text-slate-700">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">내용 (선택)</label>
+                    <textarea id="schedule-content" rows="3" placeholder="상세 내용" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none font-medium text-slate-700 resize-none"></textarea>
+                </div>
+                <p class="text-xs text-slate-400 mb-4"><i class="fas fa-lock mr-1"></i>내 일정은 나만 볼 수 있습니다.</p>
+                <button onclick="submitSchedule()" id="schedule-submit-btn" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-black py-4 rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all">등록하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 포인트 충전 모달 -->
+    <div id="charge-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div class="modal-overlay absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeChargeModal()"></div>
+        <div class="modal-content glass-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden border border-white/50">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white">
+                <button onclick="closeChargeModal()" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center"><i class="fas fa-coins text-2xl"></i></div>
+                    <div>
+                        <h2 class="text-xl font-black">포인트 충전</h2>
+                        <p class="text-sm text-white/80">원하는 금액을 선택하세요</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <button onclick="selectChargeAmount(1000)" class="charge-amount-btn p-4 rounded-xl border-2 border-slate-200 hover:border-amber-500 hover:bg-amber-50 transition text-center">
+                        <span class="text-lg font-black text-slate-700">1,000</span><span class="text-sm text-slate-500">P</span>
+                    </button>
+                    <button onclick="selectChargeAmount(5000)" class="charge-amount-btn p-4 rounded-xl border-2 border-slate-200 hover:border-amber-500 hover:bg-amber-50 transition text-center">
+                        <span class="text-lg font-black text-slate-700">5,000</span><span class="text-sm text-slate-500">P</span>
+                    </button>
+                    <button onclick="selectChargeAmount(10000)" class="charge-amount-btn p-4 rounded-xl border-2 border-slate-200 hover:border-amber-500 hover:bg-amber-50 transition text-center">
+                        <span class="text-lg font-black text-slate-700">10,000</span><span class="text-sm text-slate-500">P</span>
+                    </button>
+                    <button onclick="selectChargeAmount(50000)" class="charge-amount-btn p-4 rounded-xl border-2 border-slate-200 hover:border-amber-500 hover:bg-amber-50 transition text-center">
+                        <span class="text-lg font-black text-slate-700">50,000</span><span class="text-sm text-slate-500">P</span>
+                    </button>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">직접 입력</label>
+                    <div class="relative">
+                        <input type="number" id="custom-charge-amount" placeholder="충전할 포인트 입력" class="w-full px-4 py-3 pr-12 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 outline-none font-bold text-slate-700">
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">P</span>
+                    </div>
+                </div>
+                <button onclick="processCharge()" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black py-4 rounded-xl shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all">충전하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let studentInfo = null;
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userStr = localStorage.getItem('schoolus_user');
+            if (!userStr) { alert('로그인이 필요합니다.'); window.location.href = '/'; return; }
+            currentUser = JSON.parse(userStr);
+            if (!currentUser.school_id) console.warn('school_id가 없습니다.');
+            
+            updateCurrentDate();
+            (function() {
+                const now = new Date(), m = now.getMonth() + 1;
+                const year = m >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+                const semester = (m >= 3 && m <= 8) ? 1 : 2;
+                const el = document.getElementById('current-semester-label');
+                if (el) el.textContent = `${year}학년도 ${semester}학기`;
+            })();
+            displayBasicInfo();
+            loadStudentInfo();
+            loadTodayMeal();
+            loadTodayTimetable('my');
+            loadNoticeList();
+            loadSchedules();
+            updateNotificationBadge();
+            initPushNotifications();
+        });
+
+        function getSchoolParams() {
+            const params = new URLSearchParams();
+            if (currentUser.school_id) params.append('school_id', currentUser.school_id);
+            if (currentUser.member_school) params.append('member_school', currentUser.member_school);
+            return params;
+        }
+
+        function displayBasicInfo() {
+            const name = currentUser?.member_name || '학생';
+            const school = currentUser?.member_school || '-';
+            setText('school-name-display', school);
+            setText('user-name', name + ' 학생');
+            setText('user-avatar', name.charAt(0) || 'S');
+            setText('welcome-message', `${name} 학생, 반갑습니다!`);
+        }
+
+        function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text || '-'; }
+
+        function updateCurrentDate() {
+            const now = new Date();
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            setText('current-date', now.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }));
+            setText('today-day', dayNames[now.getDay()] + '요일');
+        }
+
+        async function loadStudentInfo() {
+            try {
+                const params = new URLSearchParams();
+                params.append('member_id', currentUser.member_id);
+                if (currentUser.school_id) params.append('school_id', currentUser.school_id);
+                
+                const response = await fetch(`/api/student/info?${params.toString()}`);
+                const data = await response.json();
+                
+                if (!data.success || !data.student) return;
+                studentInfo = data.student;
+                
+                if (studentInfo.member_school) setText('school-name-display', studentInfo.member_school);
+                if (studentInfo.member_name) {
+                    setText('user-name', studentInfo.member_name + ' 학생');
+                    setText('user-avatar', studentInfo.member_name.charAt(0));
+                    setText('welcome-message', `${studentInfo.member_name} 학생, 반갑습니다!`);
+                }
+                
+                let infoText = '';
+                if (studentInfo.class_grade && studentInfo.class_no) {
+                    infoText = `${studentInfo.class_grade}학년 ${studentInfo.class_no}반`;
+                    if (studentInfo.class_num) infoText += ` ${studentInfo.class_num}번`;
+                }
+                setText('user-info', infoText || '학급 정보 없음');
+                displayPoint(studentInfo.point);
+                
+                if (studentInfo.school_id && !currentUser.school_id) {
+                    currentUser.school_id = studentInfo.school_id;
+                    localStorage.setItem('schoolus_user', JSON.stringify(currentUser));
+                }
+            } catch (error) { console.error('학생 정보 로드 오류:', error); }
+        }
+
+        function displayPoint(point) {
+            const el = document.getElementById('user-point');
+            if (!el) return;
+            if (point === 'free' || point === 'Free') el.textContent = 'Free';
+            else if (point === null || point === undefined || point === '') el.textContent = '0';
+            else { const num = parseInt(point); el.textContent = isNaN(num) ? '0' : num.toLocaleString(); }
+        }
+
+        async function loadTodayMeal() {
+            const container = document.getElementById('meal-menu');
+            if (!container) return;
+            try {
+                const now = new Date();
+                const month = now.getMonth() + 1;
+                const day = now.getDate();
+                const params = getSchoolParams();
+                params.append('month', month);
+                params.append('day', day);
+                const response = await fetch(`/api/meal/today?${params.toString()}`);
+                const data = await response.json();
+                if (data.success && data.meal?.menu) {
+                    const items = data.meal.menu.split(/[\n,]/).filter(item => item.trim());
+                    container.innerHTML = items.map(item => `<p class="text-sm text-slate-600">• ${item.trim()}</p>`).join('');
+                } else container.innerHTML = '<p class="text-xs text-slate-400">오늘의 급식 정보가 없습니다.</p>';
+            } catch (error) { container.innerHTML = '<p class="text-xs text-slate-400">급식 정보를 불러올 수 없습니다.</p>'; }
+        }
+
+        async function loadTodayTimetable(type) {
+            document.getElementById('btn-tt-my')?.classList.toggle('active', type === 'my');
+            document.getElementById('btn-tt-class')?.classList.toggle('active', type === 'class');
+            const container = document.getElementById('today-timetable');
+            if (!container) return;
+            container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-spinner fa-spin text-2xl"></i></div>';
+            try {
+                if (studentInfo?.class_grade && studentInfo?.class_no) {
+                    const params = getSchoolParams();
+                    params.append('grade', studentInfo.class_grade);
+                    params.append('class_no', studentInfo.class_no);
+                    const response = await fetch(`/api/timetable/class?${params.toString()}`);
+                    const data = await response.json();
+                    if (data.success && data.timetable?.length > 0) {
+                        let html = '';
+                        for (let i = 1; i <= 7; i++) {
+                            const lesson = data.timetable.find(t => t.period == i);
+                            if (lesson) {
+                                if (lesson.changed) {
+                                    const reason = lesson.change_reason || '변경';
+                                    html += `<div class="flex items-center gap-3 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200"><div class="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center font-bold text-sm">${i}</div><div class="flex-1"><p class="font-bold text-orange-700">${lesson.subject} <span class="text-xs font-normal bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full ml-1">${reason}</span></p><p class="text-xs text-orange-400">${lesson.member_name || ''}</p></div></div>`;
+                                } else {
+                                    html += `<div class="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100"><div class="w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold text-sm">${i}</div><div class="flex-1"><p class="font-bold text-slate-800">${lesson.subject}</p><p class="text-xs text-slate-500">${lesson.member_name || ''}</p></div></div>`;
+                                }
+                            } else {
+                                html += `<div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100"><div class="w-8 h-8 bg-slate-300 text-white rounded-lg flex items-center justify-center font-bold text-sm">${i}</div><div class="flex-1"><p class="text-slate-400 text-sm">-</p></div></div>`;
+                            }
+                        }
+                        container.innerHTML = html;
+                    } else container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-calendar-times text-2xl mb-2"></i><p class="text-xs">오늘 시간표가 없습니다.</p></div>';
+                } else container.innerHTML = '<div class="text-center py-8 text-slate-400"><i class="fas fa-info-circle text-2xl mb-2"></i><p class="text-xs">학급 정보가 없습니다.</p></div>';
+            } catch (error) { container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-exclamation-circle text-2xl mb-2"></i><p class="text-xs">시간표를 불러올 수 없습니다.</p></div>'; }
+        }
+
+        // 공지사항 로드 (school_id 기준, 전체 공개 - role 파라미터 없음)
+        async function loadNoticeList() {
+            const container = document.getElementById('notice-list');
+            if (!container) return;
+            try {
+                const params = getSchoolParams();
+                const response = await fetch(`/api/notice/list?${params.toString()}`);
+                const data = await response.json();
+                if (data.success && data.notices?.length > 0) {
+                    container.innerHTML = data.notices.map(notice => `
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-amber-300 hover:bg-amber-50/30 transition cursor-pointer" 
+                             onclick="location.href='notice.html?id=${notice.id}'">
+                            <div class="flex items-center gap-3">
+                                <span class="w-8 h-8 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">${notice.row_num}</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-slate-800 text-sm truncate">${notice.title}</p>
+                                    <p class="text-xs text-slate-500 mt-1">${notice.member_name} · ${notice.created_at}</p>
+                                </div>
+                                <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
+                            </div>
+                        </div>
+                    `).join('');
+                } else container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-inbox text-2xl mb-2"></i><p class="text-xs">공지사항이 없습니다.</p></div>';
+            } catch (error) { container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-inbox text-2xl mb-2"></i><p class="text-xs">공지사항이 없습니다.</p></div>'; }
+        }
+
+        function openChargeModal() { window.location.href = '/templates/charge.html'; }
+        function closeChargeModal() { document.getElementById('charge-modal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
+        function selectChargeAmount(amount) { document.getElementById('custom-charge-amount').value = amount; }
+        function processCharge() { window.location.href = '/templates/charge.html'; }
+
+        let scheduleData = [];
+        let selectedDate = null;
+
+        async function loadSchedules() {
+            try {
+                const params = getSchoolParams();
+                params.append('member_id', currentUser.member_id);
+                params.append('member_roll', currentUser.member_roll);
+                params.append('year', currentYear);
+                params.append('month', currentMonth + 1);
+                
+                const response = await fetch(`/api/schedule/list?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    scheduleData = data.schedules || [];
+                    renderCalendar();
+                    if (selectedDate) showDaySchedules(selectedDate);
+                    else showTodaySchedules();
+                }
+            } catch (error) { console.error('일정 로드 오류:', error); }
+        }
+
+        function renderCalendar() {
+            const calBody = document.getElementById('calendar-body');
+            const calTitle = document.getElementById('cal-title');
+            if (!calBody || !calTitle) return;
+            calTitle.textContent = `${currentYear}년 ${currentMonth + 1}월`;
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const today = new Date();
+            const scheduleDays = scheduleData.map(s => s.day);
+            
+            let html = '';
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                const prevDate = new Date(currentYear, currentMonth, -firstDay.getDay() + i + 1);
+                html += `<div class="cal-cell other-month">${prevDate.getDate()}</div>`;
+            }
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+                const isToday = today.getFullYear() === currentYear && today.getMonth() === currentMonth && today.getDate() === d;
+                const hasSchedule = scheduleDays.includes(d);
+                const isSelected = selectedDate === d;
+                html += `<div class="cal-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="selectDate(${d})">
+                    ${d}${hasSchedule ? '<span class="schedule-dot"></span>' : ''}
+                </div>`;
+            }
+            const remaining = 42 - (firstDay.getDay() + lastDay.getDate());
+            for (let i = 1; i <= remaining; i++) html += `<div class="cal-cell other-month">${i}</div>`;
+            calBody.innerHTML = html;
+        }
+
+        function changeMonth(delta) {
+            currentMonth += delta;
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            else if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            selectedDate = null;
+            loadSchedules();
+        }
+
+        function selectDate(day) {
+            selectedDate = day;
+            renderCalendar();
+            showDaySchedules(day);
+        }
+
+        function showTodaySchedules() {
+            const today = new Date();
+            if (today.getFullYear() === currentYear && today.getMonth() === currentMonth) {
+                showDaySchedules(today.getDate());
+            } else {
+                setText('selected-date-title', '이번 달 일정');
+                const container = document.getElementById('selected-date-list');
+                if (scheduleData.length === 0) {
+                    container.innerHTML = '<div class="text-center py-6 text-slate-300"><i class="fas fa-inbox text-2xl mb-2"></i><p class="text-xs font-medium">일정이 없습니다.</p></div>';
+                } else {
+                    container.innerHTML = scheduleData.slice(0, 5).map(s => createScheduleItem(s)).join('');
+                }
+            }
+        }
+
+        function showDaySchedules(day) {
+            setText('selected-date-title', `${currentMonth + 1}월 ${day}일 일정`);
+            const container = document.getElementById('selected-date-list');
+            const daySchedules = scheduleData.filter(s => s.day === day);
+            
+            if (daySchedules.length === 0) {
+                container.innerHTML = '<div class="text-center py-6 text-slate-300"><i class="fas fa-inbox text-2xl mb-2"></i><p class="text-xs font-medium">일정이 없습니다.</p></div>';
+            } else {
+                container.innerHTML = daySchedules.map(s => createScheduleItem(s)).join('');
+            }
+        }
+
+        function createScheduleItem(s) {
+            const isOwner = s.member_id === currentUser.member_id;
+            return `
+                <div class="p-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <p class="font-bold text-slate-800 text-sm">${s.title}</p>
+                            <p class="text-xs text-slate-500 mt-1">${s.schedule_date.split(' ')[1] || ''}</p>
+                        </div>
+                        ${isOwner ? `<div class="flex gap-1">
+                            <button onclick="editSchedule(${s.id})" class="text-indigo-400 hover:text-indigo-600 p-1"><i class="fas fa-pen text-xs"></i></button>
+                            <button onclick="deleteSchedule(${s.id})" class="text-red-400 hover:text-red-600 p-1"><i class="fas fa-trash text-xs"></i></button>
+                        </div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function deleteSchedule(id) {
+            if (!confirm('이 일정을 삭제하시겠습니까?')) return;
+            try {
+                const response = await fetch('/api/schedule/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, member_id: currentUser.member_id })
+                });
+                const data = await response.json();
+                if (data.success) { alert(data.message); loadSchedules(); }
+                else alert(data.message);
+            } catch (error) { alert('삭제 중 오류가 발생했습니다.'); }
+        }
+
+        let editingScheduleId = null;
+
+        function openScheduleModal() {
+            editingScheduleId = null;
+            document.getElementById('schedule-modal-title').textContent = '내 일정 등록';
+            document.getElementById('schedule-modal-desc').textContent = '개인 일정을 추가하세요';
+            document.getElementById('schedule-submit-btn').textContent = '등록하기';
+            document.getElementById('schedule-title').value = '';
+            document.getElementById('schedule-content').value = '';
+            const now = new Date();
+            if (selectedDate) now.setFullYear(currentYear, currentMonth, selectedDate);
+            const pad = n => String(n).padStart(2, '0');
+            const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            document.getElementById('schedule-date').value = dateStr;
+            document.getElementById('schedule-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function editSchedule(id) {
+            const s = scheduleData.find(item => item.id === id);
+            if (!s) return;
+            editingScheduleId = id;
+            document.getElementById('schedule-modal-title').textContent = '일정 수정';
+            document.getElementById('schedule-modal-desc').textContent = '일정을 수정하세요';
+            document.getElementById('schedule-submit-btn').textContent = '수정하기';
+            document.getElementById('schedule-title').value = s.title;
+            document.getElementById('schedule-content').value = s.content || '';
+            document.getElementById('schedule-date').value = s.schedule_date.replace(' ', 'T');
+            document.getElementById('schedule-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeScheduleModal() {
+            editingScheduleId = null;
+            document.getElementById('schedule-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        async function submitSchedule() {
+            const title = document.getElementById('schedule-title').value.trim();
+            const schedule_date = document.getElementById('schedule-date').value;
+            const content = document.getElementById('schedule-content').value.trim();
+            
+            if (!title) return alert('일정 제목을 입력해주세요.');
+            if (!schedule_date) return alert('날짜를 선택해주세요.');
+            
+            try {
+                const url = editingScheduleId ? '/api/schedule/update' : '/api/schedule/create';
+                const body = {
+                    school_id: currentUser.school_id,
+                    member_school: currentUser.member_school,
+                    member_id: currentUser.member_id,
+                    member_name: currentUser.member_name,
+                    member_roll: currentUser.member_roll,
+                    read_roll: 'self',
+                    schedule_date, title, content
+                };
+                if (editingScheduleId) body.id = editingScheduleId;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert(data.message);
+                    closeScheduleModal();
+                    loadSchedules();
+                } else alert(data.message);
+            } catch (error) { alert('처리 중 오류가 발생했습니다.'); }
+        }
+
+        // ============================================
+        // 실시간 푸시 알림 시스템
+        // ============================================
+        let lastCheckTime = null;
+        let notificationInterval = null;
+
+        async function updateNotificationBadge() {
+            try {
+                const params = getSchoolParams();
+                const today = new Date().toISOString().slice(0, 10);
+                const noticeRes = await fetch(`/api/notice/list?${params.toString()}`);
+                const noticeData = await noticeRes.json();
+                const todayNotices = (noticeData.notices || []).filter(n => n.created_at && n.created_at.startsWith(today)).length;
+                
+                const now = new Date();
+                params.set('year', now.getFullYear());
+                params.set('month', now.getMonth() + 1);
+                params.set('member_id', currentUser.member_id);
+                params.set('member_roll', currentUser.member_roll);
+                const schedRes = await fetch(`/api/schedule/list?${params.toString()}`);
+                const schedData = await schedRes.json();
+                const todaySchedules = (schedData.schedules || []).filter(s => s.date_only === today).length;
+                
+                const total = todayNotices + todaySchedules;
+                const badge = document.getElementById('notification-badge');
+                if (total > 0) {
+                    badge.textContent = total > 99 ? '99+' : total;
+                    badge.classList.remove('hidden');
+                    badge.classList.add('flex');
+                } else {
+                    badge.classList.add('hidden');
+                    badge.classList.remove('flex');
+                }
+            } catch (e) { console.error('알림 배지 오류:', e); }
+        }
+
+        function initPushNotifications() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+            initCheckTime().then(() => {
+                notificationInterval = setInterval(checkNewNotifications, 30000);
+            });
+        }
+
+        async function initCheckTime() {
+            try {
+                const params = getSchoolParams();
+                params.set('member_id', currentUser.member_id);
+                params.set('member_roll', currentUser.member_roll);
+                params.set('since', '2099-12-31 23:59:59');
+                const res = await fetch(`/api/notifications/check?${params.toString()}`);
+                const data = await res.json();
+                if (data.success) lastCheckTime = data.server_time;
+            } catch (e) { lastCheckTime = new Date().toISOString().slice(0, 19).replace('T', ' '); }
+        }
+
+        async function checkNewNotifications() {
+            if (!lastCheckTime || !currentUser) return;
+            try {
+                const params = getSchoolParams();
+                params.set('member_id', currentUser.member_id);
+                params.set('member_roll', currentUser.member_roll);
+                params.set('since', lastCheckTime);
+                const res = await fetch(`/api/notifications/check?${params.toString()}`);
+                const data = await res.json();
+                if (!data.success) return;
+
+                lastCheckTime = data.server_time;
+
+                data.new_notices.forEach(n => {
+                    showPushNotification('📢 새 공지사항', `${n.title} - ${n.member_name}`);
+                });
+                data.new_schedules.forEach(s => {
+                    showPushNotification('📅 새 일정', `${s.title} - ${s.member_name}`);
+                });
+
+                if (data.new_notices.length > 0 || data.new_schedules.length > 0) {
+                    updateNotificationBadge();
+                    loadNoticeList();
+                    loadSchedules();
+                }
+            } catch (e) { console.error('알림 폴링 오류:', e); }
+        }
+
+        function showPushNotification(title, body) {
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+            try {
+                const noti = new Notification(title, {
+                    body: body,
+                    icon: '/static/icon-192.png',
+                    tag: title + '-' + Date.now(),
+                    requireInteraction: false
+                });
+                noti.onclick = () => { window.focus(); noti.close(); };
+                setTimeout(() => noti.close(), 5000);
+            } catch (e) { console.error('푸시 알림 오류:', e); }
+        }
+
+        function handleLogout() { if (confirm('로그아웃 하시겠습니까?')) { clearInterval(notificationInterval); localStorage.removeItem('schoolus_user'); window.location.href = '/'; } }
+
+        // 모바일 사이드바 토글
+        function toggleMobileSidebar() {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+            document.getElementById('mobile-overlay').classList.toggle('active');
+        }
+        document.getElementById('mobile-overlay').onclick = function() {
+            document.getElementById('sidebar').classList.remove('mobile-open');
+            this.classList.remove('active');
+        };
+    </script>
+</body>
+</html>

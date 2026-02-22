@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+
+# VAPID keys (민감정보)
+vapid_keys.json
+vapid_private.pem
+vapid_public.pem
+
+# OS
+.DS_Store
+*.swp
+*.swo
+
+# Temp
+새 텍스트 문서.txt
+-------
+.claude/
