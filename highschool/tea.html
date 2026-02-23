@@ -153,6 +153,7 @@
                         <li><a href="tea/subject.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-book-open w-6 mr-3 text-purple-400"></i> 교과업무</a></li>
                         <li><a href="/highschool/admission/admission.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-graduation-cap w-6 mr-3 text-pink-400"></i> 입시상담</a></li>
                         <li><a href="tea/schooladmin.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-cog w-6 mr-3 text-yellow-400"></i> 행정업무</a></li>
+                        <li><a href="tea/message.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-comments w-6 mr-3 text-cyan-400"></i> 메시지 <span id="sidebar-msg-badge" class="hidden ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">0</span></a></li>
                     </ul>
                 </nav>
                 <div id="nav-scroll-hint" class="nav-scroll-hint hidden"><i class="fas fa-chevron-down"></i></div>
@@ -183,6 +184,10 @@
                             <p class="text-xs text-slate-400">오늘</p>
                         </div>
                     </div>
+                    <a href="tea/message.html" class="relative w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition" title="메시지">
+                        <i class="fas fa-comments"></i>
+                        <span id="header-msg-badge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">0</span>
+                    </a>
                     <button class="relative w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition" onclick="toggleNotificationPanel()">
                         <i class="fas fa-bell"></i>
                         <span id="notification-badge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">0</span>
@@ -1172,6 +1177,24 @@
             toast.classList.remove('translate-x-full');
             setTimeout(function() { toast.classList.add('translate-x-full'); }, 1500);
         }
+
+    </script>
+    <script>
+    // 안 읽은 메시지 뱃지 폴링 (60초)
+    function pollUnreadMessages() {
+        fetch('/api/message/unread').then(r=>r.json()).then(data=>{
+            if(data.success){
+                const cnt=data.total_unread||0;
+                ['sidebar-msg-badge','header-msg-badge'].forEach(id=>{
+                    const el=document.getElementById(id);if(!el)return;
+                    if(cnt>0){el.textContent=cnt>99?'99+':cnt;el.classList.remove('hidden');}
+                    else{el.classList.add('hidden');}
+                });
+            }
+        }).catch(()=>{});
+    }
+    pollUnreadMessages();
+    setInterval(pollUnreadMessages, 60000);
     </script>
     <div id="toast" class="fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-[9999] bg-green-500 text-white">
         <span id="toastMessage"></span>

@@ -136,6 +136,7 @@
                 <ul class="space-y-1 px-3">
                     <li><a href="fm_homeroom.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-users w-6 mr-3 text-green-400"></i> 학급정보</a></li>
                     <li><a href="/highschool/admission/admission.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-graduation-cap w-6 mr-3 text-pink-400"></i> 입시상담</a></li>
+                    <li><a href="fm/message.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-comments w-6 mr-3 text-cyan-400"></i> 메시지 <span id="sidebar-msg-badge" class="hidden ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">0</span></a></li>
                 </ul>
             </nav>
             
@@ -163,6 +164,10 @@
                             <p class="text-xs text-slate-400">오늘</p>
                         </div>
                     </div>
+                    <a href="fm/message.html" class="relative w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition" title="메시지">
+                        <i class="fas fa-comments"></i>
+                        <span id="header-msg-badge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">0</span>
+                    </a>
                     <button class="relative w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition">
                         <i class="fas fa-bell"></i>
                         <span id="notification-badge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">0</span>
@@ -1013,6 +1018,11 @@
             document.getElementById('sidebar').classList.remove('mobile-open');
             this.classList.remove('active');
         };
+
+    </script>
+    <script>
+    function pollUnreadMessages(){fetch('/api/message/unread').then(r=>r.json()).then(data=>{if(data.success){const cnt=data.total_unread||0;['sidebar-msg-badge','header-msg-badge'].forEach(id=>{const el=document.getElementById(id);if(!el)return;if(cnt>0){el.textContent=cnt>99?'99+':cnt;el.classList.remove('hidden');}else{el.classList.add('hidden');}});}}).catch(()=>{});}
+    pollUnreadMessages(); setInterval(pollUnreadMessages,60000);
     </script>
 </body>
 </html>

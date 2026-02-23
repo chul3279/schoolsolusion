@@ -234,3 +234,52 @@ def send_push_to_student(school_id, student_id, title, body, url='/'):
     finally:
         cursor.close()
         conn.close()
+
+
+def send_push_to_user(member_id, title, body, url='/'):
+    """특정 사용자 1명에게 푸시 알림 발송 (메신저 등 개인 알림용)."""
+    result = {'sent': 0, 'failed': 0, 'expired': 0}
+    conn = get_db_connection()
+    if not conn:
+        return result
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE member_id = %s", (member_id,))
+        subscriptions = cursor.fetchall()
+        if not subscriptions:
+            return result
+        config = _load_vapid_config()
+        private_key_path = config.get('private_key_path', '')
+        claims_email = config.get('claims_email', 'mailto:admin@schoolwithus.co.kr')
+        payload = json.dumps({'title': title, 'body': body, 'icon': '/static/icons/icon-192x192.png', 'url': url})
+        expired_endpoints = []
+        seen = set()
+        for sub in subscriptions:
+            if sub['endpoint'] in seen:
+                continue
+            seen.add(sub['endpoint'])
+            try:
+                webpush(subscription_info={'endpoint': sub['endpoint'], 'keys': {'p256dh': sub['p256dh'], 'auth': sub['auth']}},
+                        data=payload, vapid_private_key=private_key_path, vapid_claims={"sub": claims_email})
+                result['sent'] += 1
+            except WebPushException as e:
+                if e.response and e.response.status_code in (404, 410):
+                    expired_endpoints.append(sub['endpoint'])
+                else:
+                    print(f"[PushHelper] send_push_to_user error: {e}")
+                result['failed'] += 1
+            except Exception as e:
+                print(f"[PushHelper] send_push_to_user error: {e}")
+                result['failed'] += 1
+        if expired_endpoints:
+            fmt = ','.join(['%s'] * len(expired_endpoints))
+            cursor.execute(f"DELETE FROM push_subscriptions WHERE endpoint IN ({fmt})", expired_endpoints)
+            conn.commit()
+            result['expired'] = len(expired_endpoints)
+        return result
+    except Exception as ex:
+        print(f"[PushHelper] send_push_to_user error: {ex}")
+        return result
+    finally:
+        cursor.close()
+        conn.close()

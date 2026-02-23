@@ -11,13 +11,7 @@ homeroom_gen_bp = Blueprint('homeroom_gen', __name__)
 # ============================================
 # Gemini API 설정 (5키 로테이션)
 # ============================================
-GEMINI_API_KEYS = [
-    '***GEMINI_KEY_REMOVED***',
-    '***GEMINI_KEY_REMOVED***',
-    '***GEMINI_KEY_REMOVED***',
-    '***GEMINI_KEY_REMOVED***',
-    '***GEMINI_KEY_REMOVED***'
-]
+from config.gemini_keys import GEMINI_API_KEYS
 _gemini_key_cycle = itertools.cycle(GEMINI_API_KEYS)
 GEMINI_MODEL = 'gemini-2.5-flash'
 GEMINI_TEMPERATURE = 0.3

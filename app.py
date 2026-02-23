@@ -371,6 +371,7 @@ from routes.class_maker import class_maker_bp
 from routes.push import push_bp
 from routes.attendance import attendance_bp
 from routes.letter import letter_bp
+from routes.message import message_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(teacher_bp)
@@ -393,6 +394,7 @@ app.register_blueprint(class_maker_bp)
 app.register_blueprint(push_bp)
 app.register_blueprint(attendance_bp)
 app.register_blueprint(letter_bp)
+app.register_blueprint(message_bp)
 
 
 # ============================================

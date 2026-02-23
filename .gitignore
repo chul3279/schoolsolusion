@@ -8,6 +8,9 @@ vapid_keys.json
 vapid_private.pem
 vapid_public.pem
 
+# API Keys (민감정보)
+config/gemini_keys.py
+
 # OS
 .DS_Store
 *.swp

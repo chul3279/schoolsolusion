@@ -336,7 +336,11 @@
                 <div class="glass-card rounded-2xl shadow-lg shadow-slate-200/50 overflow-hidden">
                     <!-- 탭 메뉴 -->
                     <div class="flex flex-wrap gap-2 p-4 pb-0 bg-gradient-to-b from-slate-100 to-transparent">
-                        <button onclick="switchTab('university')" id="tab-university" class="tab-btn active">
+                        <button onclick="switchTab('entrance2027')" id="tab-entrance2027" class="tab-btn active">
+                            <i class="fas fa-graduation-cap text-rose-400"></i>
+                            <span class="tab-label">2027년 대학입시</span>
+                        </button>
+                        <button onclick="switchTab('university')" id="tab-university" class="tab-btn">
                             <i class="fas fa-university text-pink-400"></i>
                             <span class="tab-label">대학별 입시요강</span>
                         </button>
@@ -367,8 +371,79 @@
 
                     <div class="p-6 bg-white">
 
+                        <!-- ═══════════ 2027년 대학입시 ═══════════ -->
+                        <div id="content-entrance2027" class="tab-content active">
+                            <div class="mb-6">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-rose-100 to-rose-200 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-graduation-cap text-2xl text-rose-500"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-slate-800">2027학년도 대학입시 정보</h3>
+                                        <p class="text-sm text-slate-500">2027학년도 대학입학전형 관련 핵심 자료를 한눈에 확인하세요.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="entrance2027-cards">
+                                <!-- 카드 1: 시행계획 요약 -->
+                                <div class="entrance-card bg-white border-2 border-slate-200 rounded-2xl overflow-hidden hover:border-rose-300 hover:shadow-lg transition-all duration-300 cursor-pointer" onclick="openEntranceCard(1)">
+                                    <div class="h-2 bg-gradient-to-r from-rose-400 to-pink-500"></div>
+                                    <div class="p-5">
+                                        <div class="flex items-center gap-2 mb-3">
+                                            <span class="w-8 h-8 bg-rose-100 rounded-lg flex items-center justify-center text-rose-600 font-bold text-sm">1</span>
+                                            <h4 class="font-bold text-slate-800">시행계획 요약</h4>
+                                            <span class="ml-auto text-xs text-rose-500 bg-rose-50 px-2 py-1 rounded-full font-medium">NEW</span>
+                                        </div>
+                                        <p class="text-sm text-slate-500 leading-relaxed">2027학년도 대학입학전형 시행계획 핵심 요약 — 모집인원, 전형유형, 주요 일정, 상위 15개 대학 전형 등</p>
+                                        <div class="mt-3 flex items-center text-xs text-slate-400">
+                                            <i class="fas fa-calendar-alt mr-1"></i> 2026.02 등록
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 카드 2: 빈 슬롯 -->
+                                <div class="entrance-card bg-white border-2 border-dashed border-slate-200 rounded-2xl overflow-hidden opacity-60">
+                                    <div class="h-2 bg-gradient-to-r from-slate-200 to-slate-300"></div>
+                                    <div class="p-5 flex flex-col items-center justify-center min-h-[140px]">
+                                        <i class="fas fa-plus-circle text-3xl text-slate-300 mb-2"></i>
+                                        <p class="text-sm text-slate-400 font-medium">콘텐츠 준비 중</p>
+                                        <p class="text-xs text-slate-300 mt-1">추가 자료가 등록되면 표시됩니다</p>
+                                    </div>
+                                </div>
+                                <!-- 카드 3: 빈 슬롯 -->
+                                <div class="entrance-card bg-white border-2 border-dashed border-slate-200 rounded-2xl overflow-hidden opacity-60">
+                                    <div class="h-2 bg-gradient-to-r from-slate-200 to-slate-300"></div>
+                                    <div class="p-5 flex flex-col items-center justify-center min-h-[140px]">
+                                        <i class="fas fa-plus-circle text-3xl text-slate-300 mb-2"></i>
+                                        <p class="text-sm text-slate-400 font-medium">콘텐츠 준비 중</p>
+                                        <p class="text-xs text-slate-300 mt-1">추가 자료가 등록되면 표시됩니다</p>
+                                    </div>
+                                </div>
+                                <!-- 카드 4: 빈 슬롯 -->
+                                <div class="entrance-card bg-white border-2 border-dashed border-slate-200 rounded-2xl overflow-hidden opacity-60">
+                                    <div class="h-2 bg-gradient-to-r from-slate-200 to-slate-300"></div>
+                                    <div class="p-5 flex flex-col items-center justify-center min-h-[140px]">
+                                        <i class="fas fa-plus-circle text-3xl text-slate-300 mb-2"></i>
+                                        <p class="text-sm text-slate-400 font-medium">콘텐츠 준비 중</p>
+                                        <p class="text-xs text-slate-300 mt-1">추가 자료가 등록되면 표시됩니다</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 카드 상세 보기 모달 -->
+                            <div id="entrance-detail-overlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-4 pb-4 overflow-y-auto" onclick="if(event.target===this)closeEntranceDetail()">
+                                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 my-auto">
+                                    <div class="sticky top-0 bg-white rounded-t-2xl border-b border-slate-200 px-6 py-4 flex items-center justify-between z-10">
+                                        <h3 id="entrance-detail-title" class="text-lg font-bold text-slate-800"></h3>
+                                        <button onclick="closeEntranceDetail()" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center transition">
+                                            <i class="fas fa-times text-slate-500"></i>
+                                        </button>
+                                    </div>
+                                    <div id="entrance-detail-body" class="p-6 summary-content"></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- ═══════════ 대학별 입시요강 ═══════════ -->
-                        <div id="content-university" class="tab-content active">
+                        <div id="content-university" class="tab-content">
                             <!-- 셀렉터 -->
                             <div class="selector-group bg-gradient-to-r from-slate-50 to-pink-50/30 rounded-xl p-5 mb-6 border border-slate-200">
                                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
@@ -1379,6 +1454,311 @@
         document.getElementById('sidebar').classList.remove('mobile-open');
         this.classList.remove('active');
     };
+
+    /* ═══ 2027 대학입시 카드 콘텐츠 ═══ */
+    const entranceCardData = {
+        1: {
+            title: '2027학년도 대학입학전형 시행계획 요약',
+            markdown: `# 2027학년도 대학입학전형 시행계획 요약
+
+> **용도:** SchoolUs 입시상담 참고 자료
+> **기준일:** 2026-02-23
+> **출처:** 한국대학교육협의회(대교협), 각 대학 입학처 발표 자료
+> **상태:** 시행계획 발표 완료 / 세부 모집요강 미발표 (수시 2026년 5\\~6월, 정시 2026년 9월 예상)
+> **적용 교육과정:** 2015 개정 교육과정 (현행 마지막 학년도)
+
+---
+
+## 1. 전체 모집인원 현황
+
+| 구분 | 2025학년도 | 2026학년도 | 2027학년도 | 전년 대비 |
+|------|-----------|-----------|-----------|----------|
+| **전체** | 340,934명 | 345,179명 | **345,717명** | +538명 |
+| **수시** | 271,481명 (79.6%) | 275,848명 (79.9%) | **277,583명 (80.3%)** | +1,735명 |
+| **정시** | 69,453명 (20.4%) | 69,331명 (20.1%) | **68,134명 (19.7%)** | -1,197명 |
+
+### 핵심 트렌드
+- 수시모집 비율 80% 돌파, 정시모집 20% 이하로 축소
+- 학생부위주 전형 238,679명 (+1,275명 증가)
+- 수능위주 전형 63,195명 (-707명 감소)
+
+### 권역별 수시·정시 비율
+
+| 권역 | 수시 | 정시 | 수시 비율 | 정시 비율 |
+|------|------|------|----------|----------|
+| 수도권 | 88,756명 | 46,031명 | 65.8% | 34.2% |
+| 비수도권 | 188,827명 | 22,103명 | 89.5% | 10.5% |
+
+---
+
+## 2. 전형유형별 선발 기조
+
+| 전형유형 | 수시 비율 | 정시 비율 | 비고 |
+|---------|----------|----------|------|
+| 학생부교과 | 42.0% | - | 수시 최대 비중 |
+| 학생부종합 | 24.3% | - | 주요 대학 핵심 전형 |
+| 논술위주 | 3.4% | - | 일부 상위권 대학 |
+| 실기/실적 | 10.6% | 7.3% | 예체능 중심 |
+| 수능위주 | - | 92.7% | 정시 핵심 |
+
+- 수시모집의 85.8%를 학생부위주 전형으로 선발
+- 정시모집의 92.7%를 수능위주 전형으로 선발
+- 학생부위주 전형: 학생부교과 341명 증가, 학생부종합 392명 증가
+- 수도권 지역균형선발(학교장추천 전형) 전년 대비 786명 증가
+
+---
+
+## 3. 주요 대입 일정
+
+### 수시모집
+
+| 일정 | 날짜 |
+|------|------|
+| 재외국민·외국인 특별전형 원서접수 | 2026.07.06(월) ~ 07.10(금) |
+| **수시모집 원서접수** | **2026.09.07(월) ~ 09.11(금)** (3일 이상) |
+| 전형 실시 (논술·면접·서류평가 등) | 2026.09.12(토) ~ 12.17(목) |
+| 수능시험 | **2026.11.19(목)** |
+| 수능 성적 통지 | 2026.12.11(금) |
+| **최초 합격자 발표** | **2026.12.18(금)까지** |
+| 합격자 등록 | 2026.12.21(일) ~ 12.23(화) |
+| 미등록 충원 합격 통보 | 2026.12.24(목) ~ 12.29(화) |
+| 충원합격 등록 마감 | 2026.12.30(수) |
+
+### 정시모집
+
+| 일정 | 날짜 |
+|------|------|
+| **정시모집 원서접수** | **2027.01.04(월) ~ 01.07(목)** (3일 이상) |
+| 전형 실시 | 원서접수 마감 다음 날 ~ |
+| 합격자 발표 | 대학별 자율 |
+| 합격자 등록 | 대학별 자율 |
+| 미등록 충원 합격 통보 | 2027.02.13(토) ~ 02.17(수) |
+| 충원합격 등록 마감 | 2027.02.18(목) |
+| **추가모집 공지·모집인원 발표** | **2027.02.18(목) 18시 이후** |
+| 추가모집 전형 실시 | 2027.02.19(금) 09시부터 |
+
+### 전년도(2026학년도) 대비 변경 포인트
+- 수시 원서접수: 1일 앞당김 (9/8→9/7)
+- 수능시험: 6일 뒤로 (11/13→11/19)
+- 전체적으로 수능 이전 일정은 하루 앞당기고, 이후 일정은 3\\~6일 늦춰짐
+- 수시 전형 기간이 전년 대비 7일 늘어남
+
+---
+
+## 4. 상위 15개 대학 주요 전형 요약
+
+### 4-1. 서울대학교
+
+| 구분 | 전형명 | 전형방법 | 수능최저 |
+|------|--------|---------|---------|
+| 수시 | 지역균형전형 | 1단계: 서류100% (3배수) → 2단계: 1단계70%+면접30% | 3개 영역 등급합 7 이내 |
+| 수시 | 일반전형 | 1단계: 서류100% (2배수) → 2단계: 1단계50%+면접50% (일부) | 미적용 (미술대·사범대 체육교육과 제외) |
+| 정시 | 일반전형 | 수능+교과평가 | - |
+| 정시 | 지역균형전형 | 수능+교과평가 | - |
+
+**주요 변경사항 (2027학년도)**
+- 수시모집만 실시하는 모집단위 대폭 확대: 국어국문학과, 중어중문학과, 영어영문학과, 불어불문학과, 독어독문학과, 서어서문학과, 언어학과, 아시아언어문명학부, 고고미술사학과, 철학과, 종교학과, 미학과 등
+- 공과대학 정시 지역균형전형: 광역 선발 → 입학 후 학과 선택권 보장 (기계공학부, 전기·정보공학부, 컴퓨터공학부, 화학생물공학부, 산업공학과, 항공우주공학과)
+- 첨단분야 정원 조정: 컴퓨터공학부, 산업공학과 모집인원 변경
+- 교과이수기준 Ⅰ(교과영역별) + Ⅱ(선택과목 유형별) 동시 충족 권장
+- 정시 교과평가 유지 (정성평가 방식, A/B/C 등급)
+- 의과대학·치의학과 지역균형전형: MMI 면접 유지
+
+### 4-2. 연세대학교 (서울)
+
+| 구분 | 전형명 | 전형방법 | 수능최저 |
+|------|--------|---------|---------|
+| 수시 | 추천형 (교과) | 교과100% | 인문: 3합7 / 자연: 3합8 (자연 수학·과탐 필수) |
+| 수시 | 활동우수형 (종합) | 1단계: 서류100% (일정배수) → 2단계: 1단계60%+면접40% | 인문: 3합7 / 자연: 3합8 |
+| 수시 | 국제형 (종합) | 1단계: 서류100% (5배수) → 2단계: 1단계60%+면접40% | - |
+| 수시 | 논술전형 | 논술100% | **미적용** |
+| 정시 | 일반전형 | 수능+학생부(교과) | - |
+
+**주요 변경사항 (2027학년도)**
+- 국제형(국내고) 2단계 평가대상: 4배수 → **5배수** 확대, 복수지원 가능
+- 상경대학 응용통계학과: 인문계열 → **통합계열** 변경, 논술 시험유형 자연계열 방식으로 변경
+- 정시모집에서 학생부(교과) 정량평가 반영 도입
+- 상경대학 정시 수능 반영비율 변경: 국어200 + 수학200 + 영어100 + 탐구100
+
+### 4-3. 고려대학교
+
+| 구분 | 전형명 | 전형방법 | 수능최저 |
+|------|--------|---------|---------|
+| 수시 | 학교추천 (교과) | 교과90%+서류10% | 4합 8 이내, 한국사 4등급 |
+| 수시 | 학업우수 (종합) | 1단계: 서류100% → 2단계: 1단계70%+면접30% | 4합 8 이내, 한국사 4등급 |
+| 수시 | 계열적합 (종합) | 서류100% | - |
+| 수시 | 논술전형 | 논술100% | 4합 8 이내, 한국사 4등급 |
+| 정시 | 일반전형 (가군) | 수능+학생부(교과) | - |
+
+**주요 변경사항 (2027학년도)**
+- 치과대학 치의예과 논술전형 **미선발** → 교과·종합·기균 전형으로 재배분
+- 학부대학 정시 모집군: 다군 → **가군** 이동 (전 모집단위 가군 선발)
+- 특수교육전형·특성화고전형: 전형별 선발 → **계열별 선발** (인문/자연/의학/체능/예능)
+- 생명과학부: 정시 전용 → 수시 학생부종합 활동우수형에서도 선발 시작
+- 정시 학생부(교과) 정량평가 유지
+
+### 4-4. 성균관대학교
+
+| 구분 | 전형명 | 전형방법 | 비고 |
+|------|--------|---------|------|
+| 수시 | 학교장추천 (교과) | 교과+서류 | 서류평가 포함 |
+| 수시 | 학과모집 (종합) | 서류100% | - |
+| 수시 | 탐구형인재 (종합) | 서류100% | - |
+| 수시 | 논술우수 | 논술전형 | - |
+| 정시 | 일반전형 (가/나) | 수능100% (사범대 학생부 반영) | - |
+
+**주요 변경사항 (2027학년도)**
+- 정시 사범대학: 학생부 정성평가 반영 (나머지 모집단위는 수능100% 유지)
+- 자유전공계열 입학생: 교양기초 이수 후 2학년 진급 시 전공 진입
+
+### 4-5. 한양대학교
+
+| 구분 | 전형명 | 전형방법 | 비고 |
+|------|--------|---------|------|
+| 수시 | 추천형 (교과) | 교과100% | 학교장추천 |
+| 수시 | 추천형 (종합) | 서류100% | - |
+| 수시 | 서류형 (종합) | 서류100% | - |
+| 수시 | 면접형 (종합) | 1단계: 서류 → 2단계: 면접 | - |
+| 수시 | 논술전형 | 논술+학생부교과 | - |
+| 정시 | 수능 (가/나/다) | 수능+학생부(서류) 정성평가 | - |
+
+**2027학년도 모집인원 변동**
+
+| 전형 | 2026 | 2027 | 증감 |
+|------|------|------|------|
+| 학생부교과 | 333 | 336 | +3 |
+| 학생부종합 | 1,173 | 1,180 | +7 |
+| 논술 | 232 | 232 | - |
+| 실기/실적 | 108 | 110 | +2 |
+| 수시 비율 | 56.5% | 56.5% | - |
+| 정시 수능 | 1,277 | 1,291 | +14 |
+| 정시 실기/실적 | 86 | 87 | +1 |
+| 정시 비율 | 43.5% | 43.5% | - |
+
+---
+
+## 5. 2027학년도 주요 변화 포인트 (상담 시 강조)
+
+### 5-1. 정시모집 학생부 반영 대학 확대
+
+| 대학 | 도입 시기 | 학생부 반영 방식 |
+|------|----------|----------------|
+| 서울대 | 2023학년도~ | 서류 정성평가 (교과평가 A/B/C) |
+| 고려대 | 2024학년도~ | 교과 정량평가 |
+| 연세대 | **2026학년도~** | 교과 정량평가 |
+| 한양대 | **2026학년도~** | 서류 정성평가 |
+| 성균관대 | **2026학년도~** | 사범대학만 서류 정성평가 |
+| 동국대 | **2027학년도~** | 수능90%+학생부10% (일부 모집단위) |
+| 중앙대 | **2027학년도~** | 비교과(출결) 반영 |
+
+**상담 포인트:** 정시 준비 학생도 학교생활 충실도가 점점 더 중요해지고 있음. 자퇴·검정고시 전환 신중히 판단 필요.
+
+### 5-2. 수시 학생부교과전형 서류평가 도입 확대
+
+| 대학 | 교과전형 서류평가 | 비고 |
+|------|-----------------|------|
+| 건국대 | ○ | 기존 시행 |
+| 경희대 | ○ | 기존 시행 |
+| 고려대 | ○ (교과90%+서류10%) | 기존 시행 |
+| 동국대 | ○ | 기존 시행 |
+| 성균관대 | ○ | 기존 시행 |
+| 한양대 | ○ | 기존 시행 |
+| 서울시립대 | ○ (10%→**20%** 상향) | 2027 강화 |
+| 숙명여대 | ○ (교과70%+**서류30%** 신설) | 2027 신설 |
+
+**상담 포인트:** 단순 내신 성적만으로 합격이 어려워지는 추세. 교과이수이력, 봉사활동, 리더십 등 비교과 요소도 관리 필요.
+
+### 5-3. 수능최저학력기준 비교 (SKY)
+
+| 대학 | 전형 | 인문 | 자연 | 의·치·약 |
+|------|------|------|------|---------|
+| 서울대 | 지역균형 | 3개영역 합7 | 3개영역 합7 | 3개영역 합7 |
+| 서울대 | 일반전형 | 미적용 | 미적용 | 미적용 |
+| 연세대 | 추천형/활동우수형 | 3합7 | 3합8 (수학·과탐 필수) | 별도기준 |
+| 연세대 | 논술 | **미적용** | **미적용** | - |
+| 고려대 | 학교추천/학업우수/논술 | 4합8 (한국사4) | 4합8 (한국사4) | 4합5\\~8 |
+
+### 5-4. 사회통합전형 의무선발
+
+- 「고등교육법 시행령」에 따라 사회통합전형 의무선발 시행
+- 자립지원 대상자 범위 확대 (아동복지법 개정 반영)
+- 농어촌학생, 저소득층, 특수교육대상자 등 정원 외 선발 강화
+
+### 5-5. 예체능 실기고사 공정성 강화
+
+- 3인 이상 평가위원 참여 권장
+- 평가위원 중 1/3 이상 외부 평가위원 포함 권장
+- 세부 모집단위별 모집인원을 모집요강에 표기 의무화
+- 복수 추천 및 무작위 선정 방식 등 적용 권장
+
+---
+
+## 6. 2028학년도 대비 선제 안내사항
+
+> 현재 고1 학생(2028학년도 입시 대상)부터 대대적 변화 예정
+
+| 항목 | 내용 |
+|------|------|
+| 교육과정 | 2022 개정 교육과정 적용 |
+| 내신 등급 | 9등급 → **5등급제** 전환 |
+| 고교학점제 | 전면 시행 |
+| 수능 개편 | 통합형 수능 확대, 선택과목 체계 변경 |
+| 대입 개편 | 서울대 등 주요 대학 전형 구조 변화 예고 |
+
+**상담 포인트:** 2027학년도는 현행 2015 개정 교육과정의 **마지막 학년도**. 재수 시 2028학년도 개편 제도 적용을 받게 되므로 현역 합격의 중요성이 매우 높음.
+
+---
+
+## 7. 상담 시 유의사항
+
+### 정보 정확성
+- 본 자료는 **시행계획** 기준이며, 세부 **모집요강**은 2026년 5\\~9월 발표 예정
+- 모집인원은 교육부 정원 조정, 수시 미충원 이월 등으로 변경 가능
+- 최종 확인은 각 대학 입학처 홈페이지 필수
+
+### 주요 참고 사이트
+- 대입정보포털 어디가: adiga.kr
+- 한국대학교육협의회: kcue.or.kr
+- EBSi 입시정보: ebsi.co.kr
+- 서울진로진학정보센터: jinhak.or.kr
+
+### 상담 체크리스트
+1. 학생 현재 학년 확인 (2027 vs 2028학년도 적용 여부)
+2. 내신 성적 + 모의고사 성적 종합 분석
+3. 수시 6회 지원 전략 수립 (교과/종합/논술 조합)
+4. 수능최저학력기준 충족 가능성 평가
+5. 정시 학생부 반영 대학 확대에 따른 학교생활 관리 강조
+6. 2028학년도 개편 영향 (재수 리스크) 안내
+7. 학교장추천 전형 교내 경쟁 상황 파악
+
+---
+
+*본 문서는 SchoolUs 입시상담 기능의 참고 자료로 작성되었습니다.*
+*모집요강 발표 시 세부 데이터 업데이트가 필요합니다.*
+*최종 수정일: 2026-02-23*`
+        },
+        2: { title: '', markdown: '' },
+        3: { title: '', markdown: '' },
+        4: { title: '', markdown: '' }
+    };
+
+    function openEntranceCard(num) {
+        const data = entranceCardData[num];
+        if (!data || !data.markdown) return;
+        document.getElementById('entrance-detail-title').textContent = data.title;
+        document.getElementById('entrance-detail-body').innerHTML = marked.parse(data.markdown);
+        document.getElementById('entrance-detail-overlay').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeEntranceDetail() {
+        document.getElementById('entrance-detail-overlay').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeEntranceDetail();
+    });
     </script>
 </body>
 </html>
