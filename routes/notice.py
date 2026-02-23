@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from utils.db import get_db_connection, sanitize_input
 
 notice_bp = Blueprint('notice', __name__)
@@ -125,6 +125,10 @@ def get_notice_detail():
 # ============================================
 @notice_bp.route('/api/notice/create', methods=['POST'])
 def create_notice():
+    # [보안] 교사만 공지 등록 가능
+    if session.get('user_role') != 'teacher':
+        return jsonify({'success': False, 'message': '교사만 공지사항을 등록할 수 있습니다.'}), 403
+
     conn = None
     cursor = None
     try:

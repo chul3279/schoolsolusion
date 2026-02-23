@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공지사항 - SchoolUs</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-slate-50 to-amber-50 min-h-screen">
+    
+    <!-- 헤더 -->
+    <header class="bg-white/80 backdrop-blur-lg border-b border-slate-200/50 sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <button onclick="goBack()" class="flex items-center gap-2 text-slate-600 hover:text-slate-800 transition">
+                <i class="fas fa-arrow-left"></i>
+                <span class="font-medium">뒤로가기</span>
+            </button>
+            <h1 class="font-bold text-slate-800 flex items-center gap-2">
+                <i class="fas fa-bullhorn text-amber-500"></i>
+                공지사항
+            </h1>
+            <div class="w-20"></div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="max-w-4xl mx-auto px-4 py-6">
+        
+        <!-- 공지사항 목록 뷰 -->
+        <div id="list-view">
+            <div class="glass-card rounded-2xl shadow-xl overflow-hidden">
+                <!-- 헤더 -->
+                <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-5 text-white flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-bullhorn text-xl"></i>
+                        <span class="font-bold text-lg">공지사항</span>
+                    </div>
+                    <button id="write-btn" onclick="openWriteModal()" class="hidden px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold transition">
+                        <i class="fas fa-plus mr-1"></i>글쓰기
+                    </button>
+                </div>
+
+                <!-- 목록 테이블 -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-slate-500 w-16">번호</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">제목</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-slate-500 w-24">작성자</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-slate-500 w-32">작성일</th>
+                            </tr>
+                        </thead>
+                        <tbody id="notice-list">
+                            <tr>
+                                <td colspan="4" class="text-center py-20 text-slate-400">
+                                    <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                                    <p>불러오는 중...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 공지사항 상세 뷰 -->
+        <div id="detail-view" class="hidden">
+            <div class="glass-card rounded-2xl shadow-xl overflow-hidden">
+                <!-- 헤더 -->
+                <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">공지</span>
+                    </div>
+                    <h2 id="detail-title" class="text-2xl font-black mb-3">제목</h2>
+                    <div class="flex items-center gap-4 text-sm text-white/80">
+                        <span><i class="fas fa-user mr-1"></i><span id="detail-author">작성자</span></span>
+                        <span><i class="fas fa-clock mr-1"></i><span id="detail-date">날짜</span></span>
+                    </div>
+                </div>
+
+                <!-- 본문 -->
+                <div class="p-6 min-h-[300px] border-b border-slate-100">
+                    <div id="detail-content" class="prose max-w-none text-slate-700 whitespace-pre-wrap leading-relaxed">
+                        내용
+                    </div>
+                </div>
+
+                <!-- 수정/삭제 버튼 -->
+                <div id="detail-actions" class="hidden p-4 flex justify-end gap-3 bg-slate-50">
+                    <button onclick="openEditModal()" class="px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold text-sm transition">
+                        <i class="fas fa-edit mr-1"></i>수정
+                    </button>
+                    <button onclick="openDeleteModal()" class="px-5 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-sm transition">
+                        <i class="fas fa-trash mr-1"></i>삭제
+                    </button>
+                </div>
+            </div>
+
+            <!-- 목록으로 버튼 -->
+            <div class="mt-6 text-center">
+                <button onclick="showListView()" class="px-8 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold transition">
+                    <i class="fas fa-list mr-2"></i>목록으로
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 글쓰기 모달 -->
+    <div id="write-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeWriteModal()"></div>
+        <div class="glass-card rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 overflow-hidden">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-5 text-white flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fas fa-edit mr-2"></i>공지사항 등록</h3>
+                <button onclick="closeWriteModal()" class="text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">제목</label>
+                    <input type="text" id="write-title" placeholder="제목을 입력하세요" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 outline-none font-medium">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">내용</label>
+                    <textarea id="write-content" rows="8" placeholder="내용을 입력하세요" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 outline-none font-medium resize-none"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">수정/삭제 비밀번호 (4자리 이상)</label>
+                    <input type="password" id="write-password" placeholder="비밀번호" maxlength="20" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 outline-none font-medium">
+                </div>
+                <p class="text-xs text-slate-400 mb-4"><i class="fas fa-info-circle mr-1"></i>공지사항은 학교 전체에 공개됩니다.</p>
+                <button onclick="submitWrite()" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black py-4 rounded-xl shadow-lg hover:shadow-xl transition">
+                    등록하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 수정 모달 -->
+    <div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeEditModal()"></div>
+        <div class="glass-card rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-5 text-white flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fas fa-edit mr-2"></i>공지사항 수정</h3>
+                <button onclick="closeEditModal()" class="text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">제목</label>
+                    <input type="text" id="edit-title" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none font-medium">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">내용</label>
+                    <textarea id="edit-content" rows="8" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none font-medium resize-none"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">비밀번호 확인</label>
+                    <input type="password" id="edit-password" placeholder="등록 시 설정한 비밀번호" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 outline-none font-medium">
+                </div>
+                <button onclick="submitEdit()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-black py-4 rounded-xl shadow-lg hover:shadow-xl transition">
+                    수정 완료
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 삭제 모달 -->
+    <div id="delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
+        <div class="glass-card rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
+            <div class="bg-gradient-to-r from-red-500 to-pink-600 p-5 text-white flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fas fa-trash mr-2"></i>공지사항 삭제</h3>
+                <button onclick="closeDeleteModal()" class="text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <p class="text-slate-600 mb-4 text-center">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-2xl mb-2 block"></i>
+                    정말 삭제하시겠습니까?<br>
+                    <span class="text-sm text-slate-400">삭제 후 복구할 수 없습니다.</span>
+                </p>
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">비밀번호 확인</label>
+                    <input type="password" id="delete-password" placeholder="등록 시 설정한 비밀번호" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-red-500 outline-none font-medium">
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="closeDeleteModal()" class="flex-1 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold transition">취소</button>
+                    <button onclick="submitDelete()" class="flex-1 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition">삭제</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let noticeList = [];
+        let currentNotice = null;
+        let currentNoticeId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const userStr = localStorage.getItem('schoolus_user');
+            if (!userStr) {
+                alert('로그인이 필요합니다.');
+                window.location.href = '/';
+                return;
+            }
+            currentUser = JSON.parse(userStr);
+            
+            // 교사만 글쓰기 버튼 표시
+            if (currentUser.member_roll === 'teacher') {
+                document.getElementById('write-btn').classList.remove('hidden');
+            }
+            
+            // URL에서 id 확인
+            const params = new URLSearchParams(window.location.search);
+            const noticeId = params.get('id');
+            
+            if (noticeId) {
+                currentNoticeId = noticeId;
+                loadNoticeDetail(noticeId);
+            } else {
+                loadNoticeList();
+            }
+        });
+
+        function getSchoolParams() {
+            const params = new URLSearchParams();
+            if (currentUser.school_id) params.append('school_id', currentUser.school_id);
+            if (currentUser.member_school) params.append('member_school', currentUser.member_school);
+            return params;
+        }
+
+        // 목록 로드
+        async function loadNoticeList() {
+            const container = document.getElementById('notice-list');
+            try {
+                const params = getSchoolParams();
+                const response = await fetch(`/api/notice/list?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success && data.notices?.length > 0) {
+                    noticeList = data.notices;
+                    container.innerHTML = data.notices.map(notice => `
+                        <tr class="border-b border-slate-100 hover:bg-amber-50/50 cursor-pointer transition" onclick="showDetail(${notice.id})">
+                            <td class="px-4 py-4 text-center">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-amber-100 text-amber-600 rounded-lg text-sm font-bold">${notice.row_num}</span>
+                            </td>
+                            <td class="px-4 py-4">
+                                <p class="font-bold text-slate-800 truncate">${notice.title}</p>
+                            </td>
+                            <td class="px-4 py-4 text-center text-sm text-slate-600">${notice.member_name}</td>
+                            <td class="px-4 py-4 text-center text-sm text-slate-500">${notice.created_at.split(' ')[0]}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    container.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center py-20 text-slate-400">
+                                <i class="fas fa-inbox text-3xl mb-3"></i>
+                                <p>등록된 공지사항이 없습니다.</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                container.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-20 text-red-400">
+                            <i class="fas fa-exclamation-circle text-3xl mb-3"></i>
+                            <p>불러오기 실패</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // 상세 보기
+        async function loadNoticeDetail(id) {
+            try {
+                const response = await fetch(`/api/notice/detail?id=${id}`);
+                const data = await response.json();
+                
+                if (data.success && data.notice) {
+                    currentNotice = data.notice;
+                    currentNoticeId = id;
+                    displayDetail();
+                } else {
+                    alert('공지사항을 찾을 수 없습니다.');
+                    showListView();
+                }
+            } catch (error) {
+                alert('불러오기 실패');
+                showListView();
+            }
+        }
+
+        function showDetail(id) {
+            currentNoticeId = id;
+            // URL 업데이트 (새로고침 없이)
+            history.pushState(null, '', `notice.html?id=${id}`);
+            loadNoticeDetail(id);
+        }
+
+        function displayDetail() {
+            document.getElementById('list-view').classList.add('hidden');
+            document.getElementById('detail-view').classList.remove('hidden');
+            
+            document.getElementById('detail-title').textContent = currentNotice.title;
+            document.getElementById('detail-author').textContent = currentNotice.member_name;
+            document.getElementById('detail-date').textContent = currentNotice.created_at;
+            document.getElementById('detail-content').textContent = currentNotice.message;
+            
+            // 본인 글이면 수정/삭제 버튼 표시
+            if (currentUser && currentUser.member_name === currentNotice.member_name) {
+                document.getElementById('detail-actions').classList.remove('hidden');
+            } else {
+                document.getElementById('detail-actions').classList.add('hidden');
+            }
+        }
+
+        function showListView() {
+            document.getElementById('detail-view').classList.add('hidden');
+            document.getElementById('list-view').classList.remove('hidden');
+            currentNotice = null;
+            currentNoticeId = null;
+            history.pushState(null, '', 'notice.html');
+            loadNoticeList();
+        }
+
+        function goBack() {
+            if (currentUser) {
+                const roleMap = { teacher: 'tea.html', student: 'st.html', parent: 'fm.html' };
+                window.location.href = roleMap[currentUser.member_roll] || 'tea.html';
+            } else {
+                window.location.href = '/';
+            }
+        }
+
+        // 브라우저 뒤로가기 처리
+        window.addEventListener('popstate', () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            if (id) {
+                loadNoticeDetail(id);
+            } else {
+                showListView();
+            }
+        });
+
+        // 글쓰기 모달
+        function openWriteModal() {
+            document.getElementById('write-title').value = '';
+            document.getElementById('write-content').value = '';
+            document.getElementById('write-password').value = '';
+            document.getElementById('write-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeWriteModal() {
+            document.getElementById('write-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        async function submitWrite() {
+            const title = document.getElementById('write-title').value.trim();
+            const message = document.getElementById('write-content').value.trim();
+            const correct_no = document.getElementById('write-password').value.trim();
+            
+            if (!title || !message) return alert('제목과 내용을 입력해주세요.');
+            if (!correct_no || correct_no.length < 4) return alert('비밀번호를 4자리 이상 입력해주세요.');
+            
+            try {
+                const response = await fetch('/api/notice/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        member_name: currentUser.member_name,
+                        member_school: currentUser.member_school,
+                        school_id: currentUser.school_id,
+                        title, message, correct_no
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(data.message);
+                    closeWriteModal();
+                    loadNoticeList();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('등록 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 수정 모달
+        function openEditModal() {
+            document.getElementById('edit-title').value = currentNotice.title;
+            document.getElementById('edit-content').value = currentNotice.message;
+            document.getElementById('edit-password').value = '';
+            document.getElementById('edit-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        async function submitEdit() {
+            const title = document.getElementById('edit-title').value.trim();
+            const message = document.getElementById('edit-content').value.trim();
+            const correct_no = document.getElementById('edit-password').value.trim();
+            
+            if (!title || !message) return alert('제목과 내용을 입력해주세요.');
+            if (!correct_no) return alert('비밀번호를 입력해주세요.');
+            
+            try {
+                const response = await fetch('/api/notice/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: currentNoticeId, title, message, correct_no })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(data.message);
+                    closeEditModal();
+                    loadNoticeDetail(currentNoticeId);
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('수정 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 삭제 모달
+        function openDeleteModal() {
+            document.getElementById('delete-password').value = '';
+            document.getElementById('delete-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        async function submitDelete() {
+            const correct_no = document.getElementById('delete-password').value.trim();
+            
+            if (!correct_no) return alert('비밀번호를 입력해주세요.');
+            
+            try {
+                const response = await fetch('/api/notice/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: currentNoticeId, correct_no })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(data.message);
+                    closeDeleteModal();
+                    showListView();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('삭제 중 오류가 발생했습니다.');
+            }
+        }
+    </script>
+</body>
+</html>

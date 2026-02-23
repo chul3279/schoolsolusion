@@ -11,7 +11,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <title>SchoolUs(스쿨어스) - 학교 통합 관리 플랫폼 | 출결, 성적, 상담을 하나로</title>
     <meta name="description" content="SchoolUs(스쿨어스, schoolwithus)는 선생님, 학생, 학부모를 연결하는 스마트 교육 통합 플랫폼입니다. 출결관리, 성적관리, 상담관리, 시간표, AI 생기부 작성까지 우리들 학교의 모든 업무를 하나로 관리하세요.">
     <meta name="keywords" content="스쿨어스, SchoolUs, schoolus, schoolwithus, 우리들학교, 우리들 학교, 학교관리시스템, 출결관리, 성적관리, 학생관리, 학부모앱, 교사앱, 스마트스쿨, 학교ERP, 생기부작성, AI생기부, 교육플랫폼, 학교통합관리, 교무업무, 학사관리">
@@ -19,7 +19,7 @@
     <meta name="robots" content="index, follow">
     <meta name="googlebot" content="index, follow">
     <link rel="canonical" href="https://www.schoolwithus.co.kr/">
-    
+
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="SchoolUs - 스쿨어스">
     <meta property="og:title" content="SchoolUs(스쿨어스) - 학교 통합 관리 플랫폼">
@@ -29,7 +29,7 @@
     <meta property="og:image:height" content="630">
     <meta property="og:url" content="https://www.schoolwithus.co.kr/">
     <meta property="og:locale" content="ko_KR">
-    
+
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="SchoolUs(스쿨어스) - 학교 통합 관리 플랫폼">
     <meta name="twitter:description" content="선생님, 학생, 학부모를 연결하는 스마트 교육 통합 플랫폼">
@@ -41,7 +41,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/apple-touch-icon.png">
-    
+
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -64,7 +64,7 @@
             "logo": "https://www.schoolwithus.co.kr/images/logo.png",
             "contactPoint": {
                 "@type": "ContactPoint",
-                "telephone": "+82-10-5291-6965",
+                "telephone": "+82-70-4137-9000",
                 "contactType": "customer service",
                 "email": "free327912@gmail.com",
                 "availableLanguage": "Korean"
@@ -80,7 +80,7 @@
         },
         "featureList": [
             "출결 관리",
-            "성적 관리", 
+            "성적 관리",
             "상담 관리",
             "시간표 관리",
             "AI 생기부 작성",
@@ -88,7 +88,7 @@
         ]
     }
     </script>
-    
+
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -100,7 +100,7 @@
         "foundingDate": "2025",
         "contactPoint": {
             "@type": "ContactPoint",
-            "telephone": "+82-10-5291-6965",
+            "telephone": "+82-70-4137-9000",
             "contactType": "customer service",
             "email": "free327912@gmail.com"
         },
@@ -114,80 +114,709 @@
         "sameAs": []
     }
     </script>
-    
+
     <meta name="subject" content="스쿨어스 - 학교 통합 관리 시스템">
     <meta name="classification" content="교육, 학교관리, 출결관리, 성적관리">
     <meta name="distribution" content="global">
     <meta name="rating" content="general">
 
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <script src="/static/js/tailwindcss.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
-        body { font-family: 'Noto Sans KR', sans-serif; }
-        
-        .mesh-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            position: absolute;
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+        :root {
+            --ink: #0c1222;
+            --ink-soft: #3a4560;
+            --ink-muted: #7b8aab;
+            --surface: #f6f8fc;
+            --white: #ffffff;
+            --blue-50: #eef4ff;
+            --blue-100: #dae6ff;
+            --blue-200: #bdd4ff;
+            --blue-400: #5b93ff;
+            --blue-500: #3b6ff5;
+            --blue-600: #2952cc;
+            --blue-700: #1e3da6;
+            --green-400: #34d399;
+            --green-500: #10b981;
+            --purple-400: #a78bfa;
+            --purple-500: #8b5cf6;
+            --amber-400: #fbbf24;
+            --rose-400: #fb7185;
+            --radius: 20px;
+            --radius-sm: 12px;
+            --radius-xs: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: var(--surface);
+            color: var(--ink);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        .outfit { font-family: 'Outfit', 'Noto Sans KR', sans-serif; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+        /* ===== NAV ===== */
+        #main-nav {
+            position: fixed;
+            top: 0;
             width: 100%;
-            height: 100%;
-            opacity: 0.03;
-            z-index: 0;
+            z-index: 50;
+            padding: 0 clamp(16px, 4vw, 48px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        
-        .blob { 
-            position: absolute; 
-            filter: blur(100px); 
-            z-index: 0; 
-            opacity: 0.4; 
-            animation: float 15s infinite ease-in-out; 
-            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+        #main-nav.scrolled {
+            background: rgba(255,255,255,0.82);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.06);
         }
-        .blob-1 { top: -15%; left: -15%; width: 600px; height: 600px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .blob-2 { bottom: -15%; right: -15%; width: 650px; height: 650px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); animation-delay: -7s; }
-        .blob-3 { top: 50%; left: 50%; width: 500px; height: 500px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); animation-delay: -3s; }
-        
-        @keyframes float { 
-            0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); } 
-            33% { transform: translate(30px, -50px) rotate(120deg) scale(1.1); } 
-            66% { transform: translate(-20px, 30px) rotate(240deg) scale(0.95); } 
+        .nav-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 72px;
         }
-        
-        .text-gradient { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); 
-            -webkit-background-clip: text; 
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .nav-logo-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            color: white;
+            font-size: 16px;
+        }
+        .nav-logo-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            color: var(--ink);
+            letter-spacing: -0.5px;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+        .nav-links a {
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--ink-soft);
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--blue-500); }
+        .nav-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            background: var(--ink);
+            color: white !important;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .nav-cta:hover { background: var(--blue-600); transform: translateY(-1px); }
+        .nav-mobile-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: var(--ink);
+            cursor: pointer;
+        }
+
+        /* Mobile menu overlay */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 72px;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            z-index: 49;
+        }
+        .mobile-menu.open { display: block; }
+        .mobile-menu a {
+            display: block;
+            padding: 14px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--ink-soft);
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        .mobile-menu a:hover { background: var(--blue-50); color: var(--blue-500); }
+
+        /* ===== HERO ===== */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 120px clamp(16px, 4vw, 48px) 80px;
+            overflow: hidden;
+        }
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 20% 40%, rgba(59,111,245,0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 50% at 80% 30%, rgba(139,92,246,0.05) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 40% at 60% 80%, rgba(16,185,129,0.04) 0%, transparent 70%);
+        }
+        .hero-grid-pattern {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(59,111,245,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59,111,245,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+        }
+        .hero-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-content { max-width: 580px; }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: var(--blue-50);
+            border: 1px solid var(--blue-200);
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--blue-600);
+            margin-bottom: 28px;
+            animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        .hero-badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green-500);
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .hero h1 {
+            font-size: clamp(36px, 5vw, 56px);
+            font-weight: 900;
+            line-height: 1.2;
+            letter-spacing: -1.5px;
+            color: var(--ink);
+            margin-bottom: 20px;
+            animation: fadeUp 0.8s 0.1s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        .hero h1 em {
+            font-style: normal;
+            background: linear-gradient(135deg, var(--blue-500), var(--purple-500));
+            -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-size: 200% auto;
-            animation: shimmer 3s linear infinite;
+            background-clip: text;
         }
-        
-        @keyframes shimmer { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
-        
+        .hero-desc {
+            font-size: 17px;
+            line-height: 1.7;
+            color: var(--ink-muted);
+            margin-bottom: 36px;
+            max-width: 460px;
+            animation: fadeUp 0.8s 0.2s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        .hero-actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            animation: fadeUp 0.8s 0.3s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, var(--blue-500), var(--blue-600));
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(59,111,245,0.3);
+            text-decoration: none;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(59,111,245,0.4); }
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 28px;
+            background: var(--white);
+            color: var(--ink);
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .btn-secondary:hover { border-color: var(--blue-400); color: var(--blue-500); }
+
+        .hero-stats {
+            display: flex;
+            gap: 36px;
+            margin-top: 48px;
+            animation: fadeUp 0.8s 0.4s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        .hero-stat-num {
+            font-family: 'Outfit', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--ink);
+        }
+        .hero-stat-label {
+            font-size: 13px;
+            color: var(--ink-muted);
+            font-weight: 500;
+        }
+
+        /* Hero mockup */
+        .hero-mockup {
+            position: relative;
+            animation: fadeUp 1s 0.3s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        .mockup-browser {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 25px 80px rgba(12,18,34,0.12), 0 0 0 1px rgba(0,0,0,0.04);
+            overflow: hidden;
+            transform: perspective(1200px) rotateY(-6deg) rotateX(2deg);
+            transition: transform 0.6s cubic-bezier(0.16,1,0.3,1);
+        }
+        .mockup-browser:hover { transform: perspective(1200px) rotateY(-2deg) rotateX(1deg); }
+        .mockup-browser-bar {
+            height: 40px;
+            background: #f1f3f8;
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            gap: 7px;
+        }
+        .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .mockup-dot:nth-child(1) { background: #ff6059; }
+        .mockup-dot:nth-child(2) { background: #ffbd2e; }
+        .mockup-dot:nth-child(3) { background: #28c840; }
+        .mockup-browser-content {
+            padding: 24px;
+            min-height: 340px;
+            background: linear-gradient(135deg, #f8faff, #f0f4ff);
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 16px;
+        }
+        .mock-sidebar {
+            background: linear-gradient(180deg, #0f172a, #1e3050);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .mock-sidebar-item { height: 10px; background: rgba(255,255,255,0.15); border-radius: 4px; margin-bottom: 10px; }
+        .mock-sidebar-item.active { background: rgba(59,111,245,0.6); }
+        .mock-sidebar-logo { height: 14px; width: 60%; background: rgba(255,255,255,0.3); border-radius: 4px; margin-bottom: 20px; }
+        .mock-main { display: flex; flex-direction: column; gap: 12px; }
+        .mock-topbar { height: 36px; background: white; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .mock-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .mock-card { background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .mock-card-icon { width: 28px; height: 28px; border-radius: 8px; margin-bottom: 8px; }
+        .mock-card:nth-child(1) .mock-card-icon { background: linear-gradient(135deg, var(--green-400), var(--green-500)); }
+        .mock-card:nth-child(2) .mock-card-icon { background: linear-gradient(135deg, var(--blue-400), var(--blue-500)); }
+        .mock-card:nth-child(3) .mock-card-icon { background: linear-gradient(135deg, var(--purple-400), var(--purple-500)); }
+        .mock-card-line { height: 8px; background: #f1f3f8; border-radius: 3px; margin-bottom: 6px; }
+        .mock-card-line:last-child { width: 60%; }
+        .mock-table { background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); flex: 1; }
+        .mock-table-row { display: flex; gap: 10px; margin-bottom: 8px; }
+        .mock-table-cell { height: 8px; background: #f1f3f8; border-radius: 3px; flex: 1; }
+        .mock-table-cell.header { background: #e2e8f0; height: 10px; }
+
+        .mockup-phone {
+            position: absolute;
+            bottom: -20px;
+            left: -40px;
+            width: 140px;
+            background: var(--white);
+            border-radius: 20px;
+            padding: 8px;
+            box-shadow: 0 20px 60px rgba(12,18,34,0.15), 0 0 0 1px rgba(0,0,0,0.04);
+            z-index: 2;
+            animation: float-phone 6s ease-in-out infinite;
+        }
+        @keyframes float-phone {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+        .phone-notch { width: 50%; height: 6px; background: #e2e8f0; border-radius: 3px; margin: 4px auto 10px; }
+        .phone-content { background: linear-gradient(135deg, #f0f4ff, #eff6ff); border-radius: 14px; padding: 12px; min-height: 200px; }
+        .phone-card-mini { background: white; border-radius: 8px; padding: 8px; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+        .phone-line { height: 6px; background: #f1f3f8; border-radius: 3px; margin-bottom: 4px; }
+        .phone-line:last-child { width: 50%; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== SECTION COMMON ===== */
+        .page-section { padding: 100px clamp(16px, 4vw, 48px); }
+        .section-inner { max-width: 1280px; margin: 0 auto; }
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--blue-500);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            font-family: 'Outfit', sans-serif;
+        }
+        .section-label i { font-size: 11px; }
+        .section-title {
+            font-size: clamp(28px, 3.5vw, 42px);
+            font-weight: 900;
+            letter-spacing: -1px;
+            line-height: 1.25;
+            margin-bottom: 16px;
+        }
+        .section-desc {
+            font-size: 16px;
+            color: var(--ink-muted);
+            line-height: 1.7;
+            max-width: 520px;
+        }
+
+        /* ===== ROLES ===== */
+        .roles { background: var(--white); }
+        .roles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 56px; }
+        .role-card {
+            position: relative;
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 40px 32px;
+            border: 2px solid transparent;
+            transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+            overflow: hidden;
+        }
+        .role-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            border-radius: var(--radius) var(--radius) 0 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .role-card:hover { transform: translateY(-6px); border-color: #e2e8f0; box-shadow: 0 20px 60px rgba(12,18,34,0.08); }
+        .role-card:hover::after { opacity: 1; }
+        .role-card:nth-child(1)::after { background: linear-gradient(90deg, var(--green-400), var(--green-500)); }
+        .role-card:nth-child(2)::after { background: linear-gradient(90deg, var(--blue-400), var(--blue-500)); }
+        .role-card:nth-child(3)::after { background: linear-gradient(90deg, var(--purple-400), var(--purple-500)); }
+        .role-icon {
+            width: 56px; height: 56px; border-radius: 16px;
+            display: grid; place-items: center;
+            font-size: 22px; color: white; margin-bottom: 24px;
+        }
+        .role-card:nth-child(1) .role-icon { background: linear-gradient(135deg, var(--green-400), var(--green-500)); }
+        .role-card:nth-child(2) .role-icon { background: linear-gradient(135deg, var(--blue-400), var(--blue-500)); }
+        .role-card:nth-child(3) .role-icon { background: linear-gradient(135deg, var(--purple-400), var(--purple-500)); }
+        .role-title { font-size: 22px; font-weight: 800; margin-bottom: 12px; }
+        .role-desc { font-size: 14px; color: var(--ink-muted); line-height: 1.7; margin-bottom: 24px; }
+        .role-features { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        .role-features li { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+        .role-features li i {
+            font-size: 10px; color: var(--green-500);
+            width: 20px; height: 20px; display: grid; place-items: center;
+            background: rgba(16,185,129,0.1); border-radius: 50%;
+        }
+
+        /* ===== FEATURES ===== */
+        .features { background: var(--surface); }
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 56px; }
+        .feature-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 32px;
+            border: 1px solid #eef1f6;
+            transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(12,18,34,0.06); border-color: transparent; }
+        .feature-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            display: grid; place-items: center; font-size: 20px; margin-bottom: 20px;
+        }
+        .fi-blue { background: var(--blue-50); color: var(--blue-500); }
+        .fi-green { background: rgba(16,185,129,0.08); color: var(--green-500); }
+        .fi-purple { background: rgba(139,92,246,0.08); color: var(--purple-500); }
+        .fi-amber { background: rgba(251,191,36,0.1); color: #d97706; }
+        .fi-rose { background: rgba(251,113,133,0.08); color: #e11d48; }
+        .fi-teal { background: rgba(20,184,166,0.08); color: #0d9488; }
+        .feature-card h3 { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
+        .feature-card p { font-size: 13px; color: var(--ink-muted); line-height: 1.65; }
+        .feature-tag { display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 10px; font-weight: 700; margin-top: 14px; }
+        .tag-ai { background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,111,245,0.1)); color: var(--purple-500); }
+        .tag-new { background: rgba(16,185,129,0.1); color: var(--green-500); }
+
+        /* ===== HIGHLIGHT ===== */
+        .highlight {
+            background: linear-gradient(135deg, #0f172a, #1e2d4a);
+            color: white;
+            overflow: hidden;
+            position: relative;
+        }
+        .highlight::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 40% 50% at 80% 20%, rgba(59,111,245,0.2) 0%, transparent 70%),
+                radial-gradient(ellipse 30% 40% at 20% 80%, rgba(139,92,246,0.15) 0%, transparent 70%);
+        }
+        .highlight-inner {
+            max-width: 1280px; margin: 0 auto;
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 80px; align-items: center;
+            position: relative; z-index: 1;
+        }
+        .highlight h2 { font-size: clamp(28px, 3.5vw, 40px); font-weight: 900; letter-spacing: -1px; line-height: 1.25; margin-bottom: 20px; }
+        .highlight h2 em {
+            font-style: normal;
+            background: linear-gradient(135deg, var(--blue-400), var(--purple-400));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .highlight p { font-size: 16px; color: rgba(255,255,255,0.6); line-height: 1.7; margin-bottom: 32px; }
+        .highlight-features { display: flex; flex-direction: column; gap: 16px; list-style: none; }
+        .highlight-features li { display: flex; align-items: center; gap: 14px; font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.85); }
+        .highlight-features li i { color: var(--blue-400); font-size: 14px; width: 28px; }
+        .highlight-demo {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 28px;
+            backdrop-filter: blur(10px);
+        }
+        .demo-label { font-size: 11px; font-weight: 700; color: var(--blue-400); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+        .demo-text-block { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 18px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.06); }
+        .demo-text-line { height: 8px; background: rgba(255,255,255,0.12); border-radius: 3px; margin-bottom: 8px; }
+        .demo-text-line:last-child { width: 70%; margin-bottom: 0; }
+        .demo-text-line.highlight-line { background: rgba(59,111,245,0.3); }
+        .demo-btn-row { display: flex; gap: 10px; margin-top: 18px; }
+        .demo-btn { padding: 8px 18px; border-radius: 8px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; }
+        .demo-btn-primary { background: var(--blue-500); color: white; }
+        .demo-btn-ghost { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.1); }
+
+        /* ===== PRICING ===== */
+        .pricing { background: var(--white); }
+        .pricing-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 24px; margin-top: 56px;
+            max-width: 880px; margin-left: auto; margin-right: auto;
+        }
+        .price-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 40px 32px;
+            border: 2px solid transparent;
+            position: relative;
+            transition: all 0.3s;
+        }
+        .price-card:hover { border-color: #e2e8f0; }
+        .price-card.featured {
+            background: linear-gradient(135deg, #0f172a, #1e2d4a);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 20px 60px rgba(12,18,34,0.2);
+        }
+        .price-card.featured .price-features li { color: rgba(255,255,255,0.7); }
+        .price-card.featured .price-features li i { color: var(--blue-400); background: rgba(59,111,245,0.15); }
+        .price-popular {
+            position: absolute;
+            top: -12px; right: 24px;
+            padding: 4px 14px;
+            background: linear-gradient(135deg, var(--blue-500), var(--purple-500));
+            color: white;
+            font-size: 11px; font-weight: 800;
+            border-radius: 100px;
+        }
+        .price-name { font-size: 14px; font-weight: 700; color: var(--ink-muted); margin-bottom: 8px; }
+        .price-card.featured .price-name { color: rgba(255,255,255,0.5); }
+        .price-amount { font-family: 'Outfit', sans-serif; font-size: 42px; font-weight: 900; margin-bottom: 4px; }
+        .price-amount span { font-size: 16px; font-weight: 500; color: var(--ink-muted); }
+        .price-card.featured .price-amount span { color: rgba(255,255,255,0.4); }
+        .price-period { font-size: 13px; color: var(--ink-muted); margin-bottom: 28px; }
+        .price-card.featured .price-period { color: rgba(255,255,255,0.4); }
+        .price-features { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+        .price-features li { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: var(--ink-soft); }
+        .price-features li i {
+            font-size: 10px; color: var(--green-500);
+            width: 20px; height: 20px; display: grid; place-items: center;
+            background: rgba(16,185,129,0.08); border-radius: 50%;
+        }
+        .price-btn {
+            width: 100%; padding: 14px; border-radius: 12px;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            border: 2px solid #e2e8f0; background: transparent; color: var(--ink);
+            transition: all 0.3s;
+        }
+        .price-btn:hover { border-color: var(--blue-500); color: var(--blue-500); }
+        .price-card.featured .price-btn { background: var(--blue-500); border-color: var(--blue-500); color: white; }
+        .price-card.featured .price-btn:hover { background: var(--blue-400); }
+        .price-point-box {
+            background: var(--blue-50); border-radius: 10px; padding: 14px 16px; margin-bottom: 24px; border: 1px solid var(--blue-200);
+        }
+        .price-point-title { font-size: 12px; font-weight: 800; color: var(--blue-600); margin-bottom: 4px; }
+        .price-point-desc { font-size: 12px; color: var(--ink-muted); line-height: 1.6; }
+
+        /* ===== TRUST ===== */
+        .trust { background: var(--surface); }
+        .trust-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 56px; }
+        .trust-card {
+            background: var(--white); border-radius: var(--radius);
+            padding: 32px; text-align: center; border: 1px solid #eef1f6;
+        }
+        .trust-icon { font-size: 28px; color: var(--blue-500); margin-bottom: 14px; }
+        .trust-title { font-size: 17px; font-weight: 800; color: var(--ink); margin-bottom: 8px; }
+        .trust-label { font-size: 13px; color: var(--ink-muted); font-weight: 600; }
+
+        /* ===== CTA ===== */
+        .cta {
+            background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+            text-align: center; color: white;
+            position: relative; overflow: hidden;
+        }
+        .cta::before {
+            content: '';
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(255,255,255,0.05) 0%, transparent 50%);
+        }
+        .cta h2 { font-size: clamp(28px, 3.5vw, 42px); font-weight: 900; letter-spacing: -1px; margin-bottom: 16px; position: relative; }
+        .cta p { font-size: 16px; color: rgba(255,255,255,0.7); margin-bottom: 36px; position: relative; }
+        .cta-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; position: relative; }
+        .cta-btn-white {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 16px 36px; background: white; color: var(--blue-600);
+            border-radius: 14px; font-size: 15px; font-weight: 800;
+            text-decoration: none; transition: all 0.3s; border: none; cursor: pointer;
+        }
+        .cta-btn-white:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+        .cta-btn-outline {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 16px 36px; background: transparent; color: white;
+            border: 2px solid rgba(255,255,255,0.3); border-radius: 14px;
+            font-size: 15px; font-weight: 700; text-decoration: none;
+            transition: all 0.3s; cursor: pointer;
+        }
+        .cta-btn-outline:hover { border-color: white; background: rgba(255,255,255,0.1); }
+
+        /* ===== FOOTER ===== */
+        .site-footer {
+            background: #080d18;
+            color: #7b8aab;
+            padding: 64px clamp(16px, 4vw, 48px) 40px;
+        }
+        .footer-inner { max-width: 1280px; margin: 0 auto; }
+        .footer-top {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px; padding-bottom: 48px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .footer-brand-desc { font-size: 14px; line-height: 1.7; margin-top: 16px; }
+        .footer-col h4 { font-size: 13px; font-weight: 700; color: white; margin-bottom: 20px; letter-spacing: 0.5px; }
+        .footer-col a { display: block; font-size: 13px; color: #7b8aab; text-decoration: none; margin-bottom: 12px; transition: color 0.2s; }
+        .footer-col a:hover { color: white; }
+        .footer-bottom {
+            padding-top: 32px;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            gap: 32px; flex-wrap: wrap;
+        }
+        .footer-biz { font-size: 12px; line-height: 1.8; }
+        .footer-biz strong { color: #94a3b8; }
+        .footer-copy { font-size: 12px; white-space: nowrap; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .hero-inner { grid-template-columns: 1fr; }
+            .hero-mockup { display: none; }
+            .highlight-inner { grid-template-columns: 1fr; }
+            .highlight-demo { display: none; }
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .pricing-grid { grid-template-columns: 1fr; max-width: 420px; }
+            .footer-top { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .nav-mobile-btn { display: block; }
+            .roles-grid { grid-template-columns: 1fr; }
+            .features-grid { grid-template-columns: 1fr; }
+            .trust-grid { grid-template-columns: repeat(2, 1fr); }
+            .hero-stats { gap: 24px; }
+            .footer-top { grid-template-columns: 1fr; gap: 32px; }
+            .footer-bottom { flex-direction: column; }
+        }
+
+        /* Login modal glass styles */
         .glass-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15); }
-        .glass-nav { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px) saturate(180%); border-bottom: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 4px 24px 0 rgba(31, 38, 135, 0.1); }
-        
-        .fade-in-up { animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(30px); }
-        .delay-100 { animation-delay: 0.15s; } 
-        .delay-200 { animation-delay: 0.3s; }
-        .delay-300 { animation-delay: 0.45s; }
-        
-        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
-        
         .glow-button { position: relative; overflow: hidden; }
         .glow-button::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transition: left 0.7s; }
         .glow-button:hover::before { left: 100%; }
-        
-        .feature-card { position: relative; overflow: hidden; }
-        .feature-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); transition: left 0.7s; }
-        .feature-card:hover::before { left: 100%; }
-        
-        .premium-badge { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 4px 15px 0 rgba(102, 126, 234, 0.4); }
-        
-        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+        /* trust check items */
+        .trust-checks { display: inline-flex; align-items: center; gap: 24px; flex-wrap: wrap; justify-content: center; }
+        .trust-check-item { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink-muted); }
     </style>
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#3b82f6">
+    <meta name="theme-color" content="#3b6ff5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SchoolUs">
@@ -195,8 +824,7 @@
     <script src="/static/js/pwa-install.js" defer></script>
     <script src="/static/js/pwa-push.js" defer></script>
 </head>
-
-<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 text-slate-800 overflow-x-hidden relative min-h-screen flex flex-col">
+<body>
     <script>
     (function(){
         var ua = navigator.userAgent || '';
@@ -221,663 +849,869 @@
         <p>schoolus, schoolwithus, 스쿨어스, 우리들학교 - 선생님, 학생, 학부모를 위한 스마트 교육 플랫폼</p>
     </div>
 
-    <div class="mesh-gradient"></div>
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
+<!-- NAV -->
+<nav id="main-nav">
+    <div class="nav-inner">
+        <a href="/" class="nav-logo">
+            <div class="nav-logo-icon"><i class="fas fa-school"></i></div>
+            <span class="nav-logo-text outfit">SchoolUs</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="#roles">사용자별 안내</a></li>
+            <li><a href="#features">주요 기능</a></li>
+            <li><a href="#ai-record">AI 생기부</a></li>
+            <li><a href="#pricing">요금제</a></li>
+            <li><a href="javascript:void(0)" onclick="openLoginModal()" class="nav-cta"><i class="fas fa-lock" style="font-size:12px"></i> 로그인</a></li>
+        </ul>
+        <button class="nav-mobile-btn" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+    </div>
+</nav>
 
-    <nav class="fixed w-full z-50 top-0 transition-all duration-500 glass-nav">
-        <div class="max-w-7xl mx-auto px-6 lg:px-8">
-            <div class="flex justify-between h-20 items-center">
-                <a href="/" class="flex items-center gap-3 cursor-pointer group" aria-label="SchoolUs 스쿨어스 홈">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-xl group-hover:shadow-2xl group-hover:shadow-blue-500/50 group-hover:scale-110 transition-all duration-500">
-                        <i class="fas fa-school text-xl" aria-hidden="true"></i>
-                    </div>
-                    <span class="font-black text-2xl tracking-tight text-slate-800">SchoolUs</span>
-                </a>
-                <div class="flex items-center gap-2">
-                    <button id="nav-install-btn" onclick="SchoolUsPWA.triggerInstall()" class="hidden relative px-3 py-3 rounded-2xl font-bold text-sm bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300" aria-label="앱 설치" title="앱 설치하기">
-                        <i class="fas fa-download" aria-hidden="true"></i>
-                    </button>
-                </div>
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobile-menu">
+    <a href="#roles" onclick="closeMobileMenu()">사용자별 안내</a>
+    <a href="#features" onclick="closeMobileMenu()">주요 기능</a>
+    <a href="#ai-record" onclick="closeMobileMenu()">AI 생기부</a>
+    <a href="#pricing" onclick="closeMobileMenu()">요금제</a>
+    <a href="javascript:void(0)" onclick="closeMobileMenu(); openLoginModal();" style="color:var(--blue-500); font-weight:800;"><i class="fas fa-lock" style="margin-right:6px;"></i>로그인</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid-pattern"></div>
+    <div class="hero-inner">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                2026 스마트 교육 플랫폼
             </div>
-        </div>
-    </nav>
-
-    <main class="relative pt-24 md:pt-36 pb-12 md:pb-24 px-4 flex-1 flex flex-col items-center justify-center">
-        <div class="max-w-5xl w-full text-center z-10">
-            <div class="fade-in-up premium-badge inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-white font-bold text-xs uppercase tracking-wider backdrop-blur-sm mb-6 md:mb-10 shadow-lg">
-                <span class="w-2 h-2 rounded-full bg-white animate-pulse shadow-lg shadow-white/50"></span>
-                2026 Smart Education Platform
-            </div>
-            
-            <h1 class="fade-in-up delay-100 text-4xl md:text-7xl font-black text-slate-900 mb-4 md:mb-8 leading-tight tracking-tight">
-                학교의 모든 업무,<br>
-                <span class="text-gradient">하나로 완벽하게 연결하다.</span>
-            </h1>
-
-            <p class="fade-in-up delay-200 text-base md:text-xl text-slate-600 mb-8 md:mb-12 max-w-2xl mx-auto font-medium leading-relaxed">
-                복잡한 교육 행정은 줄이고, 교육의 본질에 집중하세요.<br>
-                선생님, 학생, 학부모가 함께 만드는 새로운 교육 생태계.
+            <h1>학교의 모든 업무를<br><em>하나로 연결합니다</em></h1>
+            <p class="hero-desc">
+                출결, 성적, 상담, AI 생기부까지.<br>
+                선생님·학생·학부모가 함께 만드는 새로운 교육 생태계.
             </p>
-
-            <div class="fade-in-up delay-300 flex flex-col sm:flex-row items-center justify-center gap-3 mb-10 md:mb-20">
-                <button onclick="openLoginModal()" class="glow-button w-full sm:w-auto px-10 py-4 rounded-2xl font-black text-base bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-xl shadow-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/40 transition-all duration-500 transform hover:scale-[1.03] active:scale-[0.98] flex items-center justify-center gap-3">
-                    <i class="fas fa-lock" aria-hidden="true"></i>
-                    통합 로그인
-                    <i class="fas fa-arrow-right text-sm opacity-70" aria-hidden="true"></i>
-                </button>
-                <button id="hero-install-btn" onclick="SchoolUsPWA.triggerInstall()" class="hidden w-full sm:w-auto px-8 py-4 rounded-2xl font-bold text-base bg-white/80 backdrop-blur border-2 border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2">
-                    <i class="fas fa-mobile-alt" aria-hidden="true"></i>
-                    앱으로 설치하기
-                </button>
+            <div class="hero-actions">
+                <button class="btn-primary" onclick="openLoginModal()"><i class="fas fa-lock"></i> 통합 로그인</button>
+                <a href="#roles" class="btn-secondary"><i class="fas fa-play"></i> 서비스 둘러보기</a>
             </div>
-            
-            <section aria-label="SchoolUs 스쿨어스 주요 기능">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-left max-w-6xl mx-auto fade-in-up delay-300">
-                    <article class="feature-card glass-card p-10 rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-3 transition-all duration-500 group cursor-default border-2 border-transparent hover:border-green-200">
-                        <div class="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-600 rounded-2xl flex items-center justify-center text-white text-2xl mb-6 shadow-lg shadow-green-500/30 group-hover:shadow-xl group-hover:shadow-green-500/50 group-hover:scale-110 transition-all duration-500" aria-hidden="true">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                        </div>
-                        <h2 class="text-xl font-black text-slate-800 mb-3">선생님</h2>
-                        <p class="text-slate-500 text-sm leading-relaxed font-medium">출결, 성적, 상담 관리를 한 곳에서. 반복 업무는 줄이고 학생과의 시간은 늘리세요.</p>
-                    </article>
-                    
-                    <article class="feature-card glass-card p-10 rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-3 transition-all duration-500 group cursor-default border-2 border-transparent hover:border-blue-200">
-                        <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl mb-6 shadow-lg shadow-blue-500/30 group-hover:shadow-xl group-hover:shadow-blue-500/50 group-hover:scale-110 transition-all duration-500" aria-hidden="true">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                        <h2 class="text-xl font-black text-slate-800 mb-3">학생</h2>
-                        <p class="text-slate-500 text-sm leading-relaxed font-medium">시간표, 과제, 성적을 모바일로 간편하게. 스마트한 학교생활을 경험하세요.</p>
-                    </article>
-                    
-                    <article class="feature-card glass-card p-10 rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-3 transition-all duration-500 group cursor-default border-2 border-transparent hover:border-purple-200">
-                        <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-600 rounded-2xl flex items-center justify-center text-white text-2xl mb-6 shadow-lg shadow-purple-500/30 group-hover:shadow-xl group-hover:shadow-purple-500/50 group-hover:scale-110 transition-all duration-500" aria-hidden="true">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <h2 class="text-xl font-black text-slate-800 mb-3">학부모</h2>
-                        <p class="text-slate-500 text-sm leading-relaxed font-medium">자녀의 학교 소식을 실시간으로. 선생님과의 소통이 더욱 가까워집니다.</p>
-                    </article>
-                </div>
-            </section>
-        </div>
-    </main>
-
-    <footer class="relative z-10 bg-slate-900 text-slate-400 py-12">
-        <div class="max-w-7xl mx-auto px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <div class="hero-stats">
                 <div>
-                    <div class="flex items-center gap-2 mb-4">
-                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center" aria-hidden="true">
-                            <i class="fas fa-school text-sm"></i>
-                        </div>
-                        <span class="font-black text-white text-lg tracking-tight">SchoolUs</span>
-                    </div>
-                    <p class="text-sm leading-relaxed">
-                        선생님, 학생, 학부모를 연결하는<br>스마트 교육 통합 플랫폼
-                        <span class="block mt-2 text-xs text-slate-500">스쿨어스 | schoolwithus | 우리들 학교</span>
-                    </p>
+                    <div class="hero-stat-num outfit" id="stat-schools">-</div>
+                    <div class="hero-stat-label">도입 학교</div>
                 </div>
-                
                 <div>
-                    <h3 class="font-bold text-white mb-4">고객 지원</h3>
-                    <ul class="space-y-2 text-sm">
-                        <li><a href="support.html" class="hover:text-white transition-colors">고객센터</a></li>
-                        <li><a href="mailto:free327912@gmail.com" class="hover:text-white transition-colors">이메일 문의</a></li>
-                        <li><a href="tel:070-4137-9000" class="hover:text-white transition-colors">전화 문의: 070-4137-9000</a></li>
-                    </ul>
+                    <div class="hero-stat-num outfit" id="stat-teachers">-</div>
+                    <div class="hero-stat-label">교사</div>
                 </div>
-                
                 <div>
-                    <h3 class="font-bold text-white mb-4">약관 및 정책</h3>
-                    <ul class="space-y-2 text-sm">
-                        <li><a href="terms.html" class="hover:text-white transition-colors">이용약관</a></li>
-                        <li><a href="privacy.html" class="hover:text-white transition-colors font-bold text-blue-400">개인정보처리방침</a></li>
-                        <li><a href="refund_policy.html" class="hover:text-white transition-colors">환불규정</a></li>
-                    </ul>
+                    <div class="hero-stat-num outfit" id="stat-students">-</div>
+                    <div class="hero-stat-label">학생</div>
                 </div>
-            </div>
-            
-            <div class="border-t border-slate-700 pt-8">
-                <address class="text-xs leading-relaxed space-y-1 not-italic">
-                    <p><strong class="text-slate-300">상호:</strong> 어스 정보 | <strong class="text-slate-300">대표:</strong> 이규복</p>
-                    <p><strong class="text-slate-300">사업자등록번호:</strong> 807-58-00926 
-                        <a href="https://www.ftc.go.kr/bizCommPop.do?wrkr_no=8075800926" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline ml-1">[사업자정보확인]</a>
-                    </p>
-                    <p><strong class="text-slate-300">통신판매업신고:</strong> 2026-안양만안-0160</p>
-                    <p><strong class="text-slate-300">주소:</strong> 경기도 안양시 만안구 안양로 174, 101동 115호</p>
-                    <p><strong class="text-slate-300">전화:</strong> 070-4137-9000 | <strong class="text-slate-300">이메일:</strong> free327912@gmail.com</p>
-                    <p><strong class="text-slate-300">개인정보관리책임자:</strong> 이규복 (free327912@gmail.com)</p>
-                    <p><strong class="text-slate-300">호스팅 서비스 제공자:</strong> 어스 정보</p>
-                </address>
-                
-                <div class="mt-6 pt-6 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p class="text-xs">© <script>document.write(new Date().getFullYear())</script> SchoolUs(스쿨어스) by 어스 정보. All rights reserved.</p>
-                    <nav class="flex gap-4" aria-label="푸터 링크">
-                        <a href="terms.html" class="text-xs hover:text-white transition-colors">이용약관</a>
-                        <span class="text-slate-600" aria-hidden="true">|</span>
-                        <a href="privacy.html" class="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors">개인정보처리방침</a>
-                        <span class="text-slate-600" aria-hidden="true">|</span>
-                        <a href="refund_policy.html" class="text-xs hover:text-white transition-colors">환불규정</a>
-                        <span class="text-slate-600" aria-hidden="true">|</span>
-                        <a href="support.html" class="text-xs hover:text-white transition-colors">고객센터</a>
-                    </nav>
+                <div>
+                    <div class="hero-stat-num outfit" id="stat-parents">-</div>
+                    <div class="hero-stat-label">학부모</div>
                 </div>
             </div>
         </div>
-    </footer>
-
-    <div id="login-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
-        <div class="glass-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden border-2 border-white/50">
-            <div class="bg-gradient-to-br from-slate-50 to-blue-50/30 p-10 pb-8 border-b border-slate-100 text-center relative">
-                <button onclick="closeLoginModal()" class="absolute top-5 right-5 text-slate-300 hover:text-slate-700 hover:rotate-90 transition-all duration-300" aria-label="닫기">
-                    <i class="fas fa-times text-xl" aria-hidden="true"></i>
-                </button>
-                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl shadow-blue-500/40 mx-auto mb-5" aria-hidden="true">
-                    <i class="fas fa-lock"></i>
+        <div class="hero-mockup">
+            <div class="mockup-browser">
+                <div class="mockup-browser-bar">
+                    <div class="mockup-dot"></div>
+                    <div class="mockup-dot"></div>
+                    <div class="mockup-dot"></div>
                 </div>
-                <h2 id="login-title" class="text-3xl font-black text-slate-800 mb-2">통합 로그인</h2>
-                <p class="text-xs text-slate-500 font-medium">SchoolUs 계정으로 모든 학교 서비스 이용 가능</p>
+                <div class="mockup-browser-content">
+                    <div class="mock-sidebar">
+                        <div class="mock-sidebar-logo"></div>
+                        <div class="mock-sidebar-item"></div>
+                        <div class="mock-sidebar-item active"></div>
+                        <div class="mock-sidebar-item"></div>
+                        <div class="mock-sidebar-item"></div>
+                        <div class="mock-sidebar-item"></div>
+                        <div class="mock-sidebar-item"></div>
+                    </div>
+                    <div class="mock-main">
+                        <div class="mock-topbar"></div>
+                        <div class="mock-cards">
+                            <div class="mock-card"><div class="mock-card-icon"></div><div class="mock-card-line"></div><div class="mock-card-line"></div></div>
+                            <div class="mock-card"><div class="mock-card-icon"></div><div class="mock-card-line"></div><div class="mock-card-line"></div></div>
+                            <div class="mock-card"><div class="mock-card-icon"></div><div class="mock-card-line"></div><div class="mock-card-line"></div></div>
+                        </div>
+                        <div class="mock-table">
+                            <div class="mock-table-row"><div class="mock-table-cell header"></div><div class="mock-table-cell header"></div><div class="mock-table-cell header"></div><div class="mock-table-cell header"></div></div>
+                            <div class="mock-table-row"><div class="mock-table-cell"></div><div class="mock-table-cell"></div><div class="mock-table-cell"></div><div class="mock-table-cell"></div></div>
+                            <div class="mock-table-row"><div class="mock-table-cell"></div><div class="mock-table-cell"></div><div class="mock-table-cell"></div><div class="mock-table-cell"></div></div>
+                            <div class="mock-table-row"><div class="mock-table-cell"></div><div class="mock-table-cell"></div><div class="mock-table-cell"></div><div class="mock-table-cell"></div></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="p-10 pt-8">
-                <form onsubmit="return false;" class="space-y-6">
-                    <div>
-                        <label for="login_id" class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">Account ID</label>
-                        <div class="relative group">
-                            <span class="absolute inset-y-0 left-0 pl-5 flex items-center text-slate-400 group-focus-within:text-blue-600 transition-colors duration-300" aria-hidden="true">
-                                <i class="fas fa-user"></i>
-                            </span>
-                            <input id="login_id" type="text" placeholder="아이디를 입력하세요" autocomplete="username" class="w-full pl-12 pr-5 py-4 bg-slate-50/80 border-2 border-slate-200 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-300 font-medium text-sm text-slate-700 hover:border-slate-300">
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label for="password" class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">Password</label>
-                        <div class="relative group">
-                            <span class="absolute inset-y-0 left-0 pl-5 flex items-center text-slate-400 group-focus-within:text-blue-600 transition-colors duration-300" aria-hidden="true">
-                                <i class="fas fa-key"></i>
-                            </span>
-                            <input id="password" type="password" placeholder="비밀번호를 입력하세요" autocomplete="current-password" class="w-full pl-12 pr-5 py-4 bg-slate-50/80 border-2 border-slate-200 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-300 font-medium text-sm text-slate-700 hover:border-slate-300" onkeyup="if(event.key === 'Enter') handleLogin()">
-                        </div>
-                    </div>
-                    
-                    <button onclick="handleLogin()" class="glow-button w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-500 transform hover:scale-[1.02] active:scale-[0.98] flex justify-center items-center gap-2">
-                        <span class="relative z-10">로그인</span> 
-                        <i class="fas fa-arrow-right relative z-10" aria-hidden="true"></i>
-                    </button>
-                    
-                    <div class="flex justify-between items-center text-xs font-bold text-slate-500 pt-3">
-                        <div class="flex gap-3">
-                            <a href="#" onclick="openFindIdModal(); return false;" class="hover:text-blue-600 transition-colors duration-300">아이디 찾기</a>
-                            <span class="text-slate-300" aria-hidden="true">|</span>
-                            <a href="#" onclick="openFindPwModal(); return false;" class="hover:text-blue-600 transition-colors duration-300">비밀번호 찾기</a>
-                        </div>
-                        <a href="/signup" class="text-transparent bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text font-black hover:underline">회원가입</a>
-                    </div>
-                </form>
-            </div>
-            
-            <div class="bg-gradient-to-r from-slate-50 to-blue-50/30 p-4 text-center border-t border-slate-100">
-                <p class="text-[10px] text-slate-400 font-semibold tracking-wider">© <script>document.write(new Date().getFullYear())</script> SchoolUs by 어스 정보</p>
+            <div class="mockup-phone">
+                <div class="phone-notch"></div>
+                <div class="phone-content">
+                    <div class="phone-card-mini"><div class="phone-line"></div><div class="phone-line"></div></div>
+                    <div class="phone-card-mini"><div class="phone-line"></div><div class="phone-line"></div></div>
+                    <div class="phone-card-mini"><div class="phone-line"></div><div class="phone-line"></div></div>
+                    <div class="phone-card-mini"><div class="phone-line"></div><div class="phone-line"></div></div>
+                </div>
             </div>
         </div>
     </div>
+</section>
 
-    <!-- ============================================ -->
-    <!-- 아이디 찾기 모달 -->
-    <!-- ============================================ -->
-    <div id="find-id-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
-        <div class="glass-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden border-2 border-white/50">
-            <div class="bg-gradient-to-br from-slate-50 to-blue-50/30 p-8 pb-6 border-b border-slate-100 text-center relative">
-                <button onclick="closeFindIdModal()" class="absolute top-4 right-4 text-slate-300 hover:text-slate-700 hover:rotate-90 transition-all duration-300"><i class="fas fa-times text-xl"></i></button>
-                <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl shadow-green-500/40 mx-auto mb-4">
-                    <i class="fas fa-search"></i>
-                </div>
-                <h2 class="text-2xl font-black text-slate-800 mb-1">아이디 찾기</h2>
-                <p class="text-xs text-slate-500 font-medium">가입 시 등록한 정보로 아이디를 찾습니다</p>
+<!-- ROLES -->
+<section class="page-section roles" id="roles">
+    <div class="section-inner">
+        <div class="section-label"><i class="fas fa-users"></i> 사용자별 안내</div>
+        <div class="section-title">누구에게나 맞춤 경험을 제공합니다</div>
+        <p class="section-desc">교사, 학생, 학부모 각 역할에 최적화된 인터페이스로 학교 생활의 모든 순간을 연결합니다.</p>
+        <div class="roles-grid">
+            <div class="role-card">
+                <div class="role-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                <div class="role-title">선생님</div>
+                <p class="role-desc">반복적인 행정 업무는 줄이고, 학생과의 시간은 늘리세요.</p>
+                <ul class="role-features">
+                    <li><i class="fas fa-check"></i> 학급/과목/동아리 통합 관리</li>
+                    <li><i class="fas fa-check"></i> AI 생기부 자동 작성</li>
+                    <li><i class="fas fa-check"></i> 상담 일정·일지 관리</li>
+                    <li><i class="fas fa-check"></i> 과제 출제 및 제출 관리</li>
+                    <li><i class="fas fa-check"></i> 가정통신문 발송·수합</li>
+                    <li><i class="fas fa-check"></i> 출결 관리 및 기록</li>
+                </ul>
             </div>
+            <div class="role-card">
+                <div class="role-icon"><i class="fas fa-user-graduate"></i></div>
+                <div class="role-title">학생</div>
+                <p class="role-desc">시간표, 과제, 알림을 모바일로 간편하게 확인하세요.</p>
+                <ul class="role-features">
+                    <li><i class="fas fa-check"></i> 시간표·과제 알림</li>
+                    <li><i class="fas fa-check"></i> 과제 제출 및 확인</li>
+                    <li><i class="fas fa-check"></i> 선생님과 1:1 메시지</li>
+                    <li><i class="fas fa-check"></i> 학급 공지사항 확인</li>
+                    <li><i class="fas fa-check"></i> 동아리 활동 기록</li>
+                </ul>
+            </div>
+            <div class="role-card">
+                <div class="role-icon"><i class="fas fa-heart"></i></div>
+                <div class="role-title">학부모</div>
+                <p class="role-desc">자녀의 학교 생활을 실시간으로 확인하고 선생님과 소통하세요.</p>
+                <ul class="role-features">
+                    <li><i class="fas fa-check"></i> 자녀 출결·성적 확인</li>
+                    <li><i class="fas fa-check"></i> 선생님과 직접 메시지</li>
+                    <li><i class="fas fa-check"></i> 가정통신문 수신·동의</li>
+                    <li><i class="fas fa-check"></i> 상담 일정 확인</li>
+                    <li><i class="fas fa-check"></i> 시간표·과제 현황 열람</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
 
-            <div class="p-8 pt-6">
-                <div id="find-id-form" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">이름</label>
-                        <div class="relative group">
-                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><i class="fas fa-user"></i></span>
-                            <input id="find-id-name" type="text" placeholder="이름을 입력하세요" class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none font-medium text-sm text-slate-700">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">이메일</label>
-                        <div class="relative group">
-                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><i class="fas fa-envelope"></i></span>
-                            <input id="find-id-email" type="email" placeholder="가입 시 등록한 이메일" class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none font-medium text-sm text-slate-700">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">생년월일</label>
-                        <div class="relative group">
-                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><i class="fas fa-calendar"></i></span>
-                            <input id="find-id-birth" type="text" placeholder="YYYY-MM-DD" maxlength="10" class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none font-medium text-sm text-slate-700" oninput="formatBirthInput(this)">
-                        </div>
-                    </div>
-                    <button onclick="handleFindId()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-black py-3.5 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]">
-                        <i class="fas fa-search mr-2"></i>아이디 찾기
-                    </button>
+<!-- FEATURES -->
+<section class="page-section features" id="features">
+    <div class="section-inner">
+        <div class="section-label"><i class="fas fa-bolt"></i> 주요 기능</div>
+        <div class="section-title">교육에 필요한 모든 것, 하나의 플랫폼에</div>
+        <p class="section-desc">학교 업무의 핵심 기능을 빠짐없이 제공합니다.</p>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon fi-blue"><i class="fas fa-clipboard-check"></i></div>
+                <h3>출결 관리</h3>
+                <p>실시간 출결 체크, 결석/지각/조퇴 사유 기록. 생기부와 자동 연동됩니다.</p>
+                <span class="feature-tag tag-new">NEW</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-purple"><i class="fas fa-robot"></i></div>
+                <h3>AI 생활기록부</h3>
+                <p>학생 활동 데이터를 기반으로 AI가 생기부를 자동 생성합니다.</p>
+                <span class="feature-tag tag-ai">AI Powered</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-green"><i class="fas fa-comments"></i></div>
+                <h3>교내 메신저</h3>
+                <p>교사↔학생↔학부모 역할별 보안 메시지. 학급·학년 단체방을 지원합니다.</p>
+                <span class="feature-tag tag-new">NEW</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-amber"><i class="fas fa-file-signature"></i></div>
+                <h3>가정통신문</h3>
+                <p>온라인 발송·수합·전자동의. 학부모 확인 현황을 실시간으로 추적합니다.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-rose"><i class="fas fa-calendar-check"></i></div>
+                <h3>상담 관리</h3>
+                <p>상담 일정 등록, 상담 일지 작성, 이력 관리까지 한 곳에서 처리합니다.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-teal"><i class="fas fa-tasks"></i></div>
+                <h3>과제 관리</h3>
+                <p>과제 출제, 제출 현황 추적, 파일 첨부까지. 교사와 학생 모두 편리합니다.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- HIGHLIGHT: AI 생기부 -->
+<section class="page-section highlight" id="ai-record">
+    <div class="highlight-inner">
+        <div>
+            <div class="section-label" style="color: var(--blue-400);"><i class="fas fa-sparkles"></i> 차별화 기능</div>
+            <h2>생기부 작성,<br><em>AI가 대신합니다</em></h2>
+            <p>학생의 교과 활동, 동아리, 상담 기록을 분석하여 Gemini AI가 생활기록부를 자동 생성합니다. 선생님은 검토하고 수정만 하세요.</p>
+            <ul class="highlight-features">
+                <li><i class="fas fa-database"></i> 교과별 활동 데이터 자동 수집</li>
+                <li><i class="fas fa-pen-nib"></i> 항목별 자동 생성 (Gemini 2.5)</li>
+                <li><i class="fas fa-sliders-h"></i> 바이트 수 자동 조절</li>
+                <li><i class="fas fa-sync"></i> 재생성·요약·편집 원클릭 지원</li>
+                <li><i class="fas fa-shield-alt"></i> 학생 데이터 외부 저장 없음</li>
+            </ul>
+        </div>
+        <div class="highlight-demo">
+            <div class="demo-label"><i class="fas fa-wand-magic-sparkles"></i> AI 생기부 미리보기</div>
+            <div class="demo-text-block">
+                <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,0.4); margin-bottom:10px;">교과학습발달상황 — 국어</div>
+                <div class="demo-text-line"></div>
+                <div class="demo-text-line highlight-line"></div>
+                <div class="demo-text-line"></div>
+                <div class="demo-text-line"></div>
+            </div>
+            <div class="demo-text-block">
+                <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,0.4); margin-bottom:10px;">행동특성 및 종합의견</div>
+                <div class="demo-text-line"></div>
+                <div class="demo-text-line"></div>
+                <div class="demo-text-line highlight-line"></div>
+                <div class="demo-text-line"></div>
+                <div class="demo-text-line"></div>
+            </div>
+            <div class="demo-btn-row">
+                <button class="demo-btn demo-btn-primary"><i class="fas fa-sparkles" style="font-size:10px"></i> AI 생성</button>
+                <button class="demo-btn demo-btn-ghost">재요약</button>
+                <button class="demo-btn demo-btn-ghost">편집</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PRICING -->
+<section class="page-section pricing" id="pricing">
+    <div class="section-inner">
+        <div class="section-label"><i class="fas fa-tag"></i> 요금제</div>
+        <div class="section-title">핵심 기능은 무료, 프리미엄은 무제한</div>
+        <p class="section-desc">핵심 기능은 무료로 제공됩니다. 포인트 충전으로 추가 기능을 이용하거나, 프리미엄 계약으로 모든 기능을 무제한 사용하세요.</p>
+        <div class="pricing-grid">
+            <div class="price-card">
+                <div class="price-name">기본 (영구 무료)</div>
+                <div class="price-amount outfit">₩0</div>
+                <div class="price-period">기간 제한 없음 · 교사 수 제한 없음</div>
+                <ul class="price-features">
+                    <li><i class="fas fa-check"></i> 학급·과목·동아리 관리</li>
+                    <li><i class="fas fa-check"></i> 출결 관리</li>
+                    <li><i class="fas fa-check"></i> 상담 일정·일지 관리</li>
+                    <li><i class="fas fa-check"></i> 과제 출제·제출 관리</li>
+                    <li><i class="fas fa-check"></i> 가정통신문 발송·수합</li>
+                    <li><i class="fas fa-check"></i> 교내 메신저</li>
+                    <li><i class="fas fa-check"></i> 학부모·학생 앱</li>
+                    <li><i class="fas fa-check"></i> 웹 푸시 알림</li>
+                </ul>
+                <div class="price-point-box">
+                    <div class="price-point-title"><i class="fas fa-coins" style="margin-right:4px;"></i> 포인트 충전</div>
+                    <div class="price-point-desc">AI 생기부, 대용량 저장소 등 추가 기능은 포인트를 충전하여 사용할 수 있습니다.</div>
                 </div>
+                <button class="price-btn" onclick="openLoginModal()">시작하기</button>
+            </div>
+            <div class="price-card featured">
+                <div class="price-popular">추천</div>
+                <div class="price-name">프리미엄</div>
+                <div class="price-amount outfit">별도 협의</div>
+                <div class="price-period">계약 기반 · 모든 기능 무제한 사용</div>
+                <ul class="price-features">
+                    <li><i class="fas fa-check"></i> 기본 기능 전체 포함</li>
+                    <li><i class="fas fa-check"></i> AI 생기부 자동 생성 무제한</li>
+                    <li><i class="fas fa-check"></i> 대용량 파일 저장소</li>
+                    <li><i class="fas fa-check"></i> 입시 상담 데이터 분석</li>
+                    <li><i class="fas fa-check"></i> 포인트 차감 없이 전 기능 이용</li>
+                    <li><i class="fas fa-check"></i> 전화·이메일 우선 지원</li>
+                    <li><i class="fas fa-check"></i> 전담 매니저 배정</li>
+                </ul>
+                <button class="price-btn" onclick="location.href='support.html'">도입 상담 신청</button>
+            </div>
+        </div>
+    </div>
+</section>
 
-                <!-- 결과 영역 -->
-                <div id="find-id-result" class="hidden">
-                    <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-5 text-center mb-4">
-                        <i class="fas fa-check-circle text-3xl text-blue-500 mb-2"></i>
-                        <p class="text-sm text-slate-600 mb-1">회원님의 아이디는</p>
-                        <p class="text-2xl font-black text-blue-600" id="find-id-value"></p>
-                        <p class="text-sm text-slate-600 mt-1">입니다.</p>
+<!-- SECURITY -->
+<section class="page-section trust" id="trust">
+    <div class="section-inner">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div class="section-label" style="justify-content: center;"><i class="fas fa-shield-alt"></i> 보안 정책</div>
+            <div class="section-title" style="margin-left: auto; margin-right: auto;">학생 데이터 보호,<br>타협하지 않습니다</div>
+            <p class="section-desc" style="margin-left:auto; margin-right:auto; text-align:center;">
+                교육 데이터는 가장 민감한 개인정보입니다.<br>SchoolUs는 보안을 최우선 가치로 설계되었습니다.
+            </p>
+        </div>
+        <div class="trust-grid">
+            <div class="trust-card">
+                <div class="trust-icon"><i class="fas fa-lock"></i></div>
+                <div class="trust-title">SSL 256bit 암호화</div>
+                <div class="trust-label">모든 통신 구간 암호화 적용<br>데이터 전송 시 제3자 접근 원천 차단</div>
+            </div>
+            <div class="trust-card">
+                <div class="trust-icon"><i class="fas fa-user-shield"></i></div>
+                <div class="trust-title">역할 기반 접근 제어</div>
+                <div class="trust-label">교사·학생·학부모 권한 완전 분리<br>타학교 데이터 접근 원천 차단</div>
+            </div>
+            <div class="trust-card">
+                <div class="trust-icon"><i class="fas fa-server"></i></div>
+                <div class="trust-title">국내 전용 서버 운영</div>
+                <div class="trust-label">국내 데이터센터에서만 운영<br>학생 데이터 해외 반출 없음</div>
+            </div>
+            <div class="trust-card">
+                <div class="trust-icon"><i class="fas fa-database"></i></div>
+                <div class="trust-title">실시간 백업 체계</div>
+                <div class="trust-label">24시간 자동 백업 운영<br>데이터 유실 방지 이중 보관</div>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:40px;">
+            <div class="trust-checks">
+                <div class="trust-check-item"><i class="fas fa-check-circle" style="color:var(--green-500);"></i> 개인정보처리방침 공개</div>
+                <div class="trust-check-item"><i class="fas fa-check-circle" style="color:var(--green-500);"></i> 비인증 API 접근 전면 차단</div>
+                <div class="trust-check-item"><i class="fas fa-check-circle" style="color:var(--green-500);"></i> 소유자 검증 기반 데이터 보호</div>
+                <div class="trust-check-item"><i class="fas fa-check-circle" style="color:var(--green-500);"></i> AI 분석 시 외부 데이터 저장 없음</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="page-section cta">
+    <div class="section-inner" style="text-align: center;">
+        <h2>지금 바로 SchoolUs를 시작하세요</h2>
+        <p>핵심 기능 무료, 복잡한 설치 없이 가입만 하면 바로 사용할 수 있습니다.</p>
+        <div class="cta-buttons">
+            <button class="cta-btn-white" onclick="openLoginModal()"><i class="fas fa-lock"></i> 통합 로그인</button>
+            <a href="support.html" class="cta-btn-outline"><i class="fas fa-phone"></i> 도입 상담 문의</a>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="footer-top">
+            <div>
+                <a href="/" class="nav-logo" style="text-decoration:none;">
+                    <div class="nav-logo-icon"><i class="fas fa-school"></i></div>
+                    <span class="nav-logo-text outfit" style="color:white;">SchoolUs</span>
+                </a>
+                <p class="footer-brand-desc">선생님, 학생, 학부모를 연결하는<br>스마트 교육 통합 플랫폼</p>
+            </div>
+            <div class="footer-col">
+                <h4>서비스</h4>
+                <a href="#features">주요 기능</a>
+                <a href="#pricing">요금제</a>
+                <a href="#ai-record">AI 생기부</a>
+                <a href="#roles">사용자별 안내</a>
+            </div>
+            <div class="footer-col">
+                <h4>고객 지원</h4>
+                <a href="support.html">고객센터</a>
+                <a href="support.html">도입 상담</a>
+                <a href="mailto:free327912@gmail.com">이메일 문의</a>
+                <a href="tel:070-4137-9000">070-4137-9000</a>
+            </div>
+            <div class="footer-col">
+                <h4>약관 및 정책</h4>
+                <a href="terms.html">이용약관</a>
+                <a href="privacy.html" style="color: #5b93ff; font-weight: 700;">개인정보처리방침</a>
+                <a href="refund_policy.html">환불규정</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="footer-biz">
+                <strong>상호:</strong> 어스 정보 &nbsp;|&nbsp; <strong>대표:</strong> 이규복 &nbsp;|&nbsp; <strong>사업자등록번호:</strong> 807-58-00926<br>
+                <strong>통신판매업신고:</strong> 2026-안양만안-0160 &nbsp;|&nbsp; <strong>주소:</strong> 경기도 안양시 만안구 안양로 174, 101동 115호<br>
+                <strong>전화:</strong> 070-4137-9000 &nbsp;|&nbsp; <strong>이메일:</strong> <a href="mailto:free327912@gmail.com" style="color:#5b93ff;">free327912@gmail.com</a>
+            </div>
+            <div class="footer-copy">&copy; <script>document.write(new Date().getFullYear())</script> SchoolUs by 어스 정보. All rights reserved.</div>
+        </div>
+    </div>
+</footer>
+
+<!-- ============================================ -->
+<!-- 로그인 모달 -->
+<!-- ============================================ -->
+<div id="login-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <div class="glass-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden border-2 border-white/50">
+        <div class="bg-gradient-to-br from-slate-50 to-blue-50/30 p-10 pb-8 border-b border-slate-100 text-center relative">
+            <button onclick="closeLoginModal()" class="absolute top-5 right-5 text-slate-300 hover:text-slate-700 hover:rotate-90 transition-all duration-300" aria-label="닫기">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl shadow-blue-500/40 mx-auto mb-5">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h2 id="login-title" class="text-3xl font-black text-slate-800 mb-2">통합 로그인</h2>
+            <p class="text-xs text-slate-500 font-medium">SchoolUs 계정으로 모든 학교 서비스 이용 가능</p>
+        </div>
+        <div class="p-10 pt-8">
+            <form onsubmit="return false;" class="space-y-6">
+                <div>
+                    <label for="login_id" class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">Account ID</label>
+                    <div class="relative group">
+                        <span class="absolute inset-y-0 left-0 pl-5 flex items-center text-slate-400 group-focus-within:text-blue-600 transition-colors duration-300"><i class="fas fa-user"></i></span>
+                        <input id="login_id" type="text" placeholder="아이디를 입력하세요" autocomplete="username" class="w-full pl-12 pr-5 py-4 bg-slate-50/80 border-2 border-slate-200 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-300 font-medium text-sm text-slate-700 hover:border-slate-300">
                     </div>
+                </div>
+                <div>
+                    <label for="password" class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">Password</label>
+                    <div class="relative group">
+                        <span class="absolute inset-y-0 left-0 pl-5 flex items-center text-slate-400 group-focus-within:text-blue-600 transition-colors duration-300"><i class="fas fa-key"></i></span>
+                        <input id="password" type="password" placeholder="비밀번호를 입력하세요" autocomplete="current-password" class="w-full pl-12 pr-5 py-4 bg-slate-50/80 border-2 border-slate-200 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-300 font-medium text-sm text-slate-700 hover:border-slate-300" onkeyup="if(event.key === 'Enter') handleLogin()">
+                    </div>
+                </div>
+                <button onclick="handleLogin()" class="glow-button w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-500 transform hover:scale-[1.02] active:scale-[0.98] flex justify-center items-center gap-2">
+                    <span class="relative z-10">로그인</span>
+                    <i class="fas fa-arrow-right relative z-10"></i>
+                </button>
+                <div class="flex justify-between items-center text-xs font-bold text-slate-500 pt-3">
                     <div class="flex gap-3">
-                        <button onclick="closeFindIdModal(); openLoginModal();" class="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 rounded-xl transition-all hover:scale-[1.02]">
-                            <i class="fas fa-sign-in-alt mr-1"></i>로그인
-                        </button>
-                        <button onclick="closeFindIdModal(); openFindPwModal();" class="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl transition-all hover:bg-slate-200">
-                            <i class="fas fa-key mr-1"></i>비밀번호 찾기
-                        </button>
+                        <a href="#" onclick="openFindIdModal(); return false;" class="hover:text-blue-600 transition-colors duration-300">아이디 찾기</a>
+                        <span class="text-slate-300">|</span>
+                        <a href="#" onclick="openFindPwModal(); return false;" class="hover:text-blue-600 transition-colors duration-300">비밀번호 찾기</a>
                     </div>
+                    <a href="/signup" class="text-transparent bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text font-black hover:underline">회원가입</a>
                 </div>
-            </div>
+            </form>
+        </div>
+        <div class="bg-gradient-to-r from-slate-50 to-blue-50/30 p-4 text-center border-t border-slate-100">
+            <p class="text-[10px] text-slate-400 font-semibold tracking-wider">&copy; <script>document.write(new Date().getFullYear())</script> SchoolUs by 어스 정보</p>
         </div>
     </div>
+</div>
 
-    <!-- ============================================ -->
-    <!-- 비밀번호 찾기 모달 -->
-    <!-- ============================================ -->
-    <div id="find-pw-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
-        <div class="glass-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden border-2 border-white/50">
-            <div class="bg-gradient-to-br from-slate-50 to-blue-50/30 p-8 pb-6 border-b border-slate-100 text-center relative">
-                <button onclick="closeFindPwModal()" class="absolute top-4 right-4 text-slate-300 hover:text-slate-700 hover:rotate-90 transition-all duration-300"><i class="fas fa-times text-xl"></i></button>
-                <div class="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl shadow-amber-500/40 mx-auto mb-4">
-                    <i class="fas fa-key"></i>
-                </div>
-                <h2 class="text-2xl font-black text-slate-800 mb-1">비밀번호 찾기</h2>
-                <p class="text-xs text-slate-500 font-medium">등록된 이메일로 임시 비밀번호를 발송합니다</p>
+<!-- 아이디 찾기 모달 -->
+<div id="find-id-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
+    <div class="glass-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden border-2 border-white/50">
+        <div class="bg-gradient-to-br from-slate-50 to-blue-50/30 p-8 pb-6 border-b border-slate-100 text-center relative">
+            <button onclick="closeFindIdModal()" class="absolute top-4 right-4 text-slate-300 hover:text-slate-700 hover:rotate-90 transition-all duration-300"><i class="fas fa-times text-xl"></i></button>
+            <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl shadow-green-500/40 mx-auto mb-4">
+                <i class="fas fa-search"></i>
             </div>
-
-            <div class="p-8 pt-6">
-                <div id="find-pw-form" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">아이디</label>
-                        <div class="relative group">
-                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><i class="fas fa-user"></i></span>
-                            <input id="find-pw-id" type="text" placeholder="아이디를 입력하세요" class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none font-medium text-sm text-slate-700">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">이메일</label>
-                        <div class="relative group">
-                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><i class="fas fa-envelope"></i></span>
-                            <input id="find-pw-email" type="email" placeholder="가입 시 등록한 이메일" class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none font-medium text-sm text-slate-700">
-                        </div>
-                    </div>
-                    <button id="find-pw-btn" onclick="handleFindPw()" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-black py-3.5 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]">
-                        <i class="fas fa-paper-plane mr-2"></i>임시 비밀번호 발송
-                    </button>
-                </div>
-
-                <!-- 결과 영역 -->
-                <div id="find-pw-result" class="hidden">
-                    <div class="bg-green-50 border-2 border-green-200 rounded-xl p-5 text-center mb-4">
-                        <i class="fas fa-envelope-open-text text-3xl text-green-500 mb-2"></i>
-                        <p class="text-sm font-bold text-green-700 mb-1">임시 비밀번호가 발송되었습니다</p>
-                        <p class="text-sm text-slate-600" id="find-pw-email-display"></p>
-                    </div>
-                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-                        <p class="text-xs text-amber-800 leading-relaxed">로그인 후 반드시 비밀번호를 변경해주세요. 메일이 오지 않으면 스팸함을 확인해주세요.</p>
-                    </div>
-                    <button onclick="closeFindPwModal(); openLoginModal();" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02]">
-                        <i class="fas fa-sign-in-alt mr-2"></i>로그인하러 가기
-                    </button>
-                </div>
-            </div>
+            <h2 class="text-2xl font-black text-slate-800 mb-1">아이디 찾기</h2>
+            <p class="text-xs text-slate-500 font-medium">가입 시 등록한 정보로 아이디를 찾습니다</p>
         </div>
-    </div>
-
-    <div id="role-select-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
-        <div class="glass-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden border-2 border-white/50">
-            <div class="bg-gradient-to-br from-slate-50 to-blue-50/30 p-8 pb-6 border-b border-slate-100 text-center">
-                <div class="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl mx-auto mb-4">
-                    <i class="fas fa-user-tag"></i>
+        <div class="p-8 pt-6">
+            <div id="find-id-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">이름</label>
+                    <div class="relative group">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><i class="fas fa-user"></i></span>
+                        <input id="find-id-name" type="text" placeholder="이름을 입력하세요" class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none font-medium text-sm text-slate-700">
+                    </div>
                 </div>
-                <h2 class="text-2xl font-black text-slate-800 mb-2">역할 선택</h2>
-                <p id="role-select-greeting" class="text-sm text-slate-500 font-medium"></p>
-            </div>
-            <div class="p-8 space-y-3" id="role-select-buttons">
-                <button onclick="selectLoginRole('teacher')" class="w-full flex items-center gap-4 p-5 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl hover:border-green-400 hover:shadow-lg transition-all group">
-                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-110 transition-transform">
-                        <i class="fas fa-chalkboard-teacher"></i>
+                <div>
+                    <label class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">이메일</label>
+                    <div class="relative group">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><i class="fas fa-envelope"></i></span>
+                        <input id="find-id-email" type="email" placeholder="가입 시 등록한 이메일" class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none font-medium text-sm text-slate-700">
                     </div>
-                    <div class="text-left">
-                        <p class="font-black text-slate-700 text-lg">교사로 로그인</p>
-                        <p class="text-xs text-slate-500">수업/학급 관리, 성적처리</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">생년월일</label>
+                    <div class="relative group">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><i class="fas fa-calendar"></i></span>
+                        <input id="find-id-birth" type="text" placeholder="YYYY-MM-DD" maxlength="10" class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none font-medium text-sm text-slate-700" oninput="formatBirthInput(this)">
                     </div>
-                    <i class="fas fa-chevron-right text-slate-300 ml-auto"></i>
-                </button>
-                <button onclick="selectLoginRole('parent')" class="w-full flex items-center gap-4 p-5 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl hover:border-purple-400 hover:shadow-lg transition-all group">
-                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-110 transition-transform">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="text-left">
-                        <p class="font-black text-slate-700 text-lg">학부모로 로그인</p>
-                        <p class="text-xs text-slate-500">자녀 학습현황, 상담관리</p>
-                    </div>
-                    <i class="fas fa-chevron-right text-slate-300 ml-auto"></i>
+                </div>
+                <button onclick="handleFindId()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-black py-3.5 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]">
+                    <i class="fas fa-search mr-2"></i>아이디 찾기
                 </button>
             </div>
-            <div class="bg-gradient-to-r from-slate-50 to-blue-50/30 p-4 text-center border-t border-slate-100">
-                <p class="text-[10px] text-slate-400 font-semibold tracking-wider">© <script>document.write(new Date().getFullYear())</script> SchoolUs by 어스 정보</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="child-select-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
-        <div class="glass-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden border-2 border-white/50">
-            <div class="bg-gradient-to-br from-slate-50 to-pink-50/30 p-8 pb-6 border-b border-slate-100 text-center">
-                <div class="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl mx-auto mb-4">
-                    <i class="fas fa-child"></i>
+            <div id="find-id-result" class="hidden">
+                <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-5 text-center mb-4">
+                    <i class="fas fa-check-circle text-3xl text-blue-500 mb-2"></i>
+                    <p class="text-sm text-slate-600 mb-1">회원님의 아이디는</p>
+                    <p class="text-2xl font-black text-blue-600" id="find-id-value"></p>
+                    <p class="text-sm text-slate-600 mt-1">입니다.</p>
                 </div>
-                <h2 class="text-2xl font-black text-slate-800 mb-2">자녀 선택</h2>
-                <p class="text-sm text-slate-500 font-medium">로그인할 자녀를 선택해주세요</p>
-            </div>
-            <div class="p-8 space-y-3 max-h-80 overflow-y-auto" id="child-select-list"></div>
-            <div class="bg-gradient-to-r from-slate-50 to-blue-50/30 p-4 text-center border-t border-slate-100">
-                <p class="text-[10px] text-slate-400 font-semibold tracking-wider">© <script>document.write(new Date().getFullYear())</script> SchoolUs by 어스 정보</p>
+                <div class="flex gap-3">
+                    <button onclick="closeFindIdModal(); openLoginModal();" class="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 rounded-xl transition-all hover:scale-[1.02]">
+                        <i class="fas fa-sign-in-alt mr-1"></i>로그인
+                    </button>
+                    <button onclick="closeFindIdModal(); openFindPwModal();" class="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl transition-all hover:bg-slate-200">
+                        <i class="fas fa-key mr-1"></i>비밀번호 찾기
+                    </button>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        var loginUserData = null;
+<!-- 비밀번호 찾기 모달 -->
+<div id="find-pw-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
+    <div class="glass-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden border-2 border-white/50">
+        <div class="bg-gradient-to-br from-slate-50 to-blue-50/30 p-8 pb-6 border-b border-slate-100 text-center relative">
+            <button onclick="closeFindPwModal()" class="absolute top-4 right-4 text-slate-300 hover:text-slate-700 hover:rotate-90 transition-all duration-300"><i class="fas fa-times text-xl"></i></button>
+            <div class="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl shadow-amber-500/40 mx-auto mb-4">
+                <i class="fas fa-key"></i>
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 mb-1">비밀번호 찾기</h2>
+            <p class="text-xs text-slate-500 font-medium">등록된 이메일로 임시 비밀번호를 발송합니다</p>
+        </div>
+        <div class="p-8 pt-6">
+            <div id="find-pw-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">아이디</label>
+                    <div class="relative group">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><i class="fas fa-user"></i></span>
+                        <input id="find-pw-id" type="text" placeholder="아이디를 입력하세요" class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none font-medium text-sm text-slate-700">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase tracking-wider">이메일</label>
+                    <div class="relative group">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><i class="fas fa-envelope"></i></span>
+                        <input id="find-pw-email" type="email" placeholder="가입 시 등록한 이메일" class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none font-medium text-sm text-slate-700">
+                    </div>
+                </div>
+                <button id="find-pw-btn" onclick="handleFindPw()" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-black py-3.5 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]">
+                    <i class="fas fa-paper-plane mr-2"></i>임시 비밀번호 발송
+                </button>
+            </div>
+            <div id="find-pw-result" class="hidden">
+                <div class="bg-green-50 border-2 border-green-200 rounded-xl p-5 text-center mb-4">
+                    <i class="fas fa-envelope-open-text text-3xl text-green-500 mb-2"></i>
+                    <p class="text-sm font-bold text-green-700 mb-1">임시 비밀번호가 발송되었습니다</p>
+                    <p class="text-sm text-slate-600" id="find-pw-email-display"></p>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                    <p class="text-xs text-amber-800 leading-relaxed">로그인 후 반드시 비밀번호를 변경해주세요. 메일이 오지 않으면 스팸함을 확인해주세요.</p>
+                </div>
+                <button onclick="closeFindPwModal(); openLoginModal();" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02]">
+                    <i class="fas fa-sign-in-alt mr-2"></i>로그인하러 가기
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-        function openLoginModal() {
-            document.getElementById('login-modal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-            document.getElementById('login_id').focus();
+<!-- 역할 선택 모달 -->
+<div id="role-select-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
+    <div class="glass-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden border-2 border-white/50">
+        <div class="bg-gradient-to-br from-slate-50 to-blue-50/30 p-8 pb-6 border-b border-slate-100 text-center">
+            <div class="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl mx-auto mb-4">
+                <i class="fas fa-user-tag"></i>
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 mb-2">역할 선택</h2>
+            <p id="role-select-greeting" class="text-sm text-slate-500 font-medium"></p>
+        </div>
+        <div class="p-8 space-y-3" id="role-select-buttons">
+            <button onclick="selectLoginRole('teacher')" class="w-full flex items-center gap-4 p-5 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl hover:border-green-400 hover:shadow-lg transition-all group">
+                <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-110 transition-transform">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div class="text-left">
+                    <p class="font-black text-slate-700 text-lg">교사로 로그인</p>
+                    <p class="text-xs text-slate-500">수업/학급 관리, 성적처리</p>
+                </div>
+                <i class="fas fa-chevron-right text-slate-300 ml-auto"></i>
+            </button>
+            <button onclick="selectLoginRole('parent')" class="w-full flex items-center gap-4 p-5 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl hover:border-purple-400 hover:shadow-lg transition-all group">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-110 transition-transform">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="text-left">
+                    <p class="font-black text-slate-700 text-lg">학부모로 로그인</p>
+                    <p class="text-xs text-slate-500">자녀 학습현황, 상담관리</p>
+                </div>
+                <i class="fas fa-chevron-right text-slate-300 ml-auto"></i>
+            </button>
+        </div>
+        <div class="bg-gradient-to-r from-slate-50 to-blue-50/30 p-4 text-center border-t border-slate-100">
+            <p class="text-[10px] text-slate-400 font-semibold tracking-wider">&copy; <script>document.write(new Date().getFullYear())</script> SchoolUs by 어스 정보</p>
+        </div>
+    </div>
+</div>
+
+<!-- 자녀 선택 모달 -->
+<div id="child-select-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true">
+    <div class="glass-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden border-2 border-white/50">
+        <div class="bg-gradient-to-br from-slate-50 to-pink-50/30 p-8 pb-6 border-b border-slate-100 text-center">
+            <div class="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl mx-auto mb-4">
+                <i class="fas fa-child"></i>
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 mb-2">자녀 선택</h2>
+            <p class="text-sm text-slate-500 font-medium">로그인할 자녀를 선택해주세요</p>
+        </div>
+        <div class="p-8 space-y-3 max-h-80 overflow-y-auto" id="child-select-list"></div>
+        <div class="bg-gradient-to-r from-slate-50 to-blue-50/30 p-4 text-center border-t border-slate-100">
+            <p class="text-[10px] text-slate-400 font-semibold tracking-wider">&copy; <script>document.write(new Date().getFullYear())</script> SchoolUs by 어스 정보</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== 홈페이지 통계 로드 =====
+(function loadStats() {
+    fetch('/api/public/stats').then(function(r){ return r.json(); }).then(function(d) {
+        if (d.success) {
+            var ids = {schools:'stat-schools', teachers:'stat-teachers', students:'stat-students', parents:'stat-parents'};
+            for (var key in ids) {
+                var el = document.getElementById(ids[key]);
+                if (el && d[key] !== undefined) el.textContent = d[key].toLocaleString();
+            }
         }
+    }).catch(function(){});
+})();
 
-        function closeLoginModal() {
-            document.getElementById('login-modal').classList.add('hidden');
+// ===== Nav scroll effect =====
+var mainNav = document.getElementById('main-nav');
+window.addEventListener('scroll', function() {
+    mainNav.classList.toggle('scrolled', window.scrollY > 20);
+});
+
+// ===== Smooth scroll =====
+document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+    a.addEventListener('click', function(e) {
+        var href = this.getAttribute('href');
+        if (href === '#') return;
+        var target = document.querySelector(href);
+        if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+});
+
+// ===== Mobile menu =====
+function toggleMobileMenu() {
+    var menu = document.getElementById('mobile-menu');
+    var btn = document.querySelector('.nav-mobile-btn i');
+    menu.classList.toggle('open');
+    btn.className = menu.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
+}
+function closeMobileMenu() {
+    document.getElementById('mobile-menu').classList.remove('open');
+    document.querySelector('.nav-mobile-btn i').className = 'fas fa-bars';
+}
+
+// ===== Login =====
+var loginUserData = null;
+
+function openLoginModal() {
+    document.getElementById('login-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('login_id').focus();
+}
+
+function closeLoginModal() {
+    document.getElementById('login-modal').classList.add('hidden');
+    document.getElementById('role-select-modal').classList.add('hidden');
+    document.getElementById('child-select-modal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// ===== 아이디 찾기 =====
+function openFindIdModal() {
+    document.getElementById('login-modal').classList.add('hidden');
+    document.getElementById('find-id-modal').classList.remove('hidden');
+    document.getElementById('find-id-form').classList.remove('hidden');
+    document.getElementById('find-id-result').classList.add('hidden');
+    document.getElementById('find-id-name').value = '';
+    document.getElementById('find-id-email').value = '';
+    document.getElementById('find-id-birth').value = '';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeFindIdModal() {
+    document.getElementById('find-id-modal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+async function handleFindId() {
+    var name = document.getElementById('find-id-name').value.trim();
+    var email = document.getElementById('find-id-email').value.trim();
+    var birth = document.getElementById('find-id-birth').value.trim();
+    if (!name || !email || !birth) { alert('모든 항목을 입력해주세요.'); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) { alert('생년월일을 YYYY-MM-DD 형식으로 입력해주세요.'); return; }
+    try {
+        var res = await fetch('/api/find-id', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ member_name: name, member_email: email, member_birth: birth })
+        });
+        var data = await res.json();
+        if (data.success) {
+            document.getElementById('find-id-value').textContent = data.masked_id;
+            document.getElementById('find-id-form').classList.add('hidden');
+            document.getElementById('find-id-result').classList.remove('hidden');
+        } else { alert(data.message); }
+    } catch (e) { alert('아이디 찾기 중 오류가 발생했습니다.'); }
+}
+
+// ===== 비밀번호 찾기 =====
+function openFindPwModal() {
+    document.getElementById('login-modal').classList.add('hidden');
+    document.getElementById('find-id-modal').classList.add('hidden');
+    document.getElementById('find-pw-modal').classList.remove('hidden');
+    document.getElementById('find-pw-form').classList.remove('hidden');
+    document.getElementById('find-pw-result').classList.add('hidden');
+    document.getElementById('find-pw-id').value = '';
+    document.getElementById('find-pw-email').value = '';
+    document.getElementById('find-pw-btn').disabled = false;
+    document.getElementById('find-pw-btn').innerHTML = '<i class="fas fa-paper-plane mr-2"></i>임시 비밀번호 발송';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeFindPwModal() {
+    document.getElementById('find-pw-modal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+async function handleFindPw() {
+    var id = document.getElementById('find-pw-id').value.trim();
+    var email = document.getElementById('find-pw-email').value.trim();
+    if (!id || !email) { alert('아이디와 이메일을 모두 입력해주세요.'); return; }
+    var btn = document.getElementById('find-pw-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>발송 중...';
+    try {
+        var res = await fetch('/api/find-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ member_id: id, member_email: email })
+        });
+        var data = await res.json();
+        if (data.success) {
+            document.getElementById('find-pw-email-display').textContent = data.message;
+            document.getElementById('find-pw-form').classList.add('hidden');
+            document.getElementById('find-pw-result').classList.remove('hidden');
+        } else {
+            alert(data.message);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>임시 비밀번호 발송';
+        }
+    } catch (e) {
+        alert('비밀번호 찾기 중 오류가 발생했습니다.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>임시 비밀번호 발송';
+    }
+}
+
+function formatBirthInput(input) {
+    var v = input.value.replace(/[^0-9]/g, '');
+    if (v.length > 4) v = v.substring(0, 4) + '-' + v.substring(4);
+    if (v.length > 7) v = v.substring(0, 7) + '-' + v.substring(7);
+    if (v.length > 10) v = v.substring(0, 10);
+    input.value = v;
+}
+
+// ===== 로그인 처리 =====
+async function handleLogin() {
+    var id = document.getElementById('login_id').value.trim();
+    var pw = document.getElementById('password').value.trim();
+    if (!id || !pw) { alert("아이디와 비밀번호를 입력해주세요."); return; }
+    try {
+        var response = await fetch('/login_process', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ login_id: id, password: pw })
+        });
+        var data = await response.json();
+        if (data.success) {
+            if (data.requires_role_select) {
+                loginUserData = data.user;
+                document.getElementById('role-select-greeting').textContent = data.user.member_name + '님, 어떤 역할로 로그인하시겠어요?';
+                document.getElementById('login-modal').classList.add('hidden');
+                document.getElementById('role-select-modal').classList.remove('hidden');
+                return;
+            }
+            if (data.requires_child_select) {
+                loginUserData = data.user;
+                showChildSelectModal(data.children);
+                document.getElementById('login-modal').classList.add('hidden');
+                return;
+            }
+            completeLogin(data.user);
+        } else { alert(data.message); }
+    } catch (err) { alert("서버 연결 중 오류가 발생했습니다."); }
+}
+
+async function selectLoginRole(role) {
+    try {
+        var response = await fetch('/api/select-role', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ selected_role: role })
+        });
+        var data = await response.json();
+        if (data.success) {
+            if (data.requires_child_select) {
+                loginUserData = data.user;
+                showChildSelectModal(data.children);
+                document.getElementById('role-select-modal').classList.add('hidden');
+                return;
+            }
             document.getElementById('role-select-modal').classList.add('hidden');
+            completeLogin(data.user);
+        } else { alert(data.message); }
+    } catch (err) { alert("서버 연결 중 오류가 발생했습니다."); }
+}
+
+function showChildSelectModal(children) {
+    var list = document.getElementById('child-select-list');
+    list.innerHTML = children.map(function(child) {
+        var gradeText = child.class_grade ? child.class_grade + '학년 ' : '';
+        var classText = child.class_no ? child.class_no + '반 ' : '';
+        var numText = child.class_num ? child.class_num + '번' : '';
+        var schoolText = child.member_school || '';
+        return '<button onclick="selectLoginChild(' + child.id + ')" class="w-full flex items-center gap-4 p-5 bg-gradient-to-r from-pink-50 to-rose-50 border-2 border-pink-200 rounded-2xl hover:border-pink-400 hover:shadow-lg transition-all group">' +
+            '<div class="w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-500 rounded-xl flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-110 transition-transform"><i class="fas fa-child"></i></div>' +
+            '<div class="text-left flex-1"><p class="font-black text-slate-700 text-lg">' + child.child_name + '</p><p class="text-xs text-slate-500">' + schoolText + ' ' + gradeText + classText + numText + '</p></div>' +
+            '<i class="fas fa-chevron-right text-slate-300"></i></button>';
+    }).join('');
+    document.getElementById('child-select-modal').classList.remove('hidden');
+}
+
+async function selectLoginChild(childId) {
+    try {
+        var response = await fetch('/api/select-child', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ child_id: childId })
+        });
+        var data = await response.json();
+        if (data.success) {
             document.getElementById('child-select-modal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
+            completeLogin(data.user);
+        } else { alert(data.message); }
+    } catch (err) { alert("서버 연결 중 오류가 발생했습니다."); }
+}
 
-        // ============================================
-        // 아이디 찾기
-        // ============================================
-        function openFindIdModal() {
-            document.getElementById('login-modal').classList.add('hidden');
-            document.getElementById('find-id-modal').classList.remove('hidden');
-            document.getElementById('find-id-form').classList.remove('hidden');
-            document.getElementById('find-id-result').classList.add('hidden');
-            document.getElementById('find-id-name').value = '';
-            document.getElementById('find-id-email').value = '';
-            document.getElementById('find-id-birth').value = '';
-            document.body.style.overflow = 'hidden';
-        }
+function completeLogin(user) {
+    var APP_VERSION = '1.0';
+    var savedVersion = localStorage.getItem('schoolus_version');
+    if (savedVersion !== APP_VERSION) {
+        localStorage.clear();
+        localStorage.setItem('schoolus_version', APP_VERSION);
+    }
+    localStorage.setItem('schoolus_user', JSON.stringify(user));
+    var filePrefix = '';
+    if (user.member_roll === 'teacher') filePrefix = 'tea';
+    else if (user.member_roll === 'student') filePrefix = 'st';
+    else if (user.member_roll === 'parent') filePrefix = 'fm';
+    var childName = user.selected_child_name ? ' (' + user.selected_child_name + ')' : '';
+    alert(user.member_name + '님' + childName + ' 환영합니다!');
+    window.location.href = '/' + user.school_folder + '/' + filePrefix + '.html';
+}
 
-        function closeFindIdModal() {
-            document.getElementById('find-id-modal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        async function handleFindId() {
-            const name = document.getElementById('find-id-name').value.trim();
-            const email = document.getElementById('find-id-email').value.trim();
-            const birth = document.getElementById('find-id-birth').value.trim();
-
-            if (!name || !email || !birth) {
-                alert('모든 항목을 입력해주세요.');
-                return;
-            }
-
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) {
-                alert('생년월일을 YYYY-MM-DD 형식으로 입력해주세요.');
-                return;
-            }
-
-            try {
-                const res = await fetch('/api/find-id', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ member_name: name, member_email: email, member_birth: birth })
-                });
-                const data = await res.json();
-
-                if (data.success) {
-                    document.getElementById('find-id-value').textContent = data.masked_id;
-                    document.getElementById('find-id-form').classList.add('hidden');
-                    document.getElementById('find-id-result').classList.remove('hidden');
-                } else {
-                    alert(data.message);
-                }
-            } catch (e) {
-                alert('아이디 찾기 중 오류가 발생했습니다.');
-            }
-        }
-
-        // ============================================
-        // 비밀번호 찾기
-        // ============================================
-        function openFindPwModal() {
-            document.getElementById('login-modal').classList.add('hidden');
-            document.getElementById('find-id-modal').classList.add('hidden');
-            document.getElementById('find-pw-modal').classList.remove('hidden');
-            document.getElementById('find-pw-form').classList.remove('hidden');
-            document.getElementById('find-pw-result').classList.add('hidden');
-            document.getElementById('find-pw-id').value = '';
-            document.getElementById('find-pw-email').value = '';
-            document.getElementById('find-pw-btn').disabled = false;
-            document.getElementById('find-pw-btn').innerHTML = '<i class="fas fa-paper-plane mr-2"></i>임시 비밀번호 발송';
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeFindPwModal() {
-            document.getElementById('find-pw-modal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        async function handleFindPw() {
-            const id = document.getElementById('find-pw-id').value.trim();
-            const email = document.getElementById('find-pw-email').value.trim();
-
-            if (!id || !email) {
-                alert('아이디와 이메일을 모두 입력해주세요.');
-                return;
-            }
-
-            const btn = document.getElementById('find-pw-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>발송 중...';
-
-            try {
-                const res = await fetch('/api/find-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ member_id: id, member_email: email })
-                });
-                const data = await res.json();
-
-                if (data.success) {
-                    document.getElementById('find-pw-email-display').textContent = data.message;
-                    document.getElementById('find-pw-form').classList.add('hidden');
-                    document.getElementById('find-pw-result').classList.remove('hidden');
-                } else {
-                    alert(data.message);
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>임시 비밀번호 발송';
-                }
-            } catch (e) {
-                alert('비밀번호 찾기 중 오류가 발생했습니다.');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>임시 비밀번호 발송';
-            }
-        }
-
-        // 생년월일 자동 포맷 (YYYY-MM-DD)
-        function formatBirthInput(input) {
-            let v = input.value.replace(/[^0-9]/g, '');
-            if (v.length > 4) v = v.substring(0, 4) + '-' + v.substring(4);
-            if (v.length > 7) v = v.substring(0, 7) + '-' + v.substring(7);
-            if (v.length > 10) v = v.substring(0, 10);
-            input.value = v;
-        }
-
-        async function handleLogin() {
-            var id = document.getElementById('login_id').value.trim();
-            var pw = document.getElementById('password').value.trim();
-
-            if (!id || !pw) {
-                alert("아이디와 비밀번호를 입력해주세요.");
-                return;
-            }
-
-            try {
-                var response = await fetch('/login_process', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ login_id: id, password: pw })
-                });
-
-                var data = await response.json();
-
-                if (data.success) {
-                    if (data.requires_role_select) {
-                        loginUserData = data.user;
-                        document.getElementById('role-select-greeting').textContent = 
-                            data.user.member_name + '님, 어떤 역할로 로그인하시겠어요?';
-                        document.getElementById('login-modal').classList.add('hidden');
-                        document.getElementById('role-select-modal').classList.remove('hidden');
-                        return;
-                    }
-
-                    if (data.requires_child_select) {
-                        loginUserData = data.user;
-                        showChildSelectModal(data.children);
-                        document.getElementById('login-modal').classList.add('hidden');
-                        return;
-                    }
-
-                    completeLogin(data.user);
-                } else {
-                    alert(data.message);
-                }
-            } catch (err) {
-                alert("서버 연결 중 오류가 발생했습니다.");
-            }
-        }
-
-        async function selectLoginRole(role) {
-            try {
-                var response = await fetch('/api/select-role', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ selected_role: role })
-                });
-
-                var data = await response.json();
-
-                if (data.success) {
-                    if (data.requires_child_select) {
-                        loginUserData = data.user;
-                        showChildSelectModal(data.children);
-                        document.getElementById('role-select-modal').classList.add('hidden');
-                        return;
-                    }
-
-                    document.getElementById('role-select-modal').classList.add('hidden');
-                    completeLogin(data.user);
-                } else {
-                    alert(data.message);
-                }
-            } catch (err) {
-                alert("서버 연결 중 오류가 발생했습니다.");
-            }
-        }
-
-        function showChildSelectModal(children) {
-            var list = document.getElementById('child-select-list');
-            list.innerHTML = children.map(function(child) {
-                var gradeText = child.class_grade ? child.class_grade + '학년 ' : '';
-                var classText = child.class_no ? child.class_no + '반 ' : '';
-                var numText = child.class_num ? child.class_num + '번' : '';
-                var schoolText = child.member_school || '';
-                
-                return '<button onclick="selectLoginChild(' + child.id + ')" class="w-full flex items-center gap-4 p-5 bg-gradient-to-r from-pink-50 to-rose-50 border-2 border-pink-200 rounded-2xl hover:border-pink-400 hover:shadow-lg transition-all group">' +
-                    '<div class="w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-500 rounded-xl flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-110 transition-transform">' +
-                        '<i class="fas fa-child"></i>' +
-                    '</div>' +
-                    '<div class="text-left flex-1">' +
-                        '<p class="font-black text-slate-700 text-lg">' + child.child_name + '</p>' +
-                        '<p class="text-xs text-slate-500">' + schoolText + ' ' + gradeText + classText + numText + '</p>' +
-                    '</div>' +
-                    '<i class="fas fa-chevron-right text-slate-300"></i>' +
-                '</button>';
-            }).join('');
-            document.getElementById('child-select-modal').classList.remove('hidden');
-        }
-
-        async function selectLoginChild(childId) {
-            try {
-                var response = await fetch('/api/select-child', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ child_id: childId })
-                });
-
-                var data = await response.json();
-
-                if (data.success) {
-                    document.getElementById('child-select-modal').classList.add('hidden');
-                    completeLogin(data.user);
-                } else {
-                    alert(data.message);
-                }
-            } catch (err) {
-                alert("서버 연결 중 오류가 발생했습니다.");
-            }
-        }
-
-        function completeLogin(user) {
-            var APP_VERSION = '1.0';
-            var savedVersion = localStorage.getItem('schoolus_version');
-            if (savedVersion !== APP_VERSION) {
-                localStorage.clear();
-                localStorage.setItem('schoolus_version', APP_VERSION);
-            }
-            
-            localStorage.setItem('schoolus_user', JSON.stringify(user));
-            
-            var filePrefix = '';
-            if (user.member_roll === 'teacher') filePrefix = 'tea';
-            else if (user.member_roll === 'student') filePrefix = 'st';
-            else if (user.member_roll === 'parent') filePrefix = 'fm';
-
-            var childName = user.selected_child_name ? ' (' + user.selected_child_name + ')' : '';
-            alert(user.member_name + '님' + childName + ' 환영합니다!');
-            window.location.href = '/' + user.school_folder + '/' + filePrefix + '.html';
-        }
-
-        document.getElementById('login-modal').addEventListener('click', function(e) {
-            if (e.target === this) closeLoginModal();
-        });
-        document.getElementById('role-select-modal').addEventListener('click', function(e) {
-            if (e.target === this) closeLoginModal();
-        });
-        document.getElementById('child-select-modal').addEventListener('click', function(e) {
-            if (e.target === this) closeLoginModal();
-        });
-        
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeLoginModal();
-        });
-    </script>
+// ===== 모달 배경 클릭으로 닫기 =====
+document.getElementById('login-modal').addEventListener('click', function(e) { if (e.target === this) closeLoginModal(); });
+document.getElementById('role-select-modal').addEventListener('click', function(e) { if (e.target === this) closeLoginModal(); });
+document.getElementById('child-select-modal').addEventListener('click', function(e) { if (e.target === this) closeLoginModal(); });
+document.getElementById('find-id-modal').addEventListener('click', function(e) { if (e.target === this) closeFindIdModal(); });
+document.getElementById('find-pw-modal').addEventListener('click', function(e) { if (e.target === this) closeFindPwModal(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closeLoginModal(); closeFindIdModal(); closeFindPwModal(); } });
+</script>
 </body>
 </html>

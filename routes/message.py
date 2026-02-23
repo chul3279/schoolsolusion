@@ -706,11 +706,14 @@ def send_message():
         if not mem:
             return jsonify({'success': False, 'message': '대화방 접근 권한이 없습니다.'}), 403
 
-        # 공지방 체크: admin만 전송 가능
-        cursor.execute("SELECT announcement_only FROM message_rooms WHERE id=%s", (room_id,))
+        # 공지방/단체방 쓰기 권한 체크
+        cursor.execute("SELECT announcement_only, room_type FROM message_rooms WHERE id=%s", (room_id,))
         room = cursor.fetchone()
         if room and room['announcement_only'] and not mem['is_admin']:
             return jsonify({'success': False, 'message': '공지 전용 대화방에서는 관리자만 메시지를 보낼 수 있습니다.'})
+        # [보안] school/grade 타입 대화방은 교사(admin)만 전송 가능
+        if room and room['room_type'] in ('school', 'grade') and role != 'teacher' and not mem['is_admin']:
+            return jsonify({'success': False, 'message': '학교/학년 대화방에서는 교사만 메시지를 보낼 수 있습니다.'}), 403
 
         my_name = _get_my_name(cursor, member_id, school_id)
         my_role_enum = role if role in ('teacher', 'student', 'parent') else 'teacher'
@@ -806,12 +809,13 @@ def send_message():
             'created_at': str(created_row['created_at']) if created_row else '',
         })
     except Exception as e:
-        conn.rollback()
+        if conn:
+            conn.rollback()
         print(f"[Message] send_message error: {e}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({'success': False, 'message': '메시지 전송 중 오류가 발생했습니다.'}), 500
     finally:
-        cursor.close()
-        conn.close()
+        if cursor: cursor.close()
+        if conn: conn.close()
 
 
 # ============================================

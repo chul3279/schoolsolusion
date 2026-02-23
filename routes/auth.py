@@ -1145,6 +1145,10 @@ def update_member_info():
 @auth_bp.route('/api/teacher/update-class-info', methods=['POST'])
 def update_teacher_class_info():
     """교사 담임/부서 정보만 업데이트하는 전용 API"""
+    # [보안] 교사만 호출 가능
+    if session.get('user_role') != 'teacher':
+        return jsonify({'success': False, 'message': '교사만 수정할 수 있습니다.'}), 403
+
     conn = None
     cursor = None
     try:
@@ -1153,6 +1157,10 @@ def update_teacher_class_info():
 
         if not member_id:
             return jsonify({'success': False, 'message': '회원 ID가 필요합니다.'})
+
+        # [보안] 본인 정보만 수정 가능
+        if member_id != session.get('user_id'):
+            return jsonify({'success': False, 'message': '본인 정보만 수정할 수 있습니다.'}), 403
 
         department = sanitize_input(data.get('department'), 50) or ''
         department_position = sanitize_input(data.get('department_position'), 50) or ''

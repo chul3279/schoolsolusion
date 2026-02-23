@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 반편성</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .step-btn { position: relative; color: #94a3b8; font-weight: 500; transition: all 0.2s; }
+        .step-btn:hover { color: #64748b; }
+        .step-btn.active { color: #4f46e5; font-weight: 800; }
+        .step-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 3px; background: #4f46e5; border-radius: 3px 3px 0 0; }
+        .form-input { border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; width: 100%; font-size: 0.9rem; transition: border-color 0.2s; }
+        .form-input:focus { border-color: #4f46e5; outline: none; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #4f46e5; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-align: center; }
+        .stat-card .value { font-size: 2rem; font-weight: 800; }
+        .constraint-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .class-bar { height: 24px; border-radius: 4px; transition: width 0.5s ease; }
+        @media print {
+            aside, header, .step-btn, #loadingOverlay, .no-print, button, select { display: none !important; }
+            @page { size: landscape; margin: 10mm; }
+            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 11px; }
+            main, .flex-1, .max-w-7xl, .h-screen, .max-h-\[500px\] { height: auto !important; overflow: visible !important; width: 100% !important; max-width: none !important; }
+            .bg-white, .stat-card, .glass-card { box-shadow: none !important; }
+            #step-4 { display: block !important; }
+            #step-4 > .flex.gap-4 { display: none !important; }
+            #classStatsArea, #resultArea { display: block !important; }
+            .print-title { display: block !important; }
+        }
+
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        #mobile-overlay.active { display: block; }
+        #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
+
+        /* 모바일 큰 글씨 대응: 터치 영역 확대 + 사이드바 전체 스크롤 */
+        @media (max-width: 767px) {
+            #sidebar.mobile-open { overflow-y: auto !important; }
+            #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
+            #sidebar.mobile-open #sidebar-nav { height: auto !important; overflow: visible !important; }
+            .nav-item { min-height: 52px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 15px !important; }
+            #sidebar .space-y-1 > li { margin-bottom: 4px; }
+            #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
+            .tab-btn { min-height: 48px; padding: 12px 16px !important; font-size: 14px !important; white-space: nowrap; }
+        }
+    </style>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7LJ1TCE277');</script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen flex overflow-hidden">
+
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-30 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white p-6 rounded-xl shadow-xl flex flex-col items-center">
+            <div class="loader mb-4"></div>
+            <p class="font-bold text-slate-700">처리 중입니다...</p>
+            <p class="text-xs text-slate-500 mt-1">잠시만 기다려주세요.</p>
+        </div>
+    </div>
+
+    <!-- 사이드바 (올바른 순서: 기초데이터 → 반편성 → 시간표작성 → 시간표조회) -->
+    <div id="mobile-overlay"></div>
+    <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 flex-col flex-shrink-0 hidden md:flex no-print shadow-2xl">
+        <div class="p-6 border-b border-slate-700/50">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                    <i class="fas fa-school text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-black text-2xl text-white tracking-tight">SchoolUs</span>
+                    <p class="text-xs text-slate-400 font-medium">스마트 교육 플랫폼</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li><a href="../tea.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-desktop w-6 mr-3"></i> 나의 대시보드</a></li>
+                <li class="px-6 pt-6 pb-2 text-xs font-bold uppercase text-slate-500">반편성 · 시간표</li>
+                <li><a href="classtime_maker_base.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-database w-6 mr-3"></i> 기초데이터 관리</a></li>
+                <li><a href="class_maker.html" class="flex items-center px-6 py-3 bg-slate-800 text-white border-l-4 border-blue-500"><i class="fas fa-layer-group w-6 mr-3 text-green-400"></i> <span class="font-medium">반편성</span></a></li>
+                <li><a href="timetablemaker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-edit w-6 mr-3"></i> 시간표 작성</a></li>
+                <li><a href="timetablechange.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-calendar-alt w-6 mr-3"></i> 시간표 조회/변경</a></li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-slate-700">
+            <a href="../tea.html" class="flex items-center justify-center w-full py-2 bg-slate-800 hover:bg-slate-700 rounded text-sm transition"><i class="fas fa-arrow-left mr-2"></i> 메인으로 돌아가기</a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header class="bg-white h-16 border-b flex items-center justify-between px-8 shadow-sm z-30 flex-shrink-0 no-print">
+            <div class="flex items-center gap-4">
+                <button id="sidebar-toggle" onclick="toggleMobileSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars text-xl"></i></button>
+                <h2 class="text-xl font-bold text-slate-800">반편성 관리</h2>
+                <span id="schoolBadge" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold"></span>
+            </div>
+            <div id="headerControls" class="flex gap-2">
+                <select id="gradeFilter" class="form-input w-32 h-9 py-1 text-sm" onchange="onGradeChange()">
+                    <option value="">전체 학년</option>
+                    <option value="1">1학년</option>
+                    <option value="2">2학년</option>
+                    <option value="3">3학년</option>
+                </select>
+            </div>
+        </header>
+
+        <div class="bg-white border-b px-8 z-20 shadow-sm no-print">
+            <div class="flex justify-center space-x-12">
+                <button onclick="goStep(1)" id="btn-step-1" class="step-btn active py-4 text-sm px-4">1. 개설과목 · 학생 데이터</button>
+                <button onclick="goStep(2)" id="btn-step-2" class="step-btn py-4 text-sm px-4">2. 학급 설정</button>
+                <button onclick="goStep(3)" id="btn-step-3" class="step-btn py-4 text-sm px-4">3. 제약조건 입력</button>
+                <button onclick="goStep(4)" id="btn-step-4" class="step-btn py-4 text-sm px-4">4. 반편성 실행</button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 bg-slate-50">
+            <div class="max-w-[1600px] mx-auto">
+
+<!-- ========== Step 1: 개설과목 & 학생 데이터 ========== -->
+<div id="step-1" class="fade-in space-y-6">
+    <div class="grid grid-cols-4 gap-4">
+        <div class="stat-card"><div class="text-xs text-slate-500 mb-1">총 학생수</div><div class="value text-blue-600" id="stat-total">0</div></div>
+        <div class="stat-card"><div class="text-xs text-slate-500 mb-1">1학년</div><div class="value text-emerald-600" id="stat-g1">0</div></div>
+        <div class="stat-card"><div class="text-xs text-slate-500 mb-1">2학년</div><div class="value text-amber-600" id="stat-g2">0</div></div>
+        <div class="stat-card"><div class="text-xs text-slate-500 mb-1">3학년</div><div class="value text-rose-600" id="stat-g3">0</div></div>
+    </div>
+
+    <div class="flex gap-4">
+        <button onclick="loadAllData()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow transition">
+            <i class="fas fa-database mr-2"></i>DB에서 불러오기
+        </button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-6">
+        <!-- 개설과목 -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-3 bg-slate-50 border-b font-bold text-slate-700 flex justify-between items-center">
+                <span><i class="fas fa-book mr-2 text-green-500"></i>개설과목 (<span id="subjectCount">0</span>개)</span>
+            </div>
+            <div class="overflow-auto max-h-[400px]">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 sticky top-0 z-10 text-xs text-slate-500">
+                        <tr>
+                            <th class="p-2 text-left">과목명</th>
+                            <th class="p-2 text-center w-16">학년</th>
+                            <th class="p-2 text-center w-16">시수</th>
+                            <th class="p-2 text-left">과목군</th>
+                            <th class="p-2 text-center w-20">수강인원</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subjectTableBody" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 학생 목록 -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-3 bg-slate-50 border-b font-bold text-slate-700 flex justify-between items-center">
+                <span><i class="fas fa-users mr-2 text-blue-500"></i>학생 목록 (<span id="studentCount">0</span>명)</span>
+                <input type="text" id="studentSearch" placeholder="이름 검색..." class="form-input w-40 h-7 text-xs py-0" oninput="filterStudentTable()">
+            </div>
+            <div class="overflow-auto max-h-[400px]">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 sticky top-0 z-10 text-xs text-slate-500">
+                        <tr>
+                            <th class="p-2 text-left">이름</th>
+                            <th class="p-2 text-center w-14">학년</th>
+                            <th class="p-2 text-center w-14">반</th>
+                            <th class="p-2 text-center w-14">번호</th>
+                            <th class="p-2 text-center w-16">성적</th>
+                            <th class="p-2 text-left">선택과목</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== Step 2: 학급 설정 ========== -->
+<div id="step-2" class="hidden fade-in space-y-6">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <h3 class="font-bold text-lg text-slate-800 mb-4"><i class="fas fa-cog mr-2 text-purple-500"></i>학년별 학급 설정</h3>
+        <div class="grid grid-cols-3 gap-6" id="configCards"></div>
+        <div class="mt-6 flex justify-end">
+            <button onclick="saveConfigs()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow transition">
+                <i class="fas fa-save mr-2"></i>설정 저장
+            </button>
+        </div>
+    </div>
+
+    <!-- 과목별 수강인원 분포 -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <h3 class="font-bold text-lg text-slate-800 mb-4"><i class="fas fa-chart-bar mr-2 text-emerald-500"></i>과목별 수강인원 분포</h3>
+        <div id="subjectDistChart" class="space-y-2"></div>
+    </div>
+</div>
+
+<!-- ========== Step 3: 제약조건 ========== -->
+<div id="step-3" class="hidden fade-in space-y-6">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <h3 class="font-bold text-lg text-slate-800 mb-4"><i class="fas fa-clipboard-list mr-2 text-amber-500"></i>제약조건 입력</h3>
+
+        <div class="grid grid-cols-6 gap-3 bg-slate-50 p-4 rounded-lg border border-slate-200 mb-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1">학년</label>
+                <select id="cGrade" class="form-input h-9 py-1 text-sm">
+                    <option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1">유형</label>
+                <select id="cType" class="form-input h-9 py-1 text-sm" onchange="toggleTargetClass()">
+                    <option value="separate">분리 필수</option>
+                    <option value="together">합반 필수</option>
+                    <option value="fixed_class">고정반 배치</option>
+                    <option value="special">특수 학생</option>
+                </select>
+            </div>
+            <div class="col-span-2 relative">
+                <label class="block text-xs font-bold text-slate-500 mb-1">대상 학생</label>
+                <div id="cStudentsTags" class="form-input min-h-[36px] py-1 text-sm flex flex-wrap gap-1 items-center cursor-text" onclick="document.getElementById('cStudentsInput').focus()">
+                    <input type="text" id="cStudentsInput" class="border-none outline-none bg-transparent text-sm flex-1 min-w-[120px] p-0" placeholder="이름 검색..." autocomplete="off">
+                </div>
+                <div id="cStudentsDropdown" class="absolute z-50 bg-white border border-slate-300 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto hidden w-full"></div>
+            </div>
+            <div id="targetClassWrap" class="hidden">
+                <label class="block text-xs font-bold text-slate-500 mb-1">배치할 반</label>
+                <input type="text" id="cTargetClass" class="form-input h-9 py-1 text-sm" placeholder="예: 3">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1">메모</label>
+                <input type="text" id="cMemo" class="form-input h-9 py-1 text-sm" placeholder="사유">
+            </div>
+        </div>
+        <button onclick="addConstraint()" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-lg text-sm font-bold shadow transition">
+            <i class="fas fa-plus mr-2"></i>제약조건 추가
+        </button>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-3 bg-slate-50 border-b font-bold text-slate-700">
+            <i class="fas fa-list mr-2 text-amber-500"></i>등록된 제약조건 (<span id="constraintCount">0</span>개)
+        </div>
+        <div class="overflow-auto max-h-[400px]">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-50 sticky top-0 z-10 text-xs text-slate-500">
+                    <tr>
+                        <th class="p-2 text-center w-14">학년</th>
+                        <th class="p-2 text-center w-24">유형</th>
+                        <th class="p-2 text-left">대상 학생</th>
+                        <th class="p-2 text-center w-16">대상반</th>
+                        <th class="p-2 text-left">메모</th>
+                        <th class="p-2 text-center w-16">삭제</th>
+                    </tr>
+                </thead>
+                <tbody id="constraintTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========== Step 4: 반편성 실행 ========== -->
+<div id="step-4" class="hidden fade-in space-y-6">
+    <div class="flex gap-4 items-center">
+        <select id="assignGrade" class="form-input w-32 h-10 py-1">
+            <option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option>
+        </select>
+        <button onclick="runAutoAssign()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow transition">
+            <i class="fas fa-magic mr-2"></i>자동 반편성 실행
+        </button>
+        <button onclick="loadExistingResult()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-5 py-2.5 rounded-lg text-sm font-bold transition">
+            <i class="fas fa-history mr-2"></i>이전 결과 불러오기
+        </button>
+        <button onclick="confirmResult()" id="btnConfirm" class="hidden bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow transition">
+            <i class="fas fa-check-circle mr-2"></i>반편성 확정
+        </button>
+        <button onclick="exportResultExcel()" id="btnExport" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow transition">
+            <i class="fas fa-file-excel mr-2"></i>엑셀 저장
+        </button>
+        <button onclick="printResult()" id="btnPrint" class="hidden bg-slate-600 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow transition">
+            <i class="fas fa-print mr-2"></i>인쇄
+        </button>
+    </div>
+
+    <div class="print-title hidden text-center mb-4">
+        <h2 class="text-2xl font-bold" id="printTitle"></h2>
+        <p class="text-sm text-slate-500" id="printDate"></p>
+    </div>
+
+    <!-- 반별 통계 -->
+    <div id="classStatsArea" class="hidden">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-4">
+            <h3 class="font-bold text-slate-800 mb-3"><i class="fas fa-chart-pie mr-2 text-indigo-500"></i>반별 배치 현황</h3>
+            <div id="classStatsCards" class="grid grid-cols-5 gap-3"></div>
+        </div>
+    </div>
+
+    <!-- 반별 학생 목록 -->
+    <div id="resultArea" class="hidden">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-3 bg-slate-50 border-b font-bold text-slate-700 flex justify-between items-center">
+                <span><i class="fas fa-users-cog mr-2 text-indigo-500"></i>배치 결과</span>
+                <div class="flex gap-2 items-center">
+                    <label class="text-xs text-slate-500">반 필터:</label>
+                    <select id="resultClassFilter" class="form-input w-24 h-7 py-0 text-xs" onchange="renderResultTable()">
+                        <option value="">전체</option>
+                    </select>
+                </div>
+            </div>
+            <div class="overflow-auto max-h-[500px]">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 sticky top-0 z-10 text-xs text-slate-500">
+                        <tr>
+                            <th class="p-2 text-center w-16">배정반</th>
+                            <th class="p-2 text-left">이름</th>
+                            <th class="p-2 text-center w-16">원반</th>
+                            <th class="p-2 text-center w-16">성적</th>
+                            <th class="p-2 text-center w-16">유형</th>
+                            <th class="p-2 text-center w-32">반 이동</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultTableBody" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ==========================================
+        // Global State
+        // ==========================================
+        let currentUser = null;
+        let allSubjects = [];
+        let allStudents = [];
+        let gradeSummary = [];
+        let configs = [];
+        let constraints = [];
+        let assignResult = [];
+        let classStats = {};
+        let currentNumClasses = 10;
+
+        function toggleLoading(show) {
+            const el = document.getElementById('loadingOverlay');
+            if (show) el.classList.remove('hidden'); else el.classList.add('hidden');
+        }
+
+        // ==========================================
+        // 초기화
+        // ==========================================
+        async function initUserInfo() {
+            const userStr = localStorage.getItem('schoolus_user');
+            if (!userStr) { alert('로그인이 필요합니다.'); window.location.href = '/'; return; }
+            currentUser = JSON.parse(userStr);
+
+            if (!currentUser.school_id) {
+                try {
+                    const res = await fetch('/api/teacher/info?member_id=' + encodeURIComponent(currentUser.member_id));
+                    if (res.ok) {
+                        const d = await res.json();
+                        if (d.success && d.teacher && d.teacher.school_id) {
+                            currentUser.school_id = d.teacher.school_id;
+                            localStorage.setItem('schoolus_user', JSON.stringify(currentUser));
+                        }
+                    }
+                } catch (e) { console.error(e); }
+            }
+
+            if (!currentUser.school_id) {
+                alert('school_id가 없습니다. 다시 로그인해주세요.');
+                return;
+            }
+
+            document.getElementById('schoolBadge').textContent = currentUser.member_school || currentUser.school_id;
+            loadAllData();
+        }
+
+        // ==========================================
+        // Step Navigation
+        // ==========================================
+        function goStep(n) {
+            document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById('btn-step-' + n);
+            if (btn) btn.classList.add('active');
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById('step-' + i);
+                if (el) el.classList.add('hidden');
+            }
+            const target = document.getElementById('step-' + n);
+            if (target) target.classList.remove('hidden');
+
+            if (n === 2) renderConfigCards();
+            if (n === 3) loadConstraints();
+        }
+
+        function onGradeChange() {
+            renderSubjectTable();
+            renderStudentTable();
+        }
+
+        // ==========================================
+        // Step 1: 데이터 불러오기
+        // ==========================================
+        async function loadAllData() {
+            const schoolId = currentUser.school_id;
+            if (!schoolId) return;
+
+            toggleLoading(true);
+            try {
+                const res = await fetch('/api/class-maker/load-data?school_id=' + encodeURIComponent(schoolId));
+                if (!res.ok) throw new Error('서버 오류 (' + res.status + ')');
+                const data = await res.json();
+
+                if (!data.success) { alert(data.message || '데이터 불러오기 실패'); return; }
+
+                allSubjects = data.subjects || [];
+                allStudents = data.students || [];
+                gradeSummary = data.grade_summary || [];
+                configs = data.configs || [];
+
+                // 통계 업데이트
+                let total = 0;
+                const gradeMap = {};
+                gradeSummary.forEach(g => { gradeMap[g.grade] = g.cnt; total += g.cnt; });
+                document.getElementById('stat-total').textContent = total;
+                document.getElementById('stat-g1').textContent = gradeMap['1'] || 0;
+                document.getElementById('stat-g2').textContent = gradeMap['2'] || 0;
+                document.getElementById('stat-g3').textContent = gradeMap['3'] || 0;
+
+                renderSubjectTable();
+                renderStudentTable();
+
+            } catch (e) {
+                console.error(e);
+                alert('데이터 로드 오류: ' + e.message);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        function renderSubjectTable() {
+            const grade = document.getElementById('gradeFilter').value;
+            const filtered = grade ? allSubjects.filter(s => String(s.grade) === grade) : allSubjects;
+            document.getElementById('subjectCount').textContent = filtered.length;
+
+            const tbody = document.getElementById('subjectTableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-400">개설과목 데이터가 없습니다.<br>기초데이터 관리에서 먼저 등록하세요.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = filtered.map(s => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-2 font-medium text-slate-700">${s.subject}</td>
+                    <td class="p-2 text-center">${s.grade || '-'}학년</td>
+                    <td class="p-2 text-center font-bold text-indigo-600">${s.subject_demand || '-'}</td>
+                    <td class="p-2 text-slate-500 text-xs">${s.subject_depart || '-'}</td>
+                    <td class="p-2 text-center font-bold">${s.stu_count || 0}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderStudentTable() {
+            const grade = document.getElementById('gradeFilter').value;
+            const search = (document.getElementById('studentSearch').value || '').trim().toLowerCase();
+            let filtered = grade ? allStudents.filter(s => String(s.grade) === grade) : allStudents;
+            if (search) filtered = filtered.filter(s => (s.member_name || '').toLowerCase().includes(search));
+
+            document.getElementById('studentCount').textContent = filtered.length;
+            const tbody = document.getElementById('studentTableBody');
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">학생 데이터가 없습니다.</td></tr>';
+                return;
+            }
+
+            // 최대 300명까지만 렌더 (성능)
+            const show = filtered.slice(0, 300);
+            tbody.innerHTML = show.map(s => {
+                const subjects = [];
+                for (let i = 1; i <= 12; i++) { const v = s['subject' + i]; if (v) subjects.push(v); }
+                const subjStr = subjects.length > 3 ? subjects.slice(0, 3).join(', ') + '...' : subjects.join(', ');
+                const score = s.point ? parseFloat(s.point).toFixed(0) : '-';
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-2 font-medium text-slate-700">${s.member_name || ''}</td>
+                        <td class="p-2 text-center">${s.grade || ''}</td>
+                        <td class="p-2 text-center">${s.class_no || ''}</td>
+                        <td class="p-2 text-center">${s.student_num || ''}</td>
+                        <td class="p-2 text-center font-bold text-indigo-600">${score}</td>
+                        <td class="p-2 text-xs text-slate-500">${subjStr || '-'}</td>
+                    </tr>`;
+            }).join('');
+
+            if (filtered.length > 300) {
+                tbody.innerHTML += `<tr><td colspan="6" class="p-2 text-center text-xs text-slate-400">...외 ${filtered.length - 300}명 (검색으로 필터링 가능)</td></tr>`;
+            }
+        }
+
+        function filterStudentTable() { renderStudentTable(); }
+
+        // ==========================================
+        // Step 2: 학급 설정
+        // ==========================================
+        function renderConfigCards() {
+            const container = document.getElementById('configCards');
+            const grades = ['1', '2', '3'];
+            const colors = { '1': 'emerald', '2': 'amber', '3': 'rose' };
+
+            container.innerHTML = grades.map(g => {
+                const cfg = configs.find(c => String(c.grade) === g) || { num_classes: 10, min_per_class: 20, max_per_class: 35 };
+                const stuCount = gradeSummary.find(gs => String(gs.grade) === g);
+                const cnt = stuCount ? stuCount.cnt : 0;
+                const c = colors[g];
+                return `
+                    <div class="bg-${c}-50 border border-${c}-200 rounded-xl p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-bold text-${c}-700 text-lg">${g}학년</h4>
+                            <span class="bg-${c}-100 text-${c}-700 px-2 py-0.5 rounded-full text-xs font-bold">${cnt}명</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">학급수</label>
+                                <input type="number" id="cfg_num_${g}" class="form-input text-center h-9" value="${cfg.num_classes}" min="1" max="30">
+                                <div class="text-xs text-slate-400 mt-1">반당 약 ${cfg.num_classes > 0 ? Math.round(cnt / cfg.num_classes) : 0}명</div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">최소 정원</label>
+                                    <input type="number" id="cfg_min_${g}" class="form-input text-center h-9" value="${cfg.min_per_class}">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">최대 정원</label>
+                                    <input type="number" id="cfg_max_${g}" class="form-input text-center h-9" value="${cfg.max_per_class}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            renderSubjectDistChart();
+        }
+
+        async function saveConfigs() {
+            const schoolId = currentUser.school_id;
+            const cfgData = ['1', '2', '3'].map(g => ({
+                grade: g,
+                num_classes: parseInt(document.getElementById('cfg_num_' + g).value) || 10,
+                min_per_class: parseInt(document.getElementById('cfg_min_' + g).value) || 20,
+                max_per_class: parseInt(document.getElementById('cfg_max_' + g).value) || 35
+            }));
+
+            try {
+                const res = await fetch('/api/class-maker/config/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ school_id: schoolId, configs: cfgData })
+                });
+                if (!res.ok) throw new Error('서버 오류 (' + res.status + ')');
+                const data = await res.json();
+                alert(data.message || '저장 완료');
+                configs = cfgData;
+            } catch (e) {
+                alert('저장 오류: ' + e.message);
+            }
+        }
+
+        function renderSubjectDistChart() {
+            const grade = document.getElementById('gradeFilter').value;
+            const filtered = grade ? allSubjects.filter(s => String(s.grade) === grade) : allSubjects;
+            const container = document.getElementById('subjectDistChart');
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-8">데이터가 없습니다.</div>';
+                return;
+            }
+
+            const maxCount = Math.max(...filtered.map(s => parseInt(s.stu_count) || 0), 1);
+            container.innerHTML = filtered.map(s => {
+                const count = parseInt(s.stu_count) || 0;
+                const pct = Math.round((count / maxCount) * 100);
+                return `
+                    <div class="flex items-center gap-3">
+                        <div class="w-28 text-xs font-medium text-slate-600 text-right truncate">${s.subject}</div>
+                        <div class="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
+                            <div class="class-bar bg-indigo-500 h-full" style="width: ${pct}%"></div>
+                        </div>
+                        <div class="w-12 text-xs font-bold text-slate-700 text-right">${count}명</div>
+                    </div>`;
+            }).join('');
+        }
+
+        // ==========================================
+        // Step 3: 제약조건
+        // ==========================================
+        function toggleTargetClass() {
+            const type = document.getElementById('cType').value;
+            document.getElementById('targetClassWrap').classList.toggle('hidden', type !== 'fixed_class');
+        }
+
+        // ---- 학생 태그 입력 시스템 ----
+        let selectedStudents = []; // { member_id, member_name, class_no, student_num }
+
+        function initStudentTagInput() {
+            const input = document.getElementById('cStudentsInput');
+            const dropdown = document.getElementById('cStudentsDropdown');
+
+            input.addEventListener('input', () => {
+                const keyword = input.value.trim();
+                if (keyword.length === 0) { dropdown.classList.add('hidden'); return; }
+                const grade = document.getElementById('cGrade').value;
+                const filtered = allStudents.filter(s =>
+                    String(s.grade) === grade &&
+                    (s.member_name.includes(keyword) || String(s.student_num || '').includes(keyword)) &&
+                    !selectedStudents.some(sel => sel.member_id === s.member_id)
+                );
+                if (filtered.length === 0) {
+                    dropdown.innerHTML = '<div class="p-3 text-sm text-slate-400">검색 결과 없음</div>';
+                } else {
+                    dropdown.innerHTML = filtered.slice(0, 20).map(s =>
+                        `<div class="px-3 py-2 hover:bg-indigo-50 cursor-pointer text-sm flex justify-between items-center" data-id="${s.member_id}">
+                            <span class="font-medium">${s.member_name}</span>
+                            <span class="text-xs text-slate-400">${s.class_no || '?'}반 ${s.student_num || '?'}번</span>
+                        </div>`
+                    ).join('');
+                }
+                dropdown.classList.remove('hidden');
+
+                dropdown.querySelectorAll('[data-id]').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const stu = filtered.find(s => s.member_id === el.dataset.id);
+                        if (stu) addStudentTag(stu);
+                        input.value = '';
+                        dropdown.classList.add('hidden');
+                        input.focus();
+                    });
+                });
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && input.value === '' && selectedStudents.length > 0) {
+                    selectedStudents.pop();
+                    renderStudentTags();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#cStudentsTags') && !e.target.closest('#cStudentsDropdown')) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        function addStudentTag(stu) {
+            if (selectedStudents.some(s => s.member_id === stu.member_id)) return;
+            selectedStudents.push({
+                member_id: stu.member_id,
+                member_name: stu.member_name,
+                class_no: stu.class_no || '?',
+                student_num: stu.student_num || '?'
+            });
+            renderStudentTags();
+        }
+
+        function removeStudentTag(memberId) {
+            selectedStudents = selectedStudents.filter(s => s.member_id !== memberId);
+            renderStudentTags();
+        }
+
+        function renderStudentTags() {
+            const container = document.getElementById('cStudentsTags');
+            const input = document.getElementById('cStudentsInput');
+            container.querySelectorAll('.stu-tag').forEach(el => el.remove());
+            selectedStudents.forEach(s => {
+                const tag = document.createElement('span');
+                tag.className = 'stu-tag inline-flex items-center gap-1 bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-bold';
+                tag.innerHTML = `${s.member_name} <span class="text-indigo-400">${s.class_no}-${s.student_num}</span>
+                    <button type="button" onclick="event.stopPropagation(); removeStudentTag('${s.member_id}')" class="ml-0.5 text-indigo-400 hover:text-red-500">&times;</button>`;
+                container.insertBefore(tag, input);
+            });
+        }
+
+        async function loadConstraints() {
+            const schoolId = currentUser.school_id;
+            try {
+                const res = await fetch('/api/class-maker/constraints?school_id=' + encodeURIComponent(schoolId));
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (data.success) {
+                    constraints = data.constraints || [];
+                    renderConstraintTable();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function addConstraint() {
+            const schoolId = currentUser.school_id;
+            const grade = document.getElementById('cGrade').value;
+            const type = document.getElementById('cType').value;
+            const targetClass = document.getElementById('cTargetClass').value.trim();
+            const memo = document.getElementById('cMemo').value.trim();
+
+            if (selectedStudents.length === 0) { alert('대상 학생을 선택하세요.'); return; }
+
+            const ids = selectedStudents.map(s => s.member_id);
+            const foundNames = selectedStudents.map(s => `${s.member_name}(${s.class_no}-${s.student_num})`);
+
+            try {
+                const res = await fetch('/api/class-maker/constraints/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        school_id: schoolId, grade, constraint_type: type,
+                        student_ids: ids, student_names: foundNames,
+                        target_class: type === 'fixed_class' ? targetClass : null,
+                        memo
+                    })
+                });
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (data.success) {
+                    selectedStudents = [];
+                    renderStudentTags();
+                    document.getElementById('cStudentsInput').value = '';
+                    document.getElementById('cMemo').value = '';
+                    document.getElementById('cTargetClass').value = '';
+                    loadConstraints();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) { alert('저장 오류: ' + e.message); }
+        }
+
+        async function deleteConstraint(id) {
+            if (!confirm('삭제하시겠습니까?')) return;
+            try {
+                const res = await fetch('/api/class-maker/constraints/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, school_id: currentUser.school_id })
+                });
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (data.success) loadConstraints();
+                else alert(data.message);
+            } catch (e) { alert('삭제 오류: ' + e.message); }
+        }
+
+        function renderConstraintTable() {
+            document.getElementById('constraintCount').textContent = constraints.length;
+            const tbody = document.getElementById('constraintTableBody');
+
+            const typeLabels = {
+                'separate': { text: '분리 필수', color: 'bg-red-100 text-red-700' },
+                'together': { text: '합반 필수', color: 'bg-blue-100 text-blue-700' },
+                'fixed_class': { text: '고정반', color: 'bg-purple-100 text-purple-700' },
+                'special': { text: '특수학생', color: 'bg-amber-100 text-amber-700' }
+            };
+
+            if (constraints.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">등록된 제약조건이 없습니다.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = constraints.map(c => {
+                const t = typeLabels[c.constraint_type] || { text: c.constraint_type, color: 'bg-slate-100 text-slate-700' };
+                const names = Array.isArray(c.student_names) ? c.student_names.join(', ') : (c.student_names || '');
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-2 text-center">${c.grade}학년</td>
+                        <td class="p-2 text-center"><span class="constraint-badge ${t.color}">${t.text}</span></td>
+                        <td class="p-2 font-medium">${names}</td>
+                        <td class="p-2 text-center">${c.target_class || '-'}</td>
+                        <td class="p-2 text-xs text-slate-500">${c.memo || ''}</td>
+                        <td class="p-2 text-center"><button onclick="deleteConstraint(${c.id})" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
+            }).join('');
+        }
+
+        // ==========================================
+        // Step 4: 반편성 실행
+        // ==========================================
+        async function runAutoAssign() {
+            const grade = document.getElementById('assignGrade').value;
+            const schoolId = currentUser.school_id;
+
+            if (!confirm(`${grade}학년 자동 반편성을 실행하시겠습니까?\n(기존 결과는 덮어쓰기됩니다)`)) return;
+
+            toggleLoading(true);
+            try {
+                const res = await fetch('/api/class-maker/auto-assign', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ school_id: schoolId, grade })
+                });
+                if (!res.ok) throw new Error('서버 오류 (' + res.status + ')');
+                const data = await res.json();
+
+                if (data.success) {
+                    assignResult = data.result || [];
+                    classStats = data.class_stats || {};
+                    currentNumClasses = data.num_classes || 10;
+                    alert(data.message);
+                    showResultUI();
+                } else {
+                    alert(data.message || '반편성 실행 실패');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('반편성 오류: ' + e.message);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        async function loadExistingResult() {
+            const grade = document.getElementById('assignGrade').value;
+            const schoolId = currentUser.school_id;
+
+            toggleLoading(true);
+            try {
+                const res = await fetch(`/api/class-maker/result?school_id=${encodeURIComponent(schoolId)}&grade=${grade}`);
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+
+                if (data.success && data.result && data.result.length > 0) {
+                    assignResult = data.result;
+                    classStats = data.class_stats || {};
+                    const maxClass = Math.max(...assignResult.map(r => parseInt(r.assigned_class) || 0));
+                    currentNumClasses = maxClass;
+                    alert(`${grade}학년 이전 결과 ${assignResult.length}명 불러옴`);
+                    showResultUI();
+                } else {
+                    alert('이전 반편성 결과가 없습니다.');
+                }
+            } catch (e) { alert('불러오기 오류: ' + e.message); }
+            finally { toggleLoading(false); }
+        }
+
+        function showResultUI() {
+            document.getElementById('classStatsArea').classList.remove('hidden');
+            document.getElementById('resultArea').classList.remove('hidden');
+            document.getElementById('btnConfirm').classList.remove('hidden');
+            document.getElementById('btnExport').classList.remove('hidden');
+            document.getElementById('btnPrint').classList.remove('hidden');
+            renderClassStats();
+            renderResultTable();
+        }
+
+        function renderClassStats() {
+            const container = document.getElementById('classStatsCards');
+            const colors = ['bg-blue-50 border-blue-200', 'bg-emerald-50 border-emerald-200', 'bg-amber-50 border-amber-200',
+                'bg-rose-50 border-rose-200', 'bg-purple-50 border-purple-200', 'bg-cyan-50 border-cyan-200',
+                'bg-lime-50 border-lime-200', 'bg-orange-50 border-orange-200', 'bg-pink-50 border-pink-200', 'bg-teal-50 border-teal-200'];
+
+            let html = '';
+            for (let i = 1; i <= currentNumClasses; i++) {
+                const key = String(i);
+                const s = classStats[key] || { count: 0, avg_score: 0, min_score: 0, max_score: 0 };
+                const colorIdx = (i - 1) % colors.length;
+                html += `
+                    <div class="border rounded-lg p-3 text-center ${colors[colorIdx]}">
+                        <div class="text-xs font-bold text-slate-500 mb-1">${i}반</div>
+                        <div class="text-2xl font-extrabold text-slate-800">${s.count}명</div>
+                        <div class="text-xs text-slate-500 mt-1">평균 ${s.avg_score}</div>
+                    </div>`;
+            }
+            container.innerHTML = html;
+
+            // 반 필터 select 업데이트
+            const sel = document.getElementById('resultClassFilter');
+            sel.innerHTML = '<option value="">전체</option>';
+            for (let i = 1; i <= currentNumClasses; i++) {
+                sel.innerHTML += `<option value="${i}">${i}반</option>`;
+            }
+        }
+
+        function renderResultTable() {
+            const filterClass = document.getElementById('resultClassFilter').value;
+            let filtered = assignResult;
+            if (filterClass) filtered = filtered.filter(r => String(r.assigned_class) === filterClass);
+
+            // 반순 → 이름순 정렬
+            filtered.sort((a, b) => {
+                const ca = parseInt(a.assigned_class) || 0;
+                const cb = parseInt(b.assigned_class) || 0;
+                if (ca !== cb) return ca - cb;
+                return (a.member_name || '').localeCompare(b.member_name || '', 'ko');
+            });
+
+            const tbody = document.getElementById('resultTableBody');
+            const typeLabels = { 'auto': '자동', 'manual': '수동', 'fixed': '고정' };
+            const typeColors = { 'auto': 'text-slate-500', 'manual': 'text-blue-600 font-bold', 'fixed': 'text-purple-600 font-bold' };
+
+            tbody.innerHTML = filtered.map(r => {
+                const scoreDisp = r.score ? parseFloat(r.score).toFixed(0) : '-';
+                const typeText = typeLabels[r.assignment_type] || r.assignment_type || 'auto';
+                const typeColor = typeColors[r.assignment_type] || 'text-slate-500';
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-2 text-center"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-bold">${r.assigned_class}반</span></td>
+                        <td class="p-2 font-medium text-slate-700">${r.member_name || ''}</td>
+                        <td class="p-2 text-center text-slate-400">${r.original_class || '-'}</td>
+                        <td class="p-2 text-center">${scoreDisp}</td>
+                        <td class="p-2 text-center ${typeColor} text-xs">${typeText}</td>
+                        <td class="p-2 text-center">
+                            <select class="form-input w-16 h-7 py-0 text-xs inline-block" onchange="moveStudent('${r.member_id}','${r.grade || document.getElementById('assignGrade').value}',this.value)">
+                                <option value="">이동</option>
+                                ${Array.from({length: currentNumClasses}, (_, i) => `<option value="${i+1}">${i+1}반</option>`).join('')}
+                            </select>
+                        </td>
+                    </tr>`;
+            }).join('');
+        }
+
+        async function moveStudent(memberId, grade, newClass) {
+            if (!newClass) return;
+            try {
+                const res = await fetch('/api/class-maker/move', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ school_id: currentUser.school_id, member_id: memberId, grade, new_class: newClass })
+                });
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (data.success) {
+                    // 로컬 데이터 업데이트
+                    const target = assignResult.find(r => r.member_id === memberId);
+                    if (target) {
+                        target.assigned_class = newClass;
+                        target.assignment_type = 'manual';
+                    }
+                    // 통계 재계산
+                    classStats = {};
+                    for (let i = 1; i <= currentNumClasses; i++) {
+                        const key = String(i);
+                        const members = assignResult.filter(r => String(r.assigned_class) === key);
+                        const scores = members.map(m => parseFloat(m.score) || 0).filter(s => s > 0);
+                        classStats[key] = {
+                            count: members.length,
+                            avg_score: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 10) / 10 : 0,
+                            min_score: scores.length ? Math.round(Math.min(...scores) * 10) / 10 : 0,
+                            max_score: scores.length ? Math.round(Math.max(...scores) * 10) / 10 : 0
+                        };
+                    }
+                    renderClassStats();
+                    renderResultTable();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) { alert('이동 오류: ' + e.message); }
+        }
+
+        async function confirmResult() {
+            const grade = document.getElementById('assignGrade').value;
+            if (!confirm(`${grade}학년 반편성을 확정하시겠습니까?\n\n확정 시 timetable_stu의 반(class_no)이 업데이트됩니다.`)) return;
+
+            toggleLoading(true);
+            try {
+                const res = await fetch('/api/class-maker/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ school_id: currentUser.school_id, grade })
+                });
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                alert(data.message || '확정 완료');
+            } catch (e) { alert('확정 오류: ' + e.message); }
+            finally { toggleLoading(false); }
+        }
+
+        function printResult() {
+            if (assignResult.length === 0) { alert('인쇄할 결과가 없습니다.'); return; }
+            const grade = document.getElementById('assignGrade').value;
+            const school = currentUser.member_school || '';
+            document.getElementById('printTitle').textContent = `${school} ${grade}학년 반편성 결과`;
+            const now = new Date();
+            document.getElementById('printDate').textContent = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} 출력`;
+            // 필터 해제하여 전체 표시
+            document.getElementById('resultClassFilter').value = '';
+            renderResultTable();
+            setTimeout(() => window.print(), 200);
+        }
+
+        function exportResultExcel() {
+            if (assignResult.length === 0) { alert('내보낼 결과가 없습니다.'); return; }
+
+            const grade = document.getElementById('assignGrade').value;
+            const headers = ['배정반', '이름', '학번(member_id)', '원래반', '성적', '배정유형'];
+            const sorted = [...assignResult].sort((a, b) => {
+                const ca = parseInt(a.assigned_class) || 0;
+                const cb = parseInt(b.assigned_class) || 0;
+                if (ca !== cb) return ca - cb;
+                return (a.member_name || '').localeCompare(b.member_name || '', 'ko');
+            });
+
+            const rows = sorted.map(r => [
+                r.assigned_class + '반',
+                r.member_name,
+                r.member_id,
+                r.original_class || '',
+                r.score ? parseFloat(r.score).toFixed(0) : '',
+                r.assignment_type || 'auto'
+            ]);
+
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+            ws['!cols'] = [{ wch: 8 }, { wch: 12 }, { wch: 15 }, { wch: 8 }, { wch: 8 }, { wch: 8 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, grade + '학년 반편성');
+            XLSX.writeFile(wb, `반편성_${grade}학년_결과.xlsx`);
+        }
+
+        // 초기화
+        initUserInfo();
+        initStudentTagInput();
+        goStep(1);
+
+        function toggleMobileSidebar() {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+            document.getElementById('mobile-overlay').classList.toggle('active');
+        }
+        document.getElementById('mobile-overlay').onclick = function() {
+            document.getElementById('sidebar').classList.remove('mobile-open');
+            this.classList.remove('active');
+        };
+    </script>
+</body>
+</html>

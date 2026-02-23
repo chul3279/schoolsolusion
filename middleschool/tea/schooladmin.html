@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 학교 행정 대시보드</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .dashboard-card { transition: all 0.2s; }
+        .dashboard-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .meal-input { min-height: 60px; }
+
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        #mobile-overlay.active { display: block; }
+        #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
+
+        /* 모바일 큰 글씨 대응: 터치 영역 확대 + 사이드바 전체 스크롤 */
+        @media (max-width: 767px) {
+            #sidebar.mobile-open { overflow-y: auto !important; }
+            #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
+            #sidebar.mobile-open #sidebar-nav { height: auto !important; overflow: visible !important; }
+            .nav-item { min-height: 52px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 15px !important; }
+            #sidebar .space-y-1 > li { margin-bottom: 4px; }
+            #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
+            .tab-btn { min-height: 48px; padding: 12px 16px !important; font-size: 14px !important; white-space: nowrap; }
+        }
+    </style>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen flex overflow-hidden">
+
+    <div id="mobile-overlay"></div>
+    <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 flex-col flex-shrink-0 hidden md:flex shadow-2xl">
+        <div class="p-6 border-b border-slate-700/50">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                    <i class="fas fa-school text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-black text-2xl text-white tracking-tight">SchoolUs</span>
+                    <p class="text-xs text-slate-400 font-medium">스마트 교육 플랫폼</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li><a href="../tea.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-desktop w-6 mr-3"></i> 나의 대시보드</a></li>
+                <li class="px-6 pt-6 pb-2 text-xs font-bold uppercase text-slate-500">ADMINISTRATIVE TASKS</li>
+                
+                <li><a href="#" onclick="openNoticeModal(); return false;" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-bullhorn w-6 mr-3"></i> 공지사항 등록</a></li>
+                
+                <li><a href="#" onclick="openMealModal(); return false;" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-utensils w-6 mr-3"></i> 월간 급식 등록</a></li>
+                
+                <li><a href="timetablechange.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-calendar-alt w-6 mr-3"></i> 시간표 조회/변경</a></li>
+
+                <li><a href="classtime_maker_base.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-database w-6 mr-3"></i> 기초데이터 관리</a></li>
+                
+                <li><a href="timetablemaker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-edit w-6 mr-3"></i> 시간표 작성</a></li>
+                
+                <li><a href="class_maker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-layer-group w-6 mr-3"></i> 반편성</a></li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-slate-700">
+            <a href="../tea.html" class="flex items-center justify-center w-full py-2 bg-slate-800 hover:bg-slate-700 rounded text-sm transition"><i class="fas fa-arrow-left mr-2"></i> 메인으로 돌아가기</a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white h-16 border-b flex items-center justify-between px-8 shadow-sm">
+            <div class="flex items-center gap-4">
+                <button id="sidebar-toggle" onclick="toggleMobileSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars text-xl"></i></button>
+                <h2 class="text-xl font-bold text-slate-800">행정 업무 대시보드</h2>
+                <span id="userSchoolBadge" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold"></span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center gap-2 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 px-3 py-1.5 rounded-full">
+                    <i class="fas fa-coins text-amber-500"></i>
+                    <span id="userPoint" class="font-bold text-amber-700 text-sm">0</span>
+                    <span class="text-amber-600 text-xs">P</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div id="userAvatar" class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">T</div>
+                    <span id="userName" class="text-sm font-medium text-slate-700 hidden md:block"></span>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="max-w-6xl mx-auto fade-in">
+                
+                <div class="mb-8">
+                    <h3 id="welcomeMessage" class="text-2xl font-bold text-slate-800 mb-2">안녕하세요! 👋</h3>
+                    <p class="text-slate-500">오늘 처리해야 할 주요 행정 업무를 확인하세요.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    <a href="#" onclick="openNoticeModal(); return false;" class="block group">
+                        <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-yellow-300">
+                            <div class="w-12 h-12 rounded-lg bg-yellow-100 text-yellow-600 flex items-center justify-center mb-4 text-xl">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">공지사항 등록하기</h4>
+                            <p class="text-sm text-slate-500">학교 전체 공지사항 및 가정통신문을 등록하고 관리합니다.</p>
+                        </div>
+                    </a>
+
+                    <a href="#" onclick="openMealModal(); return false;" class="block group">
+                        <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-pink-300">
+                            <div class="w-12 h-12 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center mb-4 text-xl">
+                                <i class="fas fa-utensils"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">월간 급식 등록하기</h4>
+                            <p class="text-sm text-slate-500">월별 급식 식단표 데이터를 업로드하고 관리합니다.</p>
+                        </div>
+                    </a>
+
+                    <a href="timetablechange.html" class="block group">
+                        <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-4 text-xl">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">시간표 조회 및 변경</h4>
+                            <p class="text-sm text-slate-500">전체 학급의 시간표를 조회하고 임시 시간표를 배정합니다.</p>
+                        </div>
+                    </a>
+
+                    <a href="classtime_maker_base.html" class="block group">
+                        <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-green-300">
+                            <div class="w-12 h-12 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4 text-xl">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">반편성/시간표 기초데이터</h4>
+                            <p class="text-sm text-slate-500">반편성 및 시간표 작성에 필요한 기초 데이터를 관리합니다.</p>
+                        </div>
+                    </a>
+
+                    <a href="timetablemaker.html" class="block group">
+                        <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-indigo-300">
+                            <div class="w-12 h-12 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4 text-xl">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">시간표 작성</h4>
+                            <p class="text-sm text-slate-500">기초 데이터를 바탕으로 학교 전체 시간표를 자동으로 생성합니다.</p>
+                        </div>
+                    </a>
+
+                    <a href="class_maker.html" class="block group">
+                        <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-purple-300">
+                            <div class="w-12 h-12 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mb-4 text-xl">
+                                <i class="fas fa-layer-group"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">반편성</h4>
+                            <p class="text-sm text-slate-500">학생 데이터를 기반으로 학급을 편성하고 관리합니다.</p>
+                        </div>
+                    </a>
+
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- 공지사항 등록 모달 -->
+    <div id="notice-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeNoticeModal()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 overflow-hidden">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white">
+                <button onclick="closeNoticeModal()" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center"><i class="fas fa-bullhorn text-2xl"></i></div>
+                    <div><h2 class="text-xl font-black">공지사항 등록</h2><p class="text-sm text-white/80">새 공지사항을 작성하세요</p></div>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">제목</label>
+                    <input type="text" id="notice-title" placeholder="공지사항 제목" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 outline-none font-medium">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">내용</label>
+                    <textarea id="notice-message" rows="6" placeholder="공지사항 내용을 입력하세요" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 outline-none font-medium resize-none"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">수정/삭제 비밀번호 (4자리 이상)</label>
+                    <input type="password" id="notice-correct-no" placeholder="비밀번호 입력" maxlength="20" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 outline-none font-medium">
+                </div>
+                <p class="text-xs text-slate-400 mb-4"><i class="fas fa-info-circle mr-1"></i>공지사항은 학교 전체(교사, 학생, 학부모)에게 공개됩니다.</p>
+                <button onclick="submitNotice()" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black py-4 rounded-xl shadow-lg hover:shadow-xl transition">등록하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 월간 급식 등록 모달 -->
+    <div id="meal-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeMealModal()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] relative z-10 overflow-hidden flex flex-col">
+            <div class="bg-gradient-to-r from-pink-500 to-rose-600 p-6 text-white flex-shrink-0">
+                <button onclick="closeMealModal()" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center"><i class="fas fa-utensils text-2xl"></i></div>
+                    <div><h2 class="text-xl font-black">월간 급식 등록</h2><p class="text-sm text-white/80">한 달 급식 메뉴를 입력하세요</p></div>
+                </div>
+            </div>
+            
+            <!-- 년월 선택 -->
+            <div class="p-4 bg-slate-50 border-b flex items-center gap-4 flex-shrink-0">
+                <div class="flex items-center gap-2">
+                    <label class="text-sm font-bold text-slate-600">년도</label>
+                    <select id="meal-year" onchange="loadMealData()" class="px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-pink-500 outline-none font-medium">
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-sm font-bold text-slate-600">월</label>
+                    <select id="meal-month" onchange="loadMealData()" class="px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-pink-500 outline-none font-medium">
+                        <option value="1">1월</option>
+                        <option value="2">2월</option>
+                        <option value="3">3월</option>
+                        <option value="4">4월</option>
+                        <option value="5">5월</option>
+                        <option value="6">6월</option>
+                        <option value="7">7월</option>
+                        <option value="8">8월</option>
+                        <option value="9">9월</option>
+                        <option value="10">10월</option>
+                        <option value="11">11월</option>
+                        <option value="12">12월</option>
+                    </select>
+                </div>
+                <button onclick="loadMealData()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-xl text-sm font-bold transition">
+                    <i class="fas fa-sync-alt mr-1"></i>불러오기
+                </button>
+                <span id="meal-status" class="text-sm text-slate-500"></span>
+            </div>
+            
+            <!-- 급식 입력 그리드 -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div id="meal-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- JS로 생성 -->
+                </div>
+            </div>
+            
+            <!-- 저장 버튼 -->
+            <div class="p-4 bg-slate-50 border-t flex-shrink-0">
+                <button onclick="saveMealData()" class="w-full bg-gradient-to-r from-pink-500 to-rose-600 text-white font-black py-4 rounded-xl shadow-lg hover:shadow-xl transition">
+                    <i class="fas fa-save mr-2"></i>저장하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initUserInfo();
+        });
+
+        function initUserInfo() {
+            const userStr = localStorage.getItem('schoolus_user');
+            if (!userStr) {
+                alert('로그인이 필요합니다.');
+                window.location.href = '/';
+                return;
+            }
+            
+            currentUser = JSON.parse(userStr);
+            
+            const schoolBadge = document.getElementById('userSchoolBadge');
+            if (currentUser.member_school) {
+                schoolBadge.textContent = currentUser.member_school;
+            } else {
+                schoolBadge.textContent = '학교 미설정';
+                schoolBadge.className = 'bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold';
+            }
+            
+            const userName = document.getElementById('userName');
+            const userAvatar = document.getElementById('userAvatar');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            
+            if (currentUser.member_name) {
+                if (userName) userName.textContent = currentUser.member_name + ' 선생님';
+                if (userAvatar) userAvatar.textContent = currentUser.member_name.charAt(0);
+                if (welcomeMessage) welcomeMessage.textContent = `${currentUser.member_name} 선생님, 안녕하세요! 👋`;
+            }
+            
+            loadUserPoint();
+        }
+        
+        async function loadUserPoint() {
+            try {
+                const url = `/api/teacher/info?member_id=${encodeURIComponent(currentUser.member_id)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success && data.teacher) {
+                    displayPoint(data.teacher.point);
+                }
+            } catch (error) {
+                console.error('포인트 로드 오류:', error);
+            }
+        }
+        
+        function displayPoint(point) {
+            const el = document.getElementById('userPoint');
+            if (!el) return;
+            
+            if (point === 'free' || point === 'Free') {
+                el.textContent = 'Free';
+            } else if (point === null || point === undefined || point === '') {
+                el.textContent = '0';
+            } else {
+                const num = parseInt(point);
+                el.textContent = isNaN(num) ? '0' : num.toLocaleString();
+            }
+        }
+
+        function getSchoolParams() {
+            const params = new URLSearchParams();
+            if (currentUser.school_id) params.append('school_id', currentUser.school_id);
+            if (currentUser.member_school) params.append('member_school', currentUser.member_school);
+            return params;
+        }
+
+        // ==========================================
+        // 공지사항 모달
+        // ==========================================
+        function openNoticeModal() {
+            document.getElementById('notice-title').value = '';
+            document.getElementById('notice-message').value = '';
+            document.getElementById('notice-correct-no').value = '';
+            document.getElementById('notice-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeNoticeModal() {
+            document.getElementById('notice-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        async function submitNotice() {
+            const title = document.getElementById('notice-title').value.trim();
+            const message = document.getElementById('notice-message').value.trim();
+            const correct_no = document.getElementById('notice-correct-no').value.trim();
+            
+            if (!title || !message) return alert('제목과 내용을 모두 입력해주세요.');
+            if (!correct_no || correct_no.length < 4) return alert('수정/삭제용 비밀번호를 4자리 이상 입력해주세요.');
+            
+            try {
+                const response = await fetch('/api/notice/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        member_name: currentUser.member_name,
+                        member_school: currentUser.member_school,
+                        school_id: currentUser.school_id,
+                        title, message, correct_no
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert(data.message);
+                    closeNoticeModal();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('공지사항 등록 중 오류가 발생했습니다.');
+            }
+        }
+
+        // ==========================================
+        // 월간 급식 모달
+        // ==========================================
+        function openMealModal() {
+            // 년도 옵션 생성
+            const yearSelect = document.getElementById('meal-year');
+            const currentYear = new Date().getFullYear();
+            yearSelect.innerHTML = '';
+            for (let y = currentYear - 1; y <= currentYear + 1; y++) {
+                const option = document.createElement('option');
+                option.value = y;
+                option.textContent = y + '년';
+                if (y === currentYear) option.selected = true;
+                yearSelect.appendChild(option);
+            }
+            
+            // 현재 월 선택
+            document.getElementById('meal-month').value = new Date().getMonth() + 1;
+            
+            // 그리드 생성 및 데이터 로드
+            generateMealGrid();
+            loadMealData();
+            
+            document.getElementById('meal-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMealModal() {
+            document.getElementById('meal-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function generateMealGrid() {
+            const year = parseInt(document.getElementById('meal-year').value);
+            const month = parseInt(document.getElementById('meal-month').value);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            
+            const grid = document.getElementById('meal-grid');
+            grid.innerHTML = '';
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month - 1, day);
+                const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border-2 ${isWeekend ? 'border-slate-100 bg-slate-50' : 'border-slate-200 bg-white'}`;
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-slate-800">${day}일</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full ${date.getDay() === 0 ? 'bg-red-100 text-red-600' : date.getDay() === 6 ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'}">${dayOfWeek}</span>
+                    </div>
+                    <textarea id="meal-day-${day}" rows="3" placeholder="${isWeekend ? '주말' : '메뉴 입력'}" 
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-pink-400 outline-none resize-none meal-input ${isWeekend ? 'bg-slate-100' : ''}"></textarea>
+                `;
+                grid.appendChild(card);
+            }
+        }
+
+        async function loadMealData() {
+            const year = document.getElementById('meal-year').value;
+            const month = document.getElementById('meal-month').value;
+            const status = document.getElementById('meal-status');
+            
+            // 그리드 재생성
+            generateMealGrid();
+            
+            status.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>불러오는 중...';
+            
+            try {
+                const params = getSchoolParams();
+                params.append('year', year);
+                params.append('month', month);
+                
+                const response = await fetch(`/api/meal/month?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success && data.meals) {
+                    const mealCount = Object.keys(data.meals).length;
+                    
+                    // 각 날짜에 데이터 채우기
+                    for (const [day, mealInfo] of Object.entries(data.meals)) {
+                        const textarea = document.getElementById(`meal-day-${day}`);
+                        if (textarea) {
+                            textarea.value = mealInfo.menu || '';
+                        }
+                    }
+                    
+                    status.innerHTML = mealCount > 0 
+                        ? `<i class="fas fa-check-circle text-green-500 mr-1"></i>${mealCount}일분 데이터 로드됨`
+                        : `<i class="fas fa-info-circle text-slate-400 mr-1"></i>저장된 데이터 없음`;
+                } else {
+                    status.innerHTML = `<i class="fas fa-info-circle text-slate-400 mr-1"></i>저장된 데이터 없음`;
+                }
+            } catch (error) {
+                status.innerHTML = `<i class="fas fa-exclamation-circle text-red-500 mr-1"></i>로드 실패`;
+                console.error('급식 로드 오류:', error);
+            }
+        }
+
+        async function saveMealData() {
+            const year = document.getElementById('meal-year').value;
+            const month = document.getElementById('meal-month').value;
+            const daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
+            
+            // 모든 날짜의 메뉴 수집
+            const meals = {};
+            let filledCount = 0;
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const textarea = document.getElementById(`meal-day-${day}`);
+                if (textarea && textarea.value.trim()) {
+                    meals[day] = textarea.value.trim();
+                    filledCount++;
+                }
+            }
+            
+            if (filledCount === 0) {
+                if (!confirm('입력된 메뉴가 없습니다. 기존 데이터를 모두 삭제하시겠습니까?')) {
+                    return;
+                }
+            }
+            
+            try {
+                const response = await fetch('/api/meal/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        school_id: currentUser.school_id,
+                        member_school: currentUser.member_school,
+                        year, month, meals
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(data.message);
+                    document.getElementById('meal-status').innerHTML = `<i class="fas fa-check-circle text-green-500 mr-1"></i>저장 완료`;
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('저장 중 오류가 발생했습니다.');
+                console.error('급식 저장 오류:', error);
+            }
+        }
+
+        function toggleMobileSidebar() {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+            document.getElementById('mobile-overlay').classList.toggle('active');
+        }
+        document.getElementById('mobile-overlay').onclick = function() {
+            document.getElementById('sidebar').classList.remove('mobile-open');
+            this.classList.remove('active');
+        };
+    </script>
+</body>
+</html>

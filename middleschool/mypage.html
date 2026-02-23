@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원정보 수정 - SchoolUs</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #1e3a5f 0%, #2d5a87 100%);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .input-focus:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="flex min-h-screen">
+        <aside class="sidebar-gradient w-64 text-white flex-shrink-0 hidden md:block">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold flex items-center gap-2">
+                    <i class="fas fa-user-cog"></i>
+                    회원정보 수정
+                </h1>
+                <p class="text-blue-200 text-sm mt-1">My Page</p>
+            </div>
+            <nav class="mt-6">
+                <a href="#" onclick="goBack()" class="flex items-center px-6 py-3 text-blue-100 hover:bg-white/10 transition-colors">
+                    <i class="fas fa-arrow-left w-5 mr-3"></i>
+                    대시보드로 돌아가기
+                </a>
+                <div class="flex items-center px-6 py-3 bg-white/20 border-r-4 border-white">
+                    <i class="fas fa-user-edit w-5 mr-3"></i>
+                    회원정보 수정
+                </div>
+                <a href="#" onclick="openPasswordModal()" class="flex items-center px-6 py-3 text-blue-100 hover:bg-white/10 transition-colors">
+                    <i class="fas fa-key w-5 mr-3"></i>
+                    비밀번호 변경
+                </a>
+            </nav>
+        </aside>
+
+        <div class="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md z-50 px-4 py-3">
+            <div class="flex items-center justify-between">
+                <button onclick="goBack()" class="text-gray-600"><i class="fas fa-arrow-left text-xl"></i></button>
+                <h1 class="text-lg font-bold text-gray-800">회원정보 수정</h1>
+                <div class="w-6"></div>
+            </div>
+        </div>
+
+        <main class="flex-1 p-4 md:p-8 md:pt-8 pt-20">
+            <div class="max-w-2xl mx-auto">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">회원정보 수정</h2>
+                    <p class="text-gray-500 mt-1">개인정보를 확인하고 수정할 수 있습니다.</p>
+                </div>
+
+                <div id="passwordVerifySection" class="glass-card rounded-2xl shadow-lg p-6 md:p-8 mb-6">
+                    <div class="text-center mb-6">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-lock text-blue-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800">본인 확인</h3>
+                        <p class="text-gray-500 mt-2">회원정보 수정을 위해 현재 비밀번호를 입력해주세요.</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">현재 비밀번호</label>
+                            <div class="relative">
+                                <input type="password" id="currentPasswordVerify" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all pr-12"
+                                    placeholder="현재 비밀번호를 입력하세요">
+                                <button type="button" onclick="togglePassword('currentPasswordVerify')" 
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button onclick="verifyPassword()" 
+                            class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                            확인
+                        </button>
+                    </div>
+                </div>
+
+                <div id="editFormSection" class="hidden">
+                    <form id="memberEditForm" class="glass-card rounded-2xl shadow-lg p-6 md:p-8">
+                        <div class="mb-8">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">
+                                <i class="fas fa-user mr-2 text-blue-500"></i>기본 정보
+                            </h3>
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2"><i class="fas fa-id-badge mr-1 text-gray-400"></i>아이디</label>
+                                <input type="text" id="memberId" readonly class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 cursor-not-allowed">
+                                <p class="text-xs text-gray-400 mt-1">아이디는 변경할 수 없습니다.</p>
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2"><i class="fas fa-user mr-1 text-gray-400"></i>이름 <span class="text-red-500">*</span></label>
+                                <input type="text" id="memberName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all" placeholder="이름을 입력하세요">
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2"><i class="fas fa-calendar mr-1 text-gray-400"></i>생년월일 <span class="text-red-500">*</span></label>
+                                <input type="date" id="memberBirth" required class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all">
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2"><i class="fas fa-phone mr-1 text-gray-400"></i>연락처 <span class="text-red-500">*</span></label>
+                                <input type="tel" id="memberTel" required class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all" placeholder="010-0000-0000" oninput="formatPhoneNumber(this)">
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2"><i class="fas fa-map-marker-alt mr-1 text-gray-400"></i>주소 <span class="text-red-500">*</span></label>
+                                <input type="text" id="memberAdd" required class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all" placeholder="주소를 입력하세요">
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2"><i class="fas fa-user-tag mr-1 text-gray-400"></i>역할</label>
+                                <input type="text" id="memberRollDisplay" readonly class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 cursor-not-allowed">
+                                <input type="hidden" id="memberRoll">
+                            </div>
+                        </div>
+
+                        <div class="mb-8">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">
+                                <i class="fas fa-school mr-2 text-green-500"></i>학교 정보
+                                <span class="text-sm font-normal text-gray-500 ml-2">(전학/전근 시 변경)</span>
+                            </h3>
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2"><i class="fas fa-school mr-1 text-gray-400"></i>소속 학교 <span class="text-red-500">*</span></label>
+                                <select id="memberSchool" required class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all">
+                                    <option value="">학교를 선택하세요</option>
+                                </select>
+                                <input type="hidden" id="schoolId">
+                                <p class="text-xs text-orange-500 mt-1"><i class="fas fa-exclamation-triangle mr-1"></i>학교 변경 시 관련 정보가 모두 업데이트됩니다.</p>
+                            </div>
+                        </div>
+
+                        <!-- 교사 전용 정보 -->
+                        <div id="teacherInfoSection" class="hidden mb-8">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">
+                                <i class="fas fa-chalkboard-teacher mr-2 text-purple-500"></i>교사 정보
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">부서</label>
+                                    <input type="text" id="department" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all" placeholder="예: 교무기획, 학생생활지도">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">담당업무</label>
+                                    <input type="text" id="departmentPosition" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all" placeholder="예: 부장, 기획">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">담임 학년</label>
+                                    <select id="teacherClassGrade" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all">
+                                        <option value="">선택</option>
+                                        <option value="1">1학년</option>
+                                        <option value="2">2학년</option>
+                                        <option value="3">3학년</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">담임 반</label>
+                                    <select id="teacherClassNo" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all">
+                                        <option value="">선택</option>
+                                        <option value="1">1반</option>
+                                        <option value="2">2반</option>
+                                        <option value="3">3반</option>
+                                        <option value="4">4반</option>
+                                        <option value="5">5반</option>
+                                        <option value="6">6반</option>
+                                        <option value="7">7반</option>
+                                        <option value="8">8반</option>
+                                        <option value="9">9반</option>
+                                        <option value="10">10반</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 학생 전용 정보 -->
+                        <div id="studentInfoSection" class="hidden mb-8">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">
+                                <i class="fas fa-user-graduate mr-2 text-indigo-500"></i>학급 정보
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">학년 <span class="text-red-500">*</span></label>
+                                    <select id="studentClassGrade" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all">
+                                        <option value="">선택</option>
+                                        <option value="1">1학년</option>
+                                        <option value="2">2학년</option>
+                                        <option value="3">3학년</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">반 <span class="text-red-500">*</span></label>
+                                    <select id="studentClassNo" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all">
+                                        <option value="">선택</option>
+                                        <option value="1">1반</option>
+                                        <option value="2">2반</option>
+                                        <option value="3">3반</option>
+                                        <option value="4">4반</option>
+                                        <option value="5">5반</option>
+                                        <option value="6">6반</option>
+                                        <option value="7">7반</option>
+                                        <option value="8">8반</option>
+                                        <option value="9">9반</option>
+                                        <option value="10">10반</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">번호 <span class="text-red-500">*</span></label>
+                                    <input type="number" id="studentClassNum" min="1" max="50" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all" placeholder="번호">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 학부모 전용 정보 -->
+                        <div id="parentInfoSection" class="hidden mb-8">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">
+                                <i class="fas fa-child mr-2 text-pink-500"></i>자녀 정보
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">자녀 이름 <span class="text-red-500">*</span></label>
+                                    <input type="text" id="childName" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all" placeholder="자녀 이름">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">자녀 생년월일 <span class="text-red-500">*</span></label>
+                                    <input type="date" id="childBirth" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">자녀 학년 <span class="text-red-500">*</span></label>
+                                    <select id="parentClassGrade" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all">
+                                        <option value="">선택</option>
+                                        <option value="1">1학년</option>
+                                        <option value="2">2학년</option>
+                                        <option value="3">3학년</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">자녀 반 <span class="text-red-500">*</span></label>
+                                    <select id="parentClassNo" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all">
+                                        <option value="">선택</option>
+                                        <option value="1">1반</option>
+                                        <option value="2">2반</option>
+                                        <option value="3">3반</option>
+                                        <option value="4">4반</option>
+                                        <option value="5">5반</option>
+                                        <option value="6">6반</option>
+                                        <option value="7">7반</option>
+                                        <option value="8">8반</option>
+                                        <option value="9">9반</option>
+                                        <option value="10">10반</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">자녀 번호 <span class="text-red-500">*</span></label>
+                                    <input type="number" id="parentClassNum" min="1" max="50" class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all" placeholder="번호">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 mt-8">
+                            <button type="button" onclick="goBack()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-medium">취소</button>
+                            <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"><i class="fas fa-save mr-2"></i>저장하기</button>
+                        </div>
+                    </form>
+
+                    <div class="mt-6 text-center">
+                        <button onclick="openPasswordModal()" class="text-blue-600 hover:text-blue-800 font-medium">
+                            <i class="fas fa-key mr-1"></i>비밀번호 변경하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 비밀번호 변경 모달 -->
+    <div id="passwordModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+                <h3 class="text-xl font-bold text-white">비밀번호 변경</h3>
+            </div>
+            <form id="passwordChangeForm" class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">현재 비밀번호</label>
+                        <div class="relative">
+                            <input type="password" id="currentPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all pr-12" placeholder="현재 비밀번호">
+                            <button type="button" onclick="togglePassword('currentPassword')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">새 비밀번호</label>
+                        <div class="relative">
+                            <input type="password" id="newPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all pr-12" placeholder="새 비밀번호 (8자 이상)">
+                            <button type="button" onclick="togglePassword('newPassword')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><i class="fas fa-eye"></i></button>
+                        </div>
+                        <div id="passwordStrength" class="mt-2 hidden">
+                            <div class="flex gap-1">
+                                <div class="h-1 flex-1 rounded bg-gray-200" id="strength1"></div>
+                                <div class="h-1 flex-1 rounded bg-gray-200" id="strength2"></div>
+                                <div class="h-1 flex-1 rounded bg-gray-200" id="strength3"></div>
+                                <div class="h-1 flex-1 rounded bg-gray-200" id="strength4"></div>
+                            </div>
+                            <p id="strengthText" class="text-xs mt-1 text-gray-500"></p>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">새 비밀번호 확인</label>
+                        <div class="relative">
+                            <input type="password" id="confirmPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all pr-12" placeholder="새 비밀번호 확인">
+                            <button type="button" onclick="togglePassword('confirmPassword')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><i class="fas fa-eye"></i></button>
+                        </div>
+                        <p id="passwordMatch" class="text-xs mt-1 hidden"></p>
+                    </div>
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button type="button" onclick="closePasswordModal()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-medium">취소</button>
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">변경하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-check-circle"></i>
+            <span id="toastMessage">저장되었습니다.</span>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let isPasswordVerified = false;
+        let schoolList = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const userData = localStorage.getItem('schoolus_user');
+            if (!userData) { alert('로그인이 필요합니다.'); location.href = 'index.html'; return; }
+            currentUser = JSON.parse(userData);
+            loadSchoolList();
+        });
+
+        async function loadSchoolList() {
+            try {
+                const response = await fetch('/api/schools');
+                const result = await response.json();
+                if (result.success) {
+                    schoolList = result.schools;
+                    const select = document.getElementById('memberSchool');
+                    schoolList.forEach(school => {
+                        const option = document.createElement('option');
+                        option.value = school.member_school;
+                        option.dataset.schoolId = school.school_id;
+                        option.textContent = school.member_school;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) { console.error('학교 목록 로드 오류:', error); }
+        }
+
+        document.getElementById('memberSchool').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            document.getElementById('schoolId').value = selectedOption.dataset.schoolId || '';
+        });
+
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.nextElementSibling.querySelector('i');
+            if (input.type === 'password') { input.type = 'text'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); }
+            else { input.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+        }
+
+        async function verifyPassword() {
+            const password = document.getElementById('currentPasswordVerify').value;
+            if (!password) { showToast('비밀번호를 입력해주세요.', 'error'); return; }
+            try {
+                const response = await fetch('/api/member/verify-password', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ member_id: currentUser.member_id, password: password })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    isPasswordVerified = true;
+                    document.getElementById('passwordVerifySection').classList.add('hidden');
+                    document.getElementById('editFormSection').classList.remove('hidden');
+                    loadMemberInfo();
+                } else { showToast('비밀번호가 일치하지 않습니다.', 'error'); }
+            } catch (error) { console.error('비밀번호 확인 오류:', error); showToast('오류가 발생했습니다.', 'error'); }
+        }
+
+        async function loadMemberInfo() {
+            try {
+                const response = await fetch(`/api/member/info?member_id=${currentUser.member_id}`);
+                const result = await response.json();
+                if (result.success) {
+                    const member = result.member;
+                    document.getElementById('memberId').value = member.member_id || '';
+                    document.getElementById('memberName').value = member.member_name || '';
+                    document.getElementById('memberBirth').value = member.member_birth || '';
+                    document.getElementById('memberTel').value = member.member_tel || '';
+                    document.getElementById('memberAdd').value = member.member_add || '';
+                    document.getElementById('memberSchool').value = member.member_school || '';
+                    document.getElementById('schoolId').value = member.school_id || '';
+                    const roleMap = { 'teacher': '교사', 'student': '학생', 'parent': '학부모' };
+                    document.getElementById('memberRollDisplay').value = roleMap[member.member_roll] || member.member_roll;
+                    document.getElementById('memberRoll').value = member.member_roll;
+                    showRoleSection(member.member_roll);
+                    if (member.member_roll === 'teacher') {
+                        document.getElementById('department').value = member.department || '';
+                        document.getElementById('departmentPosition').value = member.department_position || '';
+                        document.getElementById('teacherClassGrade').value = member.class_grade || '';
+                        document.getElementById('teacherClassNo').value = member.class_no || '';
+                    } else if (member.member_roll === 'student') {
+                        document.getElementById('studentClassGrade').value = member.class_grade || '';
+                        document.getElementById('studentClassNo').value = member.class_no || '';
+                        document.getElementById('studentClassNum').value = member.class_num || '';
+                    } else if (member.member_roll === 'parent') {
+                        document.getElementById('childName').value = member.child_name || '';
+                        document.getElementById('childBirth').value = member.child_birth || '';
+                        document.getElementById('parentClassGrade').value = member.class_grade || '';
+                        document.getElementById('parentClassNo').value = member.class_no || '';
+                        document.getElementById('parentClassNum').value = member.class_num || '';
+                    }
+                } else { showToast('회원정보를 불러올 수 없습니다.', 'error'); }
+            } catch (error) { console.error('회원정보 로드 오류:', error); showToast('오류가 발생했습니다.', 'error'); }
+        }
+
+        function showRoleSection(role) {
+            document.getElementById('teacherInfoSection').classList.add('hidden');
+            document.getElementById('studentInfoSection').classList.add('hidden');
+            document.getElementById('parentInfoSection').classList.add('hidden');
+            document.getElementById('studentClassGrade').removeAttribute('required');
+            document.getElementById('studentClassNo').removeAttribute('required');
+            document.getElementById('studentClassNum').removeAttribute('required');
+            document.getElementById('childName').removeAttribute('required');
+            document.getElementById('childBirth').removeAttribute('required');
+            document.getElementById('parentClassGrade').removeAttribute('required');
+            document.getElementById('parentClassNo').removeAttribute('required');
+            document.getElementById('parentClassNum').removeAttribute('required');
+            if (role === 'teacher') {
+                document.getElementById('teacherInfoSection').classList.remove('hidden');
+            } else if (role === 'student') {
+                document.getElementById('studentInfoSection').classList.remove('hidden');
+                document.getElementById('studentClassGrade').setAttribute('required', '');
+                document.getElementById('studentClassNo').setAttribute('required', '');
+                document.getElementById('studentClassNum').setAttribute('required', '');
+            } else if (role === 'parent') {
+                document.getElementById('parentInfoSection').classList.remove('hidden');
+                document.getElementById('childName').setAttribute('required', '');
+                document.getElementById('childBirth').setAttribute('required', '');
+                document.getElementById('parentClassGrade').setAttribute('required', '');
+                document.getElementById('parentClassNo').setAttribute('required', '');
+                document.getElementById('parentClassNum').setAttribute('required', '');
+            }
+        }
+
+        function formatPhoneNumber(input) {
+            let value = input.value.replace(/[^0-9]/g, '');
+            if (value.length > 3 && value.length <= 7) value = value.slice(0, 3) + '-' + value.slice(3);
+            else if (value.length > 7) value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
+            input.value = value;
+        }
+
+        document.getElementById('memberEditForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!isPasswordVerified) { showToast('비밀번호 확인이 필요합니다.', 'error'); return; }
+            const memberRoll = document.getElementById('memberRoll').value;
+            const data = {
+                member_id: document.getElementById('memberId').value,
+                member_name: document.getElementById('memberName').value,
+                member_birth: document.getElementById('memberBirth').value,
+                member_tel: document.getElementById('memberTel').value,
+                member_add: document.getElementById('memberAdd').value,
+                member_school: document.getElementById('memberSchool').value,
+                school_id: document.getElementById('schoolId').value
+            };
+            if (memberRoll === 'teacher') {
+                data.department = document.getElementById('department').value;
+                data.department_position = document.getElementById('departmentPosition').value;
+                data.class_grade = document.getElementById('teacherClassGrade').value;
+                data.class_no = document.getElementById('teacherClassNo').value;
+            } else if (memberRoll === 'student') {
+                data.class_grade = document.getElementById('studentClassGrade').value;
+                data.class_no = document.getElementById('studentClassNo').value;
+                data.class_num = document.getElementById('studentClassNum').value;
+            } else if (memberRoll === 'parent') {
+                data.child_name = document.getElementById('childName').value;
+                data.child_birth = document.getElementById('childBirth').value;
+                data.class_grade = document.getElementById('parentClassGrade').value;
+                data.class_no = document.getElementById('parentClassNo').value;
+                data.class_num = document.getElementById('parentClassNum').value;
+            }
+            try {
+                const response = await fetch('/api/member/update', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    currentUser.member_name = data.member_name;
+                    currentUser.member_school = data.member_school;
+                    currentUser.school_id = data.school_id;
+                    localStorage.setItem('schoolus_user', JSON.stringify(currentUser));
+                    showToast('회원정보가 저장되었습니다.', 'success');
+                } else { showToast(result.message || '수정에 실패했습니다.', 'error'); }
+            } catch (error) { console.error('회원정보 수정 오류:', error); showToast('오류가 발생했습니다.', 'error'); }
+        });
+
+        function openPasswordModal() {
+            document.getElementById('passwordModal').classList.remove('hidden');
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        }
+        function closePasswordModal() { document.getElementById('passwordModal').classList.add('hidden'); }
+
+        document.getElementById('newPassword').addEventListener('input', function() {
+            const password = this.value;
+            const strengthDiv = document.getElementById('passwordStrength');
+            const strengthText = document.getElementById('strengthText');
+            if (password.length > 0) {
+                strengthDiv.classList.remove('hidden');
+                let strength = 0;
+                if (password.length >= 8) strength++;
+                if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+                if (/[0-9]/.test(password)) strength++;
+                if (/[^a-zA-Z0-9]/.test(password)) strength++;
+                const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500'];
+                const texts = ['매우 약함', '약함', '보통', '강함'];
+                for (let i = 1; i <= 4; i++) {
+                    const bar = document.getElementById('strength' + i);
+                    bar.className = 'h-1 flex-1 rounded ' + (i <= strength ? colors[strength - 1] : 'bg-gray-200');
+                }
+                strengthText.textContent = texts[strength - 1] || '매우 약함';
+            } else { strengthDiv.classList.add('hidden'); }
+            checkPasswordMatch();
+        });
+
+        document.getElementById('confirmPassword').addEventListener('input', checkPasswordMatch);
+
+        function checkPasswordMatch() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const matchText = document.getElementById('passwordMatch');
+            if (confirmPassword.length > 0) {
+                matchText.classList.remove('hidden');
+                if (newPassword === confirmPassword) { matchText.textContent = '비밀번호가 일치합니다.'; matchText.className = 'text-xs mt-1 text-green-600'; }
+                else { matchText.textContent = '비밀번호가 일치하지 않습니다.'; matchText.className = 'text-xs mt-1 text-red-600'; }
+            } else { matchText.classList.add('hidden'); }
+        }
+
+        document.getElementById('passwordChangeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            if (newPassword.length < 8) { showToast('비밀번호는 8자 이상이어야 합니다.', 'error'); return; }
+            if (newPassword !== confirmPassword) { showToast('새 비밀번호가 일치하지 않습니다.', 'error'); return; }
+            try {
+                const response = await fetch('/api/member/change-password', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ member_id: currentUser.member_id, current_password: currentPassword, new_password: newPassword })
+                });
+                const result = await response.json();
+                if (result.success) { showToast('비밀번호가 변경되었습니다.', 'success'); closePasswordModal(); }
+                else { showToast(result.message || '비밀번호 변경에 실패했습니다.', 'error'); }
+            } catch (error) { console.error('비밀번호 변경 오류:', error); showToast('오류가 발생했습니다.', 'error'); }
+        });
+
+        function goBack() {
+            const roleMap = { 'teacher': 'tea.html', 'student': 'st.html', 'parent': 'fm.html' };
+            location.href = roleMap[currentUser.member_roll] || 'index.html';
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 z-50 ${type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
+            toastMessage.textContent = message;
+            toast.classList.remove('translate-x-full');
+            setTimeout(() => { toast.classList.add('translate-x-full'); }, 3000);
+        }
+
+        document.getElementById('currentPasswordVerify').addEventListener('keypress', function(e) { if (e.key === 'Enter') verifyPassword(); });
+        document.getElementById('passwordModal').addEventListener('click', function(e) { if (e.target === this) closePasswordModal(); });
+    </script>
+</body>
+</html>

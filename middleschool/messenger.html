@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 메신저</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.8); }
+        .nav-item { position: relative; transition: all 0.3s ease; }
+        .nav-item::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 0; background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), transparent); transition: width 0.3s ease; }
+        .nav-item:hover::before { width: 100%; }
+        .nav-item.active { background: linear-gradient(90deg, rgba(59, 130, 246, 0.2), transparent); border-left: 3px solid #3b82f6; }
+        .avatar-ring { background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899); padding: 3px; }
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        #mobile-overlay.active { display: block; }
+        #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
+        @media (max-width: 767px) {
+            #sidebar.mobile-open { overflow-y: auto !important; }
+            .nav-item { min-height: 52px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 15px !important; }
+        }
+
+        /* 메신저 전용 스타일 */
+        .conv-item { transition: all 0.2s; cursor: pointer; }
+        .conv-item:hover { background: #f0f9ff; }
+        .conv-item.active { background: #eff6ff; border-left: 3px solid #3b82f6; }
+        .msg-bubble { max-width: 75%; word-break: break-word; }
+        .msg-mine { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border-radius: 18px 18px 4px 18px; }
+        .msg-other { background: white; border: 1px solid #e2e8f0; border-radius: 18px 18px 18px 4px; }
+        .date-separator { display: flex; align-items: center; gap: 12px; color: #94a3b8; font-size: 12px; }
+        .date-separator::before, .date-separator::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
+
+        /* 모바일: 대화목록/내용 전환 */
+        @media (max-width: 767px) {
+            #conv-list-panel.mobile-hidden { display: none !important; }
+            #msg-panel.mobile-hidden { display: none !important; }
+            #msg-panel { position: absolute; inset: 0; z-index: 5; }
+        }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 text-slate-800">
+
+    <div class="flex h-screen overflow-hidden">
+        <div id="mobile-overlay" onclick="toggleMobileSidebar()"></div>
+        <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 hidden md:flex flex-col flex-shrink-0 shadow-2xl">
+            <div class="p-6 border-b border-slate-700/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-school text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-black text-2xl text-white tracking-tight">SchoolUs</span>
+                        <p class="text-xs text-slate-400 font-medium">스마트 교육 플랫폼</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 border-b border-slate-700/50 bg-slate-800/30">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center">
+                        <i class="fas fa-building text-white text-sm"></i>
+                    </div>
+                    <div id="school-name-display" class="text-sm font-bold text-white truncate">-</div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="avatar-ring rounded-full">
+                        <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-white font-black text-xl" id="user-avatar">U</div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white font-bold text-lg truncate" id="user-name-display">-</p>
+                        <p class="text-xs text-slate-400 truncate" id="user-info-display">-</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-4">
+                <ul id="sidebar-nav-list" class="space-y-1 px-3">
+                    <!-- 역할별 동적 렌더링 -->
+                </ul>
+            </nav>
+            <div class="p-4 border-t border-slate-700/50 space-y-2">
+                <a href="mypage.html" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-blue-500/20 hover:text-blue-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-user-cog mr-2"></i> 회원정보 수정</a>
+                <a href="#" onclick="handleLogout()" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-red-500/20 hover:text-red-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-sign-out-alt mr-2"></i> 로그아웃</a>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col h-screen overflow-hidden">
+            <header class="bg-white/80 backdrop-blur-lg h-16 border-b border-slate-200/50 flex items-center justify-between px-6 shadow-sm z-10">
+                <div class="flex items-center gap-4">
+                    <button class="md:hidden text-slate-600" onclick="toggleMobileSidebar()"><i class="fas fa-bars text-xl"></i></button>
+                    <div class="flex items-center text-slate-500">
+                        <i class="fas fa-comments text-blue-500 mr-2"></i>
+                        <span class="text-sm font-bold text-slate-700">메신저</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a id="back-to-dashboard" href="tea.html" class="text-sm text-slate-500 hover:text-blue-600 transition"><i class="fas fa-arrow-left mr-1"></i> 대시보드</a>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-hidden relative">
+                <div class="flex h-full">
+                    <!-- 대화 목록 패널 -->
+                    <div id="conv-list-panel" class="w-full md:w-80 lg:w-96 border-r border-slate-200 flex flex-col bg-white">
+                        <div class="p-4 border-b border-slate-100">
+                            <div class="flex items-center justify-between mb-3">
+                                <h2 class="font-bold text-lg text-slate-800">대화</h2>
+                                <button onclick="openNewConversation()" class="w-9 h-9 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center transition shadow-lg shadow-blue-500/30" title="새 대화">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <input type="text" id="conv-search" placeholder="대화 검색..." class="w-full pl-9 pr-4 py-2 bg-slate-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" oninput="filterConversations()">
+                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            </div>
+                        </div>
+                        <div id="conv-list" class="flex-1 overflow-y-auto">
+                            <div class="p-8 text-center text-slate-400 text-sm">
+                                <i class="fas fa-comments text-4xl mb-3 text-slate-300"></i>
+                                <p>대화가 없습니다</p>
+                                <p class="text-xs mt-1">새 대화를 시작해보세요</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 메시지 패널 -->
+                    <div id="msg-panel" class="flex-1 flex flex-col bg-gradient-to-b from-slate-50 to-white mobile-hidden">
+                        <div id="msg-header" class="hidden h-16 border-b border-slate-200 bg-white/90 backdrop-blur px-5 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <button class="md:hidden w-8 h-8 flex items-center justify-center text-slate-500 hover:text-blue-500" onclick="backToList()">
+                                    <i class="fas fa-arrow-left"></i>
+                                </button>
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold" id="msg-partner-avatar">?</div>
+                                <div>
+                                    <p class="font-bold text-slate-800" id="msg-partner-name">-</p>
+                                    <p class="text-xs text-slate-400" id="msg-partner-role">-</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="leaveCurrentConversation()" class="text-slate-400 hover:text-red-500 transition" title="대화방 나가기"><i class="fas fa-sign-out-alt"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- 기본 안내 화면 -->
+                        <div id="msg-placeholder" class="flex-1 flex items-center justify-center">
+                            <div class="text-center text-slate-400">
+                                <i class="fas fa-paper-plane text-6xl mb-4 text-slate-300"></i>
+                                <p class="text-lg font-bold">대화를 선택하세요</p>
+                                <p class="text-sm mt-1">좌측 목록에서 대화를 선택하거나 새 대화를 시작하세요</p>
+                            </div>
+                        </div>
+
+                        <!-- 메시지 영역 -->
+                        <div id="msg-area" class="hidden flex-1 overflow-y-auto p-4 space-y-3" style="scroll-behavior: smooth;"></div>
+
+                        <!-- 입력 영역 -->
+                        <div id="msg-input-area" class="hidden border-t border-slate-200 bg-white p-4">
+                            <div class="flex items-end gap-3">
+                                <button onclick="document.getElementById('file-input').click()" class="w-10 h-10 flex-shrink-0 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-500 transition" title="파일 첨부">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <input type="file" id="file-input" class="hidden" onchange="onFileSelected(this)">
+                                <div class="flex-1">
+                                    <div id="file-preview" class="hidden mb-2 p-2 bg-blue-50 rounded-lg flex items-center gap-2 text-sm text-blue-700">
+                                        <i class="fas fa-file"></i>
+                                        <span id="file-preview-name" class="flex-1 truncate"></span>
+                                        <button onclick="clearFileSelection()" class="text-blue-400 hover:text-red-500"><i class="fas fa-times"></i></button>
+                                    </div>
+                                    <textarea id="msg-input" rows="1" placeholder="메시지를 입력하세요..." class="w-full px-4 py-2.5 bg-slate-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none" onkeydown="handleInputKeydown(event)" oninput="autoResizeInput()"></textarea>
+                                </div>
+                                <button onclick="sendMessage()" class="w-10 h-10 flex-shrink-0 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center transition shadow-lg shadow-blue-500/30">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 새 대화 모달 -->
+    <div id="new-conv-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background: rgba(0,0,0,0.5);">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="font-bold text-lg text-slate-800">새 대화</h3>
+                <button onclick="closeNewConvModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="p-4 border-b border-slate-100">
+                <div id="role-filter-tabs" class="flex gap-2 mb-3">
+                    <!-- 역할별 필터 탭 동적 -->
+                </div>
+                <div class="relative">
+                    <input type="text" id="contact-search" placeholder="이름으로 검색..." class="w-full pl-9 pr-4 py-2 bg-slate-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" oninput="searchContacts()">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                </div>
+            </div>
+            <div id="contact-list" class="flex-1 overflow-y-auto p-2 min-h-0" style="max-height: 350px;">
+                <div class="p-4 text-center text-slate-400 text-sm">연락처를 로드하는 중...</div>
+            </div>
+            <div id="selected-contacts-bar" class="hidden p-4 border-t border-slate-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1 min-w-0">
+                        <span class="text-sm text-slate-500">선택: </span>
+                        <span id="selected-names" class="text-sm font-bold text-blue-600 truncate"></span>
+                    </div>
+                    <button onclick="startConversation()" class="ml-3 px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold rounded-xl transition shadow-lg shadow-blue-500/30">
+                        대화 시작
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let currentUser = null;
+    let currentConvId = null;
+    let allConversations = [];
+    let selectedContacts = [];
+    let allContacts = [];
+    let pollTimer = null;
+    let currentRoleFilter = '';
+
+    // ── 초기화 ──
+    document.addEventListener('DOMContentLoaded', async () => {
+        const userStr = localStorage.getItem('schoolus_user');
+        if (!userStr) { alert('로그인이 필요합니다.'); window.location.href = '/'; return; }
+        currentUser = JSON.parse(userStr);
+
+        setupSidebar();
+        setupDashboardLink();
+        loadConversations();
+
+        // URL에서 conv 파라미터 확인
+        const params = new URLSearchParams(window.location.search);
+        const convParam = params.get('conv');
+        if (convParam) {
+            setTimeout(() => openConversation(parseInt(convParam)), 500);
+        }
+
+        // 30초 폴링
+        pollTimer = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                loadConversations(true);
+                if (currentConvId) pollMessages();
+            }
+        }, 30000);
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && currentConvId) pollMessages();
+    });
+
+    // ── 사이드바 역할별 렌더링 ──
+    function setupSidebar() {
+        const role = currentUser.member_roll || currentUser.user_role || 'student';
+        const name = currentUser.member_name || '사용자';
+        const school = currentUser.member_school || '-';
+
+        document.getElementById('school-name-display').textContent = school;
+        document.getElementById('user-name-display').textContent = name;
+        document.getElementById('user-avatar').textContent = name.charAt(0);
+
+        const navList = document.getElementById('sidebar-nav-list');
+        let navItems = '';
+
+        if (role === 'teacher') {
+            document.getElementById('user-info-display').textContent = '교사';
+            navItems = `
+                <li><a href="tea.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-desktop w-6 mr-3 text-blue-400"></i> 대시보드</a></li>
+                <li><a href="tea/homeroom.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-chalkboard-user w-6 mr-3 text-green-400"></i> 담임업무</a></li>
+                <li><a href="tea/subject.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-book-open w-6 mr-3 text-purple-400"></i> 교과업무</a></li>
+                <li><a href="messenger.html" class="nav-item active flex items-center px-4 py-3 rounded-xl text-white font-medium"><i class="fas fa-comments w-6 mr-3 text-cyan-400"></i> 메신저</a></li>
+            `;
+        } else if (role === 'student') {
+            document.getElementById('user-info-display').textContent = '학생';
+            navItems = `
+                <li><a href="st.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-desktop w-6 mr-3 text-blue-400"></i> 대시보드</a></li>
+                <li><a href="st_homeroom.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-users w-6 mr-3 text-green-400"></i> 학급활동</a></li>
+                <li><a href="messenger.html" class="nav-item active flex items-center px-4 py-3 rounded-xl text-white font-medium"><i class="fas fa-comments w-6 mr-3 text-cyan-400"></i> 메신저</a></li>
+            `;
+        } else {
+            document.getElementById('user-info-display').textContent = '학부모';
+            navItems = `
+                <li><a href="fm.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-desktop w-6 mr-3 text-blue-400"></i> 대시보드</a></li>
+                <li><a href="fm_homeroom.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-users w-6 mr-3 text-green-400"></i> 학급정보</a></li>
+                <li><a href="messenger.html" class="nav-item active flex items-center px-4 py-3 rounded-xl text-white font-medium"><i class="fas fa-comments w-6 mr-3 text-cyan-400"></i> 메신저</a></li>
+            `;
+        }
+        navList.innerHTML = navItems;
+    }
+
+    function setupDashboardLink() {
+        const role = currentUser.member_roll || currentUser.user_role || 'student';
+        const link = document.getElementById('back-to-dashboard');
+        if (role === 'teacher') link.href = 'tea.html';
+        else if (role === 'student') link.href = 'st.html';
+        else link.href = 'fm.html';
+    }
+
+    // ── 대화 목록 ──
+    async function loadConversations(silent = false) {
+        try {
+            const params = new URLSearchParams({
+                member_id: currentUser.member_id,
+                school_id: currentUser.school_id || ''
+            });
+            const res = await fetch(`/api/messenger/conversations?${params}`);
+            const data = await res.json();
+            if (!data.success) return;
+
+            allConversations = data.conversations;
+            renderConversations(allConversations);
+        } catch(e) {
+            if (!silent) console.error('loadConversations error:', e);
+        }
+    }
+
+    function renderConversations(list) {
+        const container = document.getElementById('conv-list');
+        if (!list.length) {
+            container.innerHTML = `<div class="p-8 text-center text-slate-400 text-sm">
+                <i class="fas fa-comments text-4xl mb-3 text-slate-300"></i>
+                <p>대화가 없습니다</p><p class="text-xs mt-1">새 대화를 시작해보세요</p></div>`;
+            return;
+        }
+        container.innerHTML = list.map(c => {
+            const isActive = c.id === currentConvId ? 'active' : '';
+            const unread = c.unread_count > 0 ? `<span class="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold flex-shrink-0">${c.unread_count > 99 ? '99+' : c.unread_count}</span>` : '';
+            const partnerName = c.title || '(알 수 없음)';
+            const avatar = partnerName.charAt(0);
+            const roleLabel = c.partners && c.partners[0] ? getRoleLabel(c.partners[0].role) : '';
+            const timeStr = c.last_msg_time ? formatTime(c.last_msg_time) : '';
+            const preview = c.last_message ? (c.last_sender_name ? `${c.last_sender_name}: ` : '') + truncate(c.last_message, 30) : '대화를 시작하세요';
+
+            return `<div class="conv-item ${isActive} px-4 py-3 flex items-center gap-3 border-b border-slate-50" onclick="openConversation(${c.id})">
+                <div class="w-11 h-11 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">${avatar}</div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-sm text-slate-800 truncate">${partnerName}</span>
+                        <span class="text-xs text-slate-400 flex-shrink-0 ml-2">${timeStr}</span>
+                    </div>
+                    <div class="flex items-center justify-between mt-0.5">
+                        <p class="text-xs text-slate-500 truncate">${preview}</p>
+                        ${unread}
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function filterConversations() {
+        const kw = document.getElementById('conv-search').value.trim().toLowerCase();
+        if (!kw) { renderConversations(allConversations); return; }
+        const filtered = allConversations.filter(c =>
+            (c.title || '').toLowerCase().includes(kw) ||
+            (c.partners || []).some(p => p.name.toLowerCase().includes(kw))
+        );
+        renderConversations(filtered);
+    }
+
+    // ── 대화 열기 ──
+    async function openConversation(convId) {
+        currentConvId = convId;
+
+        // 모바일 전환
+        document.getElementById('conv-list-panel').classList.add('mobile-hidden');
+        document.getElementById('msg-panel').classList.remove('mobile-hidden');
+
+        // 헤더, 메시지 영역 표시
+        document.getElementById('msg-header').classList.remove('hidden');
+        document.getElementById('msg-header').classList.add('flex');
+        document.getElementById('msg-placeholder').classList.add('hidden');
+        document.getElementById('msg-area').classList.remove('hidden');
+        document.getElementById('msg-input-area').classList.remove('hidden');
+
+        // 대화 정보 설정
+        const conv = allConversations.find(c => c.id === convId);
+        if (conv) {
+            const name = conv.title || '(알 수 없음)';
+            document.getElementById('msg-partner-name').textContent = name;
+            document.getElementById('msg-partner-avatar').textContent = name.charAt(0);
+            const roleStr = (conv.partners || []).map(p => getRoleLabel(p.role)).join(', ');
+            document.getElementById('msg-partner-role').textContent = roleStr || '';
+        }
+
+        // 활성 대화 표시
+        document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+        // 메시지 로드
+        await loadMessages(convId);
+
+        // 대화 목록에서 활성 표시 갱신
+        renderConversations(allConversations);
+    }
+
+    function backToList() {
+        currentConvId = null;
+        document.getElementById('conv-list-panel').classList.remove('mobile-hidden');
+        document.getElementById('msg-panel').classList.add('mobile-hidden');
+        loadConversations(true);
+    }
+
+    // ── 메시지 로드 ──
+    async function loadMessages(convId) {
+        try {
+            const params = new URLSearchParams({
+                member_id: currentUser.member_id,
+                conversation_id: convId
+            });
+            const res = await fetch(`/api/messenger/messages?${params}`);
+            const data = await res.json();
+            if (!data.success) { console.error(data.message); return; }
+
+            renderMessages(data.messages);
+        } catch(e) {
+            console.error('loadMessages error:', e);
+        }
+    }
+
+    function renderMessages(msgs) {
+        const area = document.getElementById('msg-area');
+        if (!msgs.length) {
+            area.innerHTML = '<div class="text-center text-slate-400 text-sm py-8"><p>아직 메시지가 없습니다</p><p class="text-xs mt-1">첫 메시지를 보내보세요!</p></div>';
+            return;
+        }
+
+        let html = '';
+        let lastDate = '';
+
+        for (const m of msgs) {
+            const msgDate = m.created_at.split(' ')[0];
+            if (msgDate !== lastDate) {
+                lastDate = msgDate;
+                html += `<div class="date-separator my-4">${formatDateLabel(msgDate)}</div>`;
+            }
+            const time = m.created_at.split(' ')[1]?.substring(0, 5) || '';
+
+            if (m.is_mine) {
+                html += `<div class="flex justify-end items-end gap-2">
+                    <span class="text-xs text-slate-400">${time}</span>
+                    <div class="msg-bubble msg-mine px-4 py-2.5">
+                        ${m.is_deleted ? '<span class="italic opacity-70">삭제된 메시지입니다</span>' : escapeHtml(m.content)}
+                        ${m.has_file ? `<div class="mt-2 flex items-center gap-1 text-blue-100 text-xs"><i class="fas fa-file"></i> <a href="/api/messenger/file/download?member_id=${currentUser.member_id}&message_id=${m.id}" class="underline">${escapeHtml(m.file_name)}</a></div>` : ''}
+                    </div>
+                </div>`;
+                if (!m.is_deleted) {
+                    html += `<div class="flex justify-end mt-0.5"><button onclick="deleteMessage(${m.id})" class="text-xs text-slate-300 hover:text-red-400 transition">삭제</button></div>`;
+                }
+            } else {
+                html += `<div class="flex items-end gap-2">
+                    <div class="w-8 h-8 bg-gradient-to-br from-slate-300 to-slate-400 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">${(m.sender_name || '?').charAt(0)}</div>
+                    <div>
+                        <p class="text-xs text-slate-500 mb-1 font-medium">${escapeHtml(m.sender_name)}</p>
+                        <div class="msg-bubble msg-other px-4 py-2.5">
+                            ${m.is_deleted ? '<span class="italic text-slate-400">삭제된 메시지입니다</span>' : escapeHtml(m.content)}
+                            ${m.has_file ? `<div class="mt-2 flex items-center gap-1 text-blue-600 text-xs"><i class="fas fa-file"></i> <a href="/api/messenger/file/download?member_id=${currentUser.member_id}&message_id=${m.id}" class="underline hover:text-blue-800">${escapeHtml(m.file_name)}</a></div>` : ''}
+                        </div>
+                    </div>
+                    <span class="text-xs text-slate-400">${time}</span>
+                </div>`;
+            }
+        }
+
+        area.innerHTML = html;
+        area.scrollTop = area.scrollHeight;
+    }
+
+    async function pollMessages() {
+        if (!currentConvId) return;
+        await loadMessages(currentConvId);
+        // 대화 목록도 갱신 (읽음 처리 반영)
+        loadConversations(true);
+    }
+
+    // ── 메시지 전송 ──
+    async function sendMessage() {
+        const input = document.getElementById('msg-input');
+        const content = input.value.trim();
+        const fileInput = document.getElementById('file-input');
+        const file = fileInput.files[0];
+
+        if (!content && !file) return;
+        if (!currentConvId) return;
+
+        const formData = new FormData();
+        formData.append('conversation_id', currentConvId);
+        formData.append('content', content);
+        if (file) formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/messenger/messages/send', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+                input.value = '';
+                input.style.height = 'auto';
+                clearFileSelection();
+                await loadMessages(currentConvId);
+                loadConversations(true);
+            } else {
+                alert(data.message || '전송 실패');
+            }
+        } catch(e) {
+            alert('메시지 전송 중 오류가 발생했습니다.');
+        }
+    }
+
+    function handleInputKeydown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    }
+
+    function autoResizeInput() {
+        const el = document.getElementById('msg-input');
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    }
+
+    // ── 파일 첨부 ──
+    function onFileSelected(input) {
+        const file = input.files[0];
+        if (!file) return;
+        document.getElementById('file-preview').classList.remove('hidden');
+        document.getElementById('file-preview-name').textContent = file.name;
+    }
+
+    function clearFileSelection() {
+        document.getElementById('file-input').value = '';
+        document.getElementById('file-preview').classList.add('hidden');
+    }
+
+    // ── 메시지 삭제 ──
+    async function deleteMessage(msgId) {
+        if (!confirm('이 메시지를 삭제하시겠습니까?')) return;
+        try {
+            const res = await fetch('/api/messenger/messages/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ member_id: currentUser.member_id, message_id: msgId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                await loadMessages(currentConvId);
+            } else {
+                alert(data.message || '삭제 실패');
+            }
+        } catch(e) {
+            alert('삭제 중 오류가 발생했습니다.');
+        }
+    }
+
+    // ── 대화방 나가기 ──
+    async function leaveCurrentConversation() {
+        if (!currentConvId) return;
+        if (!confirm('이 대화방을 나가시겠습니까?')) return;
+        try {
+            const res = await fetch('/api/messenger/conversations/leave', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ member_id: currentUser.member_id, conversation_id: currentConvId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                currentConvId = null;
+                document.getElementById('msg-header').classList.add('hidden');
+                document.getElementById('msg-area').classList.add('hidden');
+                document.getElementById('msg-input-area').classList.add('hidden');
+                document.getElementById('msg-placeholder').classList.remove('hidden');
+                backToList();
+            }
+        } catch(e) {
+            alert('오류가 발생했습니다.');
+        }
+    }
+
+    // ── 새 대화 모달 ──
+    function openNewConversation() {
+        selectedContacts = [];
+        document.getElementById('new-conv-modal').classList.remove('hidden');
+        setupRoleFilterTabs();
+        loadContacts();
+    }
+
+    function closeNewConvModal() {
+        document.getElementById('new-conv-modal').classList.add('hidden');
+        selectedContacts = [];
+    }
+
+    function setupRoleFilterTabs() {
+        const role = currentUser.member_roll || currentUser.user_role || 'student';
+        const container = document.getElementById('role-filter-tabs');
+        let tabs = '<button onclick="setRoleFilter(\'\')" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-500 text-white" id="rf-all">전체</button>';
+
+        if (role === 'teacher') {
+            tabs += '<button onclick="setRoleFilter(\'teacher\')" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 text-slate-600" id="rf-teacher">교사</button>';
+            tabs += '<button onclick="setRoleFilter(\'student\')" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 text-slate-600" id="rf-student">학생</button>';
+            tabs += '<button onclick="setRoleFilter(\'parent\')" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 text-slate-600" id="rf-parent">학부모</button>';
+        }
+        container.innerHTML = tabs;
+        currentRoleFilter = '';
+    }
+
+    function setRoleFilter(role) {
+        currentRoleFilter = role;
+        document.querySelectorAll('#role-filter-tabs button').forEach(b => {
+            b.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 text-slate-600';
+        });
+        const activeBtn = document.getElementById('rf-' + (role || 'all'));
+        if (activeBtn) activeBtn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-500 text-white';
+        loadContacts();
+    }
+
+    async function loadContacts() {
+        const keyword = document.getElementById('contact-search')?.value.trim() || '';
+        try {
+            const params = new URLSearchParams({
+                member_id: currentUser.member_id,
+                school_id: currentUser.school_id || '',
+                user_role: currentUser.member_roll || currentUser.user_role || 'student',
+                role_filter: currentRoleFilter,
+                keyword: keyword
+            });
+            const res = await fetch(`/api/messenger/contacts?${params}`);
+            const data = await res.json();
+            if (!data.success) return;
+
+            allContacts = data.contacts;
+            renderContacts(allContacts);
+        } catch(e) {
+            console.error('loadContacts error:', e);
+        }
+    }
+
+    function searchContacts() {
+        loadContacts();
+    }
+
+    function renderContacts(list) {
+        const container = document.getElementById('contact-list');
+        if (!list.length) {
+            container.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">검색 결과가 없습니다</div>';
+            return;
+        }
+        container.innerHTML = list.map(c => {
+            const isSelected = selectedContacts.some(s => s.member_id === c.member_id);
+            return `<div class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition ${isSelected ? 'bg-blue-50 ring-1 ring-blue-300' : 'hover:bg-slate-50'}" onclick="toggleContact('${c.member_id}', '${escapeAttr(c.name)}', '${c.role}')">
+                <div class="w-9 h-9 bg-gradient-to-br ${getRoleColor(c.role)} rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">${c.name.charAt(0)}</div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-bold text-sm text-slate-800">${escapeHtml(c.name)}</p>
+                    <p class="text-xs text-slate-400">${getRoleLabel(c.role)} ${c.detail ? '· ' + escapeHtml(c.detail) : ''}</p>
+                </div>
+                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-blue-500 bg-blue-500' : 'border-slate-300'}">
+                    ${isSelected ? '<i class="fas fa-check text-white text-xs"></i>' : ''}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function toggleContact(memberId, name, role) {
+        const idx = selectedContacts.findIndex(s => s.member_id === memberId);
+        if (idx >= 0) {
+            selectedContacts.splice(idx, 1);
+        } else {
+            selectedContacts.push({ member_id: memberId, name: name, role: role });
+        }
+        renderContacts(allContacts);
+        updateSelectedBar();
+    }
+
+    function updateSelectedBar() {
+        const bar = document.getElementById('selected-contacts-bar');
+        if (selectedContacts.length === 0) {
+            bar.classList.add('hidden');
+        } else {
+            bar.classList.remove('hidden');
+            document.getElementById('selected-names').textContent = selectedContacts.map(c => c.name).join(', ');
+        }
+    }
+
+    async function startConversation() {
+        if (!selectedContacts.length) { alert('대화 상대를 선택해주세요.'); return; }
+
+        const convType = selectedContacts.length === 1 ? 'direct' : 'group';
+        const targetIds = selectedContacts.map(c => c.member_id);
+
+        try {
+            const res = await fetch('/api/messenger/conversations/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    member_id: currentUser.member_id,
+                    school_id: currentUser.school_id || '',
+                    user_role: currentUser.member_roll || currentUser.user_role || 'student',
+                    target_ids: targetIds,
+                    conv_type: convType
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeNewConvModal();
+                await loadConversations();
+                openConversation(data.conversation_id);
+            } else {
+                alert(data.message || '대화방 생성 실패');
+            }
+        } catch(e) {
+            alert('대화방 생성 중 오류가 발생했습니다.');
+        }
+    }
+
+    // ── 유틸 ──
+    function toggleMobileSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+    }
+
+    function handleLogout() {
+        if (confirm('로그아웃 하시겠습니까?')) {
+            if (pollTimer) clearInterval(pollTimer);
+            localStorage.removeItem('schoolus_user');
+            window.location.href = '/';
+        }
+    }
+
+    function getRoleLabel(role) {
+        const labels = { teacher: '교사', student: '학생', parent: '학부모' };
+        return labels[role] || role;
+    }
+
+    function getRoleColor(role) {
+        const colors = { teacher: 'from-green-400 to-emerald-500', student: 'from-blue-400 to-indigo-500', parent: 'from-purple-400 to-pink-500' };
+        return colors[role] || 'from-slate-400 to-slate-500';
+    }
+
+    function truncate(str, len) {
+        return str.length > len ? str.substring(0, len) + '...' : str;
+    }
+
+    function formatTime(dateStr) {
+        if (!dateStr) return '';
+        const now = new Date();
+        const d = new Date(dateStr.replace(' ', 'T'));
+        const today = now.toISOString().split('T')[0];
+        const msgDay = dateStr.split(' ')[0];
+        if (msgDay === today) return dateStr.split(' ')[1]?.substring(0, 5) || '';
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (msgDay === yesterday.toISOString().split('T')[0]) return '어제';
+        return msgDay.substring(5); // MM-DD
+    }
+
+    function formatDateLabel(dateStr) {
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        if (dateStr === today) return '오늘';
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (dateStr === yesterday.toISOString().split('T')[0]) return '어제';
+        const parts = dateStr.split('-');
+        return `${parseInt(parts[1])}월 ${parseInt(parts[2])}일`;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function escapeAttr(str) {
+        return (str || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+</script>
+
+</body>
+</html>

@@ -32,7 +32,10 @@ def get_teacher_info():
     cursor = None
     try:
         member_id = sanitize_input(request.args.get('member_id'), 50)
-        
+
+        # 세션 fallback: query param 없으면 세션에서 user_id 사용
+        if not member_id:
+            member_id = session.get('user_id')
         if not member_id:
             return jsonify({'success': False, 'message': '로그인 정보가 없습니다.'})
         

@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 시간표 조회/변경</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+
+        .tt-grid { display: grid; grid-template-columns: 50px repeat(5, 1fr); border: 1px solid #e2e8f0; background: #fff; border-radius: 8px; overflow: hidden; }
+        .tt-head { background: #f8fafc; color: #64748b; font-weight: bold; text-align: center; padding: 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; font-size: 0.85rem; }
+        .tt-cell { border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; min-height: 72px; position: relative; padding: 6px; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: pointer; transition: background 0.15s; }
+        .tt-cell:hover { background-color: #f1f5f9; }
+        .tt-cell:nth-child(6n) { border-right: none; }
+        .period-badge { background: #f1f5f9; color: #94a3b8; font-weight: bold; display: flex; align-items: center; justify-content: center; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; }
+
+        .subject-tag { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; border-radius: 6px; padding: 2px 8px; font-size: 0.8rem; font-weight: 600; margin-bottom: 2px; white-space: nowrap; }
+        .class-tag { font-size: 0.7rem; color: #64748b; }
+        .changed-cell { background-color: #fff7ed !important; }
+        .changed-tag { color: #c2410c; border-color: #fdba74; background-color: #ffedd5; }
+
+        .search-dropdown { position: absolute; z-index: 50; background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; width: 100%; }
+        .search-dropdown div { padding: 8px 12px; cursor: pointer; font-size: 0.85rem; }
+        .search-dropdown div:hover { background: #eef2ff; }
+
+        @media print {
+            aside, header, .no-print, .search-bar { display: none !important; }
+            @page { size: A4 landscape; margin: 5mm; }
+            body { background: white !important; }
+            main { overflow: visible !important; }
+            .tt-grid { border: 2px solid #333; }
+            .tt-head { background: #d0d0d0 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .subject-tag { border-color: #333; }
+            .changed-cell { background: #ffe0c0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        #mobile-overlay.active { display: block; }
+        #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
+
+        /* 모바일 큰 글씨 대응: 터치 영역 확대 + 사이드바 전체 스크롤 */
+        @media (max-width: 767px) {
+            #sidebar.mobile-open { overflow-y: auto !important; }
+            #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
+            #sidebar.mobile-open #sidebar-nav { height: auto !important; overflow: visible !important; }
+            .nav-item { min-height: 52px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 15px !important; }
+            #sidebar .space-y-1 > li { margin-bottom: 4px; }
+            #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
+            .tab-btn { min-height: 48px; padding: 12px 16px !important; font-size: 14px !important; white-space: nowrap; }
+        }
+    </style>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen flex overflow-hidden">
+
+    <!-- 변경 모달 -->
+    <div id="changeModal" class="fixed inset-0 bg-black bg-opacity-30 z-50 hidden items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fas fa-exchange-alt mr-2"></i>수업 변경 / 보강 처리</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <div class="flex-1 text-center border-r border-slate-200">
+                        <div class="text-xs text-slate-500">대상</div>
+                        <div class="font-bold text-indigo-600" id="modalTargetInfo">-</div>
+                    </div>
+                    <div class="flex-1 text-center border-r border-slate-200">
+                        <div class="text-xs text-slate-500">기존 과목</div>
+                        <div class="font-bold text-slate-800" id="modalOrigSubject">-</div>
+                    </div>
+                    <div class="flex-1 text-center">
+                        <div class="text-xs text-slate-500" id="modalOrigLabel">기존 교사</div>
+                        <div class="font-bold text-slate-800" id="modalOrigTeacher">-</div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-2">변경 사유</label>
+                    <select id="modalReason" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <option value="출장(관내)">출장 (관내)</option>
+                        <option value="출장(관외)">출장 (관외)</option>
+                        <option value="병가">병가</option>
+                        <option value="연가">연가</option>
+                        <option value="연수">연수</option>
+                        <option value="기타">기타</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="relative">
+                        <label class="block text-sm font-bold text-slate-600 mb-2">보강 교사</label>
+                        <input type="text" id="modalNewTeacher" class="w-full border border-slate-300 rounded-lg p-2 text-sm" placeholder="교사명 검색" autocomplete="off">
+                        <div id="modalTeacherDropdown" class="search-dropdown hidden"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-600 mb-2">변경 과목</label>
+                        <input type="text" id="modalNewSubject" class="w-full border border-slate-300 rounded-lg p-2 text-sm" placeholder="자습" value="자습">
+                    </div>
+                </div>
+
+                <div class="pt-4 flex gap-2">
+                    <button class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-2.5 rounded-lg font-bold transition" onclick="closeModal()">취소</button>
+                    <button class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-bold shadow transition" onclick="applyChange()">변경 적용</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 사이드바 -->
+    <div id="mobile-overlay"></div>
+    <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 flex-col flex-shrink-0 hidden md:flex no-print shadow-2xl">
+        <div class="p-6 border-b border-slate-700/50">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                    <i class="fas fa-school text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-black text-2xl text-white tracking-tight">SchoolUs</span>
+                    <p class="text-xs text-slate-400 font-medium">스마트 교육 플랫폼</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li><a href="../tea.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-desktop w-6 mr-3"></i> 나의 대시보드</a></li>
+                <li class="px-6 pt-6 pb-2 text-xs font-bold uppercase text-slate-500">반편성 · 시간표</li>
+                <li><a href="classtime_maker_base.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-database w-6 mr-3"></i> 기초데이터 관리</a></li>
+                <li><a href="class_maker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-layer-group w-6 mr-3"></i> 반편성</a></li>
+                <li><a href="timetablemaker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-edit w-6 mr-3"></i> 시간표 작성</a></li>
+                <li><a href="#" class="flex items-center px-6 py-3 bg-slate-800 text-white border-l-4 border-blue-500"><i class="fas fa-calendar-alt w-6 mr-3 text-green-400"></i> <span class="font-medium">시간표 조회/변경</span></a></li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-slate-700">
+            <a href="../tea.html" class="flex items-center justify-center w-full py-2 bg-slate-800 hover:bg-slate-700 rounded text-sm transition"><i class="fas fa-arrow-left mr-2"></i> 메인으로 돌아가기</a>
+        </div>
+    </aside>
+
+    <!-- 메인 -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header class="bg-white h-16 border-b flex items-center justify-between px-8 shadow-sm z-30 flex-shrink-0 no-print">
+            <div class="flex items-center gap-3">
+                <button id="sidebar-toggle" onclick="toggleMobileSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars text-xl"></i></button>
+                <h2 class="text-xl font-bold text-slate-800">시간표 조회 및 변경</h2>
+                <span id="schoolBadge" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold"></span>
+            </div>
+            <button onclick="window.print()" class="bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 px-3 py-1.5 rounded text-sm font-bold transition">
+                <i class="fas fa-print mr-1"></i> 출력
+            </button>
+        </header>
+
+        <!-- 검색 바 -->
+        <div class="bg-white border-b px-8 py-3 z-20 shadow-sm flex items-center gap-4 flex-wrap search-bar no-print">
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-bold text-slate-500">기준일자</label>
+                <input type="date" id="searchDate" class="border border-slate-300 rounded px-2 py-1.5 text-sm text-slate-700">
+            </div>
+            <div class="h-6 w-px bg-slate-200"></div>
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-bold text-slate-500">검색 대상</label>
+                <select id="searchMode" class="border border-slate-300 rounded px-2 py-1.5 text-sm text-slate-700" onchange="toggleSearchMode()">
+                    <option value="teacher">교사별</option>
+                    <option value="class">학급별</option>
+                </select>
+            </div>
+
+            <!-- 교사별 검색 -->
+            <div id="teacherSearchWrap" class="flex items-center gap-2 relative">
+                <input type="text" id="searchTeacherInput" class="border border-slate-300 rounded px-2 py-1.5 text-sm w-48" placeholder="교사명 입력" autocomplete="off">
+                <div id="searchTeacherDropdown" class="search-dropdown hidden" style="top:100%; left:0; width:192px;"></div>
+            </div>
+
+            <!-- 학급별 검색 -->
+            <div id="classSearchWrap" class="hidden flex items-center gap-2">
+                <select id="searchGrade" class="border border-slate-300 rounded px-2 py-1.5 text-sm" onchange="onGradeChange()">
+                </select>
+                <select id="searchClassNo" class="border border-slate-300 rounded px-2 py-1.5 text-sm">
+                </select>
+            </div>
+
+            <button onclick="doSearch()" class="bg-indigo-600 text-white px-4 py-1.5 rounded text-sm font-bold hover:bg-indigo-700 transition">
+                <i class="fas fa-search mr-1"></i> 조회
+            </button>
+        </div>
+
+        <!-- 콘텐츠 -->
+        <div class="flex-1 overflow-y-auto p-8 bg-slate-50">
+            <div class="max-w-7xl mx-auto">
+
+                <!-- 시간표 영역 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-6">
+                    <div class="flex justify-between items-end mb-4">
+                        <h3 class="font-bold text-lg text-slate-800" id="tableTitle">
+                            <i class="fas fa-chalkboard-teacher mr-2 text-indigo-500"></i>교사 또는 학급을 검색하세요
+                        </h3>
+                        <div class="text-xs text-slate-400">
+                            <i class="fas fa-info-circle mr-1"></i>셀을 클릭하여 보강 및 변경 처리를 할 수 있습니다.
+                        </div>
+                    </div>
+
+                    <div class="tt-grid">
+                        <div class="tt-head bg-slate-100"></div>
+                        <div class="tt-head">월</div>
+                        <div class="tt-head">화</div>
+                        <div class="tt-head">수</div>
+                        <div class="tt-head">목</div>
+                        <div class="tt-head">금</div>
+                        <div id="timetableBody" style="display: contents;"></div>
+                    </div>
+
+                    <!-- 빈 상태 메시지 -->
+                    <div id="emptyState" class="text-center py-16 text-slate-400">
+                        <i class="fas fa-calendar-alt fa-3x mb-4"></i>
+                        <p class="font-bold text-lg">시간표를 조회하려면 교사 또는 학급을 검색하세요.</p>
+                    </div>
+                </div>
+
+                <!-- 변경이력 패널 -->
+                <div id="changesPanel" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden no-print">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-800"><i class="fas fa-history mr-2 text-amber-500"></i>변경 이력 (<span id="changesCount">0</span>건)</h3>
+                    </div>
+                    <div class="overflow-auto max-h-[300px]">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-50 sticky top-0 text-xs text-slate-500">
+                                <tr>
+                                    <th class="p-2 text-center w-20">요일/교시</th>
+                                    <th class="p-2 text-left">기존 교사</th>
+                                    <th class="p-2 text-left">기존 과목</th>
+                                    <th class="p-2 text-center"><i class="fas fa-arrow-right"></i></th>
+                                    <th class="p-2 text-left">변경 교사</th>
+                                    <th class="p-2 text-left">변경 과목</th>
+                                    <th class="p-2 text-left">사유</th>
+                                    <th class="p-2 text-center w-16">취소</th>
+                                </tr>
+                            </thead>
+                            <tbody id="changesTableBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const DAYS = ['월', '화', '수', '목', '금'];
+        const DAY_IDX = {'월':0, '화':1, '수':2, '목':3, '금':4};
+        const PERIODS = 7;
+
+        let currentUser = null;
+        let allTeachers = [];
+        let classInfo = {};      // { '1': ['1','2','3'], '2': [...] } 학년별 반 목록
+        let timetableData = [];  // API 응답 원본
+        let changesData = [];    // 변경이력
+        let searchMode = 'teacher';
+        let currentTarget = {};  // 현재 조회 대상 정보
+
+        // 모달용
+        let modalCell = null;
+
+        // ==========================================
+        // 초기화
+        // ==========================================
+        async function init() {
+            const userStr = localStorage.getItem('schoolus_user');
+            if (!userStr) { alert('로그인이 필요합니다.'); window.location.href = '/'; return; }
+            currentUser = JSON.parse(userStr);
+
+            if (!currentUser.school_id) {
+                try {
+                    const res = await fetch('/api/teacher/info?member_id=' + encodeURIComponent(currentUser.member_id));
+                    if (res.ok) {
+                        const d = await res.json();
+                        if (d.success && d.teacher && d.teacher.school_id) {
+                            currentUser.school_id = d.teacher.school_id;
+                            localStorage.setItem('schoolus_user', JSON.stringify(currentUser));
+                        }
+                    }
+                } catch (e) { console.error(e); }
+            }
+
+            document.getElementById('schoolBadge').textContent = currentUser.member_school || currentUser.school_id || '';
+
+            // 오늘 날짜 설정
+            const today = new Date();
+            document.getElementById('searchDate').value = today.toISOString().split('T')[0];
+
+            // 교사 목록 + 학급 정보 로드
+            await loadTeachersList();
+            await loadClassInfo();
+
+            // 초기 그리드 (빈 그리드)
+            renderEmptyGrid();
+
+            // 교사 검색 자동완성 (선택 시 자동 조회)
+            setupTeacherAutocomplete('searchTeacherInput', 'searchTeacherDropdown', (t) => {
+                document.getElementById('searchTeacherInput').value = t.member_name;
+                document.getElementById('searchTeacherDropdown').classList.add('hidden');
+                doSearch();
+            });
+
+            // 모달 교사 자동완성
+            setupTeacherAutocomplete('modalNewTeacher', 'modalTeacherDropdown', (t) => {
+                document.getElementById('modalNewTeacher').value = t.member_name;
+                document.getElementById('modalTeacherDropdown').classList.add('hidden');
+            });
+        }
+
+        async function loadTeachersList() {
+            try {
+                let url = '/api/teachers/list?';
+                if (currentUser.school_id) url += 'school_id=' + encodeURIComponent(currentUser.school_id);
+                else if (currentUser.member_school) url += 'member_school=' + encodeURIComponent(currentUser.member_school);
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) allTeachers = data.data || [];
+                }
+            } catch (e) { console.error('교사 목록 로드 실패:', e); }
+        }
+
+        async function loadClassInfo() {
+            try {
+                let url = '/api/timetable-tea/list?';
+                if (currentUser.school_id) url += 'school_id=' + encodeURIComponent(currentUser.school_id);
+                else if (currentUser.member_school) url += 'member_school=' + encodeURIComponent(currentUser.member_school);
+                const res = await fetch(url);
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data.success) return;
+
+                // 학년별 반 목록 추출
+                classInfo = {};
+                (data.data || []).forEach(row => {
+                    const g = String(row.grade || '').trim();
+                    if (!g) return;
+                    if (!classInfo[g]) classInfo[g] = new Set();
+                    // class_no가 "1, 2, 3" 형태일 수 있으므로 분리
+                    String(row.class_no || '').split(',').forEach(c => {
+                        const cn = c.trim();
+                        if (cn && !isNaN(cn)) classInfo[g].add(cn);
+                    });
+                });
+
+                // Set → 정렬된 배열
+                for (const g in classInfo) {
+                    classInfo[g] = [...classInfo[g]].sort((a, b) => Number(a) - Number(b));
+                }
+
+                // 학년 select 채우기
+                const gradeSelect = document.getElementById('searchGrade');
+                const grades = Object.keys(classInfo).sort((a, b) => Number(a) - Number(b));
+                gradeSelect.innerHTML = grades.map(g => `<option value="${g}">${g}학년</option>`).join('');
+
+                // 첫 번째 학년의 반 목록 채우기
+                if (grades.length > 0) onGradeChange();
+            } catch (e) { console.error('학급 정보 로드 실패:', e); }
+        }
+
+        function onGradeChange() {
+            const grade = document.getElementById('searchGrade').value;
+            const classSelect = document.getElementById('searchClassNo');
+            const classes = classInfo[grade] || [];
+            classSelect.innerHTML = classes.map(c => `<option value="${c}">${c}반</option>`).join('');
+        }
+
+        function setupTeacherAutocomplete(inputId, dropdownId, onSelect) {
+            const input = document.getElementById(inputId);
+            const dropdown = document.getElementById(dropdownId);
+
+            input.addEventListener('input', () => {
+                const kw = input.value.trim();
+                if (!kw) { dropdown.classList.add('hidden'); return; }
+                const matched = allTeachers.filter(t => t.member_name && t.member_name.includes(kw));
+                if (matched.length === 0) {
+                    dropdown.innerHTML = '<div class="text-slate-400 p-2 text-xs">결과 없음</div>';
+                } else {
+                    dropdown.innerHTML = matched.slice(0, 15).map(t =>
+                        `<div data-name="${t.member_name}">
+                            <span class="font-medium">${t.member_name}</span>
+                            <span class="text-xs text-slate-400 ml-2">${t.department || ''}</span>
+                        </div>`
+                    ).join('');
+                    dropdown.querySelectorAll('[data-name]').forEach(el => {
+                        el.addEventListener('click', () => {
+                            const t = matched.find(x => x.member_name === el.dataset.name);
+                            if (t) onSelect(t);
+                        });
+                    });
+                }
+                dropdown.classList.remove('hidden');
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    dropdown.classList.add('hidden');
+                    if (inputId === 'searchTeacherInput') doSearch();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#' + inputId) && !e.target.closest('#' + dropdownId)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        // ==========================================
+        // 검색 모드 전환
+        // ==========================================
+        function toggleSearchMode() {
+            searchMode = document.getElementById('searchMode').value;
+            document.getElementById('teacherSearchWrap').classList.toggle('hidden', searchMode !== 'teacher');
+            document.getElementById('classSearchWrap').classList.toggle('hidden', searchMode !== 'class');
+        }
+
+        // ==========================================
+        // 검색 실행
+        // ==========================================
+        async function doSearch() {
+            const changeDate = document.getElementById('searchDate').value;
+
+            if (searchMode === 'teacher') {
+                const name = document.getElementById('searchTeacherInput').value.trim();
+                if (!name) { alert('교사명을 입력하세요.'); return; }
+                currentTarget = { mode: 'teacher', member_name: name };
+                await loadTeacherWeek(name, changeDate);
+            } else {
+                const grade = document.getElementById('searchGrade').value;
+                const classNo = document.getElementById('searchClassNo').value;
+                currentTarget = { mode: 'class', grade, class_no: classNo };
+                await loadClassWeek(grade, classNo, changeDate);
+            }
+        }
+
+        async function loadTeacherWeek(memberName, changeDate) {
+            try {
+                let url = '/api/timetable/teacher/week?member_name=' + encodeURIComponent(memberName);
+                if (currentUser.school_id) url += '&school_id=' + encodeURIComponent(currentUser.school_id);
+                else url += '&member_school=' + encodeURIComponent(currentUser.member_school);
+                if (changeDate) url += '&change_date=' + encodeURIComponent(changeDate);
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (!data.success) { alert(data.message); return; }
+
+                timetableData = data.timetable || [];
+                changesData = data.changes || [];
+
+                document.getElementById('tableTitle').innerHTML =
+                    `<i class="fas fa-chalkboard-teacher mr-2 text-indigo-500"></i>${memberName} 선생님 시간표`;
+                document.getElementById('emptyState').classList.add('hidden');
+
+                renderTimetable('teacher');
+                loadChanges(changeDate);
+            } catch (e) { alert('시간표 조회 실패: ' + e.message); }
+        }
+
+        async function loadClassWeek(grade, classNo, changeDate) {
+            try {
+                let url = `/api/timetable/class/week?grade=${grade}&class_no=${classNo}`;
+                if (currentUser.school_id) url += '&school_id=' + encodeURIComponent(currentUser.school_id);
+                else url += '&member_school=' + encodeURIComponent(currentUser.member_school);
+                if (changeDate) url += '&change_date=' + encodeURIComponent(changeDate);
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (!data.success) { alert(data.message); return; }
+
+                timetableData = data.timetable || [];
+                changesData = data.changes || [];
+
+                document.getElementById('tableTitle').innerHTML =
+                    `<i class="fas fa-users mr-2 text-green-500"></i>${grade}학년 ${classNo}반 시간표`;
+                document.getElementById('emptyState').classList.add('hidden');
+
+                renderTimetable('class');
+                loadChanges(changeDate);
+            } catch (e) { alert('시간표 조회 실패: ' + e.message); }
+        }
+
+        // ==========================================
+        // 시간표 그리드 렌더링
+        // ==========================================
+        function renderEmptyGrid() {
+            const con = document.getElementById('timetableBody');
+            con.innerHTML = '';
+            for (let p = 1; p <= PERIODS; p++) {
+                con.innerHTML += `<div class="period-badge">${p}</div>`;
+                for (let d = 0; d < 5; d++) {
+                    con.innerHTML += `<div class="tt-cell"></div>`;
+                }
+            }
+        }
+
+        function renderTimetable(mode) {
+            const con = document.getElementById('timetableBody');
+            con.innerHTML = '';
+
+            // 그리드 데이터 맵핑: key = "요일-교시"
+            const grid = {};
+            timetableData.forEach(item => {
+                const dIdx = DAY_IDX[item.day_of_week];
+                if (dIdx === undefined || !item.period) return;
+                const key = `${dIdx}-${item.period}`;
+                // 같은 교시에 여러 학급 수업이 있을 수 있음 (교사별 조회 시)
+                if (!grid[key]) grid[key] = [];
+                grid[key].push(item);
+            });
+
+            // 변경사항 맵핑
+            const changeMap = {};
+            changesData.forEach(c => {
+                const dIdx = DAY_IDX[c.day_of_week];
+                if (dIdx === undefined) return;
+                const key = `${dIdx}-${c.period}`;
+                changeMap[key] = c;
+            });
+
+            for (let p = 1; p <= PERIODS; p++) {
+                con.innerHTML += `<div class="period-badge">${p}</div>`;
+                for (let d = 0; d < 5; d++) {
+                    const key = `${d}-${p}`;
+                    const items = grid[key] || [];
+                    const change = changeMap[key];
+                    let cellClass = 'tt-cell';
+                    let content = '';
+
+                    if (change) {
+                        cellClass += ' changed-cell';
+                        content = `<div class="subject-tag changed-tag">${change.new_subject || '자습'}</div>`;
+                        if (mode === 'teacher') {
+                            content += `<div class="class-tag text-orange-500">${change.original_grade || ''}-${change.original_class_no || ''} (변경)</div>`;
+                        } else {
+                            content += `<div class="class-tag text-orange-500">${change.new_teacher || '자습'} (변경)</div>`;
+                        }
+                    } else if (items.length > 0) {
+                        const item = items[0];
+                        content = `<div class="subject-tag">${item.subject || ''}</div>`;
+                        if (mode === 'teacher') {
+                            content += `<div class="class-tag">${item.grade || ''}-${item.class_no || ''}</div>`;
+                        } else {
+                            content += `<div class="class-tag">${item.member_name || ''}</div>`;
+                        }
+                        // 동일 교시에 여러 학급이면 추가 표시
+                        if (items.length > 1) {
+                            content += `<div class="class-tag text-indigo-400">+${items.length - 1}개</div>`;
+                        }
+                    }
+
+                    const origData = items.length > 0 ? JSON.stringify(items[0]).replace(/'/g, '&#39;').replace(/"/g, '&quot;') : '';
+                    const changeData = change ? JSON.stringify(change).replace(/'/g, '&#39;').replace(/"/g, '&quot;') : '';
+
+                    con.innerHTML += `<div class="${cellClass}" onclick="openModal(${d}, ${p}, this)" data-day="${d}" data-period="${p}" data-orig="${origData}" data-change="${changeData}">${content}</div>`;
+                }
+            }
+        }
+
+        // ==========================================
+        // 변경 모달
+        // ==========================================
+        function openModal(dayIdx, period, cellEl) {
+            modalCell = { dayIdx, period, el: cellEl };
+
+            const day = DAYS[dayIdx];
+            const origStr = cellEl.getAttribute('data-orig');
+            const changeStr = cellEl.getAttribute('data-change');
+
+            let orig = origStr ? JSON.parse(origStr) : null;
+            let change = changeStr ? JSON.parse(changeStr) : null;
+
+            document.getElementById('modalTargetInfo').textContent = `${day}요일 ${period}교시`;
+
+            if (orig) {
+                document.getElementById('modalOrigSubject').textContent = orig.subject || '-';
+                if (currentTarget.mode === 'teacher') {
+                    document.getElementById('modalOrigLabel').textContent = '학급';
+                    document.getElementById('modalOrigTeacher').textContent = `${orig.grade || ''}-${orig.class_no || ''}`;
+                } else {
+                    document.getElementById('modalOrigLabel').textContent = '기존 교사';
+                    document.getElementById('modalOrigTeacher').textContent = orig.member_name || '-';
+                }
+            } else {
+                document.getElementById('modalOrigSubject').textContent = '-';
+                document.getElementById('modalOrigLabel').textContent = currentTarget.mode === 'teacher' ? '학급' : '기존 교사';
+                document.getElementById('modalOrigTeacher').textContent = '-';
+            }
+
+            document.getElementById('modalNewTeacher').value = '';
+            document.getElementById('modalNewSubject').value = '자습';
+            document.getElementById('modalReason').value = '출장(관내)';
+
+            const modal = document.getElementById('changeModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('changeModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            modalCell = null;
+        }
+
+        document.getElementById('changeModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('changeModal')) closeModal();
+        });
+
+        async function applyChange() {
+            if (!modalCell) return;
+
+            const { dayIdx, period } = modalCell;
+            const day = DAYS[dayIdx];
+            const origStr = modalCell.el.getAttribute('data-orig');
+            const orig = origStr ? JSON.parse(origStr) : {};
+
+            const newTeacher = document.getElementById('modalNewTeacher').value.trim();
+            const newSubject = document.getElementById('modalNewSubject').value.trim() || '자습';
+            const reason = document.getElementById('modalReason').value;
+            const changeDate = document.getElementById('searchDate').value;
+
+            if (!changeDate) { alert('기준일자를 선택하세요.'); return; }
+
+            try {
+                const res = await fetch('/api/timetable/change/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        school_id: currentUser.school_id,
+                        member_school: currentUser.member_school,
+                        change_date: changeDate,
+                        day_of_week: day,
+                        period: period,
+                        original_teacher: currentTarget.mode === 'teacher' ? currentTarget.member_name : (orig.member_name || ''),
+                        original_subject: orig.subject || '',
+                        original_grade: orig.grade || (currentTarget.mode === 'class' ? currentTarget.grade : ''),
+                        original_class_no: orig.class_no || (currentTarget.mode === 'class' ? currentTarget.class_no : ''),
+                        new_teacher: newTeacher || '자습',
+                        new_subject: newSubject,
+                        change_reason: reason,
+                        changed_by: currentUser.member_name || currentUser.member_id
+                    })
+                });
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (data.success) {
+                    closeModal();
+                    doSearch(); // 그리드 갱신
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) { alert('변경 저장 실패: ' + e.message); }
+        }
+
+        // ==========================================
+        // 변경이력 패널
+        // ==========================================
+        async function loadChanges(changeDate) {
+            try {
+                let url = `/api/timetable/changes?school_id=${encodeURIComponent(currentUser.school_id)}`;
+                if (changeDate) url += `&change_date=${encodeURIComponent(changeDate)}`;
+
+                const res = await fetch(url);
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data.success) return;
+
+                const changes = data.changes || [];
+                const panel = document.getElementById('changesPanel');
+                const tbody = document.getElementById('changesTableBody');
+                document.getElementById('changesCount').textContent = changes.length;
+
+                if (changes.length === 0) {
+                    panel.classList.add('hidden');
+                    return;
+                }
+
+                panel.classList.remove('hidden');
+                tbody.innerHTML = changes.map(c => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-2 text-center font-medium">${c.day_of_week} ${c.period}교시</td>
+                        <td class="p-2">${c.original_teacher || '-'}</td>
+                        <td class="p-2">${c.original_subject || '-'}</td>
+                        <td class="p-2 text-center text-indigo-400"><i class="fas fa-arrow-right"></i></td>
+                        <td class="p-2 font-medium text-orange-600">${c.new_teacher || '-'}</td>
+                        <td class="p-2 font-medium text-orange-600">${c.new_subject || '-'}</td>
+                        <td class="p-2 text-xs text-slate-500">${c.change_reason || ''}</td>
+                        <td class="p-2 text-center">
+                            <button onclick="cancelChange(${c.id})" class="text-red-400 hover:text-red-600" title="변경 취소">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error('변경이력 로드 실패:', e); }
+        }
+
+        async function cancelChange(id) {
+            if (!confirm('이 변경사항을 취소하시겠습니까?')) return;
+            try {
+                const res = await fetch('/api/timetable/change/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, school_id: currentUser.school_id })
+                });
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (data.success) {
+                    doSearch(); // 전체 갱신
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) { alert('취소 실패: ' + e.message); }
+        }
+
+        // ==========================================
+        // 시작
+        // ==========================================
+        init();
+
+        function toggleMobileSidebar() {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+            document.getElementById('mobile-overlay').classList.toggle('active');
+        }
+        document.getElementById('mobile-overlay').onclick = function() {
+            document.getElementById('sidebar').classList.remove('mobile-open');
+            this.classList.remove('active');
+        };
+    </script>
+</body>
+</html>

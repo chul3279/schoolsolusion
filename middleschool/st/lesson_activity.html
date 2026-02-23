@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 수업활동</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7LJ1TCE277');</script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+        .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.8); }
+        .nav-item { position: relative; transition: all 0.3s ease; }
+        .nav-item::before { content:''; position:absolute; left:0; top:0; height:100%; width:0; background:linear-gradient(90deg,rgba(59,130,246,0.3),transparent); transition:width 0.3s ease; }
+        .nav-item:hover::before { width:100%; }
+        .nav-item.active { background:linear-gradient(90deg,rgba(59,130,246,0.2),transparent); border-left:3px solid #3b82f6; }
+        .avatar-ring { background:linear-gradient(135deg,#3b82f6,#8b5cf6,#ec4899); padding:3px; }
+        .subject-tab { transition: all 0.2s; cursor: pointer; }
+        .subject-tab.active { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+        .subject-tab:not(.active) { background: white; border: 2px solid #e2e8f0; color: #64748b; }
+        .subject-tab:not(.active):hover { border-color: #a5b4fc; color: #6366f1; }
+        .main-tab { transition: all 0.2s; cursor: pointer; border-bottom: 3px solid transparent; padding-bottom: 12px; }
+        .main-tab.active { border-bottom-color: #6366f1; color: #6366f1; font-weight: 700; }
+        .main-tab:not(.active) { color: #94a3b8; }
+        .main-tab:not(.active):hover { color: #6366f1; }
+        .club-card { transition: all 0.2s; cursor: pointer; }
+        .club-card.active { border-color: #8b5cf6; background: linear-gradient(135deg, #f5f3ff, #ede9fe); box-shadow: 0 4px 12px rgba(139,92,246,0.15); }
+        .club-card:not(.active):hover { border-color: #c4b5fd; }
+
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        #mobile-overlay.active { display: block; }
+        #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
+
+        /* 모바일 큰 글씨 대응: 터치 영역 확대 + 사이드바 전체 스크롤 */
+        @media (max-width: 767px) {
+            #sidebar.mobile-open { overflow-y: auto !important; }
+            #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
+            #sidebar.mobile-open #sidebar-nav { height: auto !important; overflow: visible !important; }
+            .nav-item { min-height: 52px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 15px !important; }
+            #sidebar .space-y-1 > li { margin-bottom: 4px; }
+            #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
+            .tab-btn { min-height: 48px; padding: 12px 16px !important; font-size: 14px !important; white-space: nowrap; }
+        }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 text-slate-800">
+    <div class="flex h-screen overflow-hidden">
+        <!-- 사이드바 -->
+        <div id="mobile-overlay"></div>
+        <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 hidden md:flex flex-col flex-shrink-0 shadow-2xl">
+            <div class="p-6 border-b border-slate-700/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-school text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-black text-2xl text-white tracking-tight">SchoolUs</span>
+                        <p class="text-xs text-slate-400 font-medium">스마트 교육 플랫폼</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 border-b border-slate-700/50 bg-slate-800/30">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center">
+                        <i class="fas fa-building text-white text-sm"></i>
+                    </div>
+                    <div id="school-name-display" class="text-sm font-bold text-white truncate">-</div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="avatar-ring rounded-full">
+                        <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-white font-black text-xl" id="user-avatar">S</div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white font-bold text-lg truncate" id="user-name">-</p>
+                        <p class="text-xs text-slate-400 truncate" id="user-info">-</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-4">
+                <ul class="space-y-1 px-3 mb-4">
+                    <li><a href="../st.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-desktop w-6 mr-3 text-blue-400"></i> 대시보드</a></li>
+                </ul>
+                <ul class="space-y-1 px-3">
+                    <li><a href="../st_homeroom.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-users w-6 mr-3 text-green-400"></i> 학급활동</a></li>
+                    <li><a href="lesson_activity.html" class="nav-item active flex items-center px-4 py-3 rounded-xl text-white font-medium"><i class="fas fa-book-reader w-6 mr-3 text-purple-400"></i> 수업활동</a></li>
+                    <li><a href="/highschool/admission/admission.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-graduation-cap w-6 mr-3 text-pink-400"></i> 입시상담</a></li>
+                </ul>
+            </nav>
+            <div class="p-4 border-t border-slate-700/50 space-y-2">
+                <a href="../mypage.html" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-blue-500/20 hover:text-blue-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-user-cog mr-2"></i> 회원정보 수정</a>
+                <a href="#" onclick="handleLogout()" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-red-500/20 hover:text-red-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-sign-out-alt mr-2"></i> 로그아웃</a>
+            </div>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden">
+            <header class="bg-white/80 backdrop-blur-lg h-16 border-b border-slate-200/50 flex items-center justify-between px-6 shadow-sm z-10">
+                <div class="flex items-center gap-4">
+                    <button id="sidebar-toggle" onclick="toggleMobileSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars text-xl"></i></button>
+                    <div class="flex items-center text-slate-500">
+                        <span class="text-sm font-medium">나의 대시보드</span>
+                        <i class="fas fa-chevron-right mx-2 text-xs text-slate-300"></i>
+                        <span class="text-sm font-bold text-purple-600">수업활동</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-slate-500">
+                    <i class="fas fa-user-graduate text-purple-400"></i>
+                    <span id="header-student-info">-</span>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="mb-6">
+                    <h1 class="text-2xl font-black text-slate-800"><i class="fas fa-book-reader text-purple-500 mr-2"></i>수업활동</h1>
+                    <p class="text-slate-500 text-sm mt-1">수강 과목별 과제 확인 및 동아리 활동 파일을 제출합니다.</p>
+                </div>
+
+                <!-- 메인 탭: 수업 과제 / 동아리 활동 -->
+                <div class="flex gap-6 border-b border-slate-200 mb-6">
+                    <button class="main-tab active text-base" onclick="switchMainTab('subject', this)">
+                        <i class="fas fa-clipboard-list mr-1.5"></i>수업 과제
+                    </button>
+                    <button class="main-tab text-base" onclick="switchMainTab('club', this)">
+                        <i class="fas fa-puzzle-piece mr-1.5"></i>동아리 활동
+                    </button>
+                </div>
+
+                <!-- ===== 섹션1: 수업 과제 ===== -->
+                <div id="section-subject">
+                    <!-- 과목 탭 -->
+                    <div class="mb-6">
+                        <div id="subject-tabs" class="flex flex-wrap gap-2">
+                            <div class="text-center py-8 text-slate-400 text-sm w-full">과목 정보를 불러오는 중...</div>
+                        </div>
+                    </div>
+
+                    <!-- 선택된 과목의 과제 목록 -->
+                    <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-5 text-white flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-lg" id="selected-subject-title"><i class="fas fa-clipboard-list mr-2"></i>과제 목록</h3>
+                                <p class="text-sm text-white/80" id="selected-subject-desc">과목을 선택하세요.</p>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div id="assignment-list" class="space-y-4">
+                                <div class="text-center py-12 text-slate-400">
+                                    <i class="fas fa-hand-pointer text-4xl mb-3"></i>
+                                    <p>위에서 과목을 선택하면 과제 목록이 표시됩니다.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== 섹션2: 동아리 활동 ===== -->
+                <div id="section-club" class="hidden">
+                    <!-- 동아리 목록 -->
+                    <div class="mb-6">
+                        <div id="club-list-area" class="flex flex-wrap gap-3">
+                            <div class="text-center py-8 text-slate-400 text-sm w-full">동아리 정보를 불러오는 중...</div>
+                        </div>
+                    </div>
+
+                    <!-- 선택된 동아리 파일 영역 -->
+                    <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                        <div class="bg-gradient-to-r from-violet-500 to-fuchsia-600 p-5 text-white flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-lg" id="selected-club-title"><i class="fas fa-puzzle-piece mr-2"></i>동아리 파일</h3>
+                                <p class="text-sm text-white/80" id="selected-club-desc">동아리를 선택하세요.</p>
+                            </div>
+                            <button id="btn-club-upload" onclick="openClubUploadModal()" class="hidden px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold transition">
+                                <i class="fas fa-cloud-arrow-up mr-1.5"></i>파일 제출
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <div id="club-file-list" class="space-y-3">
+                                <div class="text-center py-12 text-slate-400">
+                                    <i class="fas fa-hand-pointer text-4xl mb-3"></i>
+                                    <p>위에서 동아리를 선택하면 파일 목록이 표시됩니다.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 과제 제출 모달 -->
+    <div id="submit-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-5 text-white">
+                <h3 class="font-bold text-lg"><i class="fas fa-file-arrow-up mr-2"></i>과제 제출</h3>
+                <p class="text-sm text-white/80 mt-1" id="modal-assignment-title">-</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">과제 파일 <span class="text-red-400">*</span></label>
+                    <input type="file" id="modal-file" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-sm"
+                           accept=".pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip">
+                    <p class="text-xs text-slate-400 mt-1">PDF, HWP, DOCX, XLSX, PPTX, 이미지, ZIP (최대 10MB)</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">코멘트 (선택)</label>
+                    <textarea id="modal-comment" rows="3" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-sm" placeholder="교사에게 전달할 내용이 있으면 입력하세요."></textarea>
+                </div>
+            </div>
+            <div class="flex gap-3 p-6 pt-0">
+                <button onclick="closeSubmitModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">취소</button>
+                <button onclick="submitAssignment()" id="btn-submit" class="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition">
+                    <i class="fas fa-paper-plane mr-2"></i>제출하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 동아리 파일 제출 모달 -->
+    <div id="club-upload-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-violet-500 to-fuchsia-600 p-5 text-white">
+                <h3 class="font-bold text-lg"><i class="fas fa-cloud-arrow-up mr-2"></i>동아리 파일 제출</h3>
+                <p class="text-sm text-white/80 mt-1" id="modal-club-name">-</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">활동 파일 <span class="text-red-400">*</span></label>
+                    <input type="file" id="modal-club-file" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-violet-500 outline-none text-sm"
+                           accept=".pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip">
+                    <p class="text-xs text-slate-400 mt-1">PDF, HWP, DOCX, XLSX, PPTX, 이미지, ZIP (최대 10MB)</p>
+                </div>
+            </div>
+            <div class="flex gap-3 p-6 pt-0">
+                <button onclick="closeClubUploadModal()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">취소</button>
+                <button onclick="uploadClubFile()" id="btn-club-submit" class="flex-1 py-3 bg-gradient-to-r from-violet-500 to-fuchsia-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition">
+                    <i class="fas fa-cloud-arrow-up mr-2"></i>업로드
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userInfo = {};
+        let mySubjects = [];
+        let selectedSubject = null;
+        let myGrade = '';
+        let myClassNo = '';
+        let currentAssignmentId = null;
+        let myClubs = [];
+        let selectedClub = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const userStr = localStorage.getItem('schoolus_user');
+            if (userStr) {
+                userInfo = JSON.parse(userStr);
+                document.getElementById('user-name').textContent = userInfo.member_name || '-';
+                document.getElementById('user-avatar').textContent = (userInfo.member_name || 'S').charAt(0);
+                document.getElementById('school-name-display').textContent = userInfo.member_school || '-';
+                document.getElementById('user-info').textContent = `${userInfo.member_roll === 'student' ? '학생' : ''}`;
+            }
+            loadMySubjects();
+        });
+
+        // ===== 메인 탭 전환 =====
+        function switchMainTab(tab, btnEl) {
+            document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+            btnEl.classList.add('active');
+
+            document.getElementById('section-subject').classList.toggle('hidden', tab !== 'subject');
+            document.getElementById('section-club').classList.toggle('hidden', tab !== 'club');
+
+            if (tab === 'club' && myClubs.length === 0) {
+                loadMyClubs();
+            }
+        }
+
+        // ===== 내 수강 과목 로드 (timetable_stu) =====
+        async function loadMySubjects() {
+            if (!userInfo.school_id || !userInfo.member_id) return;
+
+            try {
+                const res = await fetch(`/api/student/my-subjects?school_id=${userInfo.school_id}&member_id=${userInfo.member_id}`);
+                const data = await res.json();
+
+                if (!data.success) {
+                    document.getElementById('subject-tabs').innerHTML =
+                        `<div class="text-center py-8 text-slate-400 text-sm w-full"><i class="fas fa-exclamation-circle mr-1"></i>${data.message || '시간표 정보가 없습니다.'}</div>`;
+                    return;
+                }
+
+                myGrade = data.grade || '';
+                myClassNo = data.class_no || '';
+                mySubjects = data.subjects;
+
+                document.getElementById('user-info').textContent = `${myGrade}학년 ${myClassNo}반 ${data.student_num || ''}번`;
+                document.getElementById('header-student-info').textContent = `${myGrade}학년 ${myClassNo}반 · ${mySubjects.length}과목 수강`;
+
+                // 과목 탭 렌더링
+                const tabsEl = document.getElementById('subject-tabs');
+                tabsEl.innerHTML = mySubjects.map((s, i) => {
+                    const name = typeof s === 'string' ? s : s.name;
+                    return `<button class="subject-tab px-4 py-2.5 rounded-xl text-sm font-bold" onclick="selectSubject('${name}', this)">
+                        <i class="fas fa-book-open mr-1 text-xs"></i>${name}
+                    </button>`;
+                }).join('');
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('subject-tabs').innerHTML =
+                    '<div class="text-center py-8 text-red-400 text-sm w-full">과목 정보를 불러오는 중 오류가 발생했습니다.</div>';
+            }
+        }
+
+        // ===== 과목 선택 → 과제 로드 =====
+        async function selectSubject(subjectName, tabEl) {
+            document.querySelectorAll('.subject-tab').forEach(t => t.classList.remove('active'));
+            tabEl.classList.add('active');
+
+            selectedSubject = subjectName;
+            document.getElementById('selected-subject-title').innerHTML = `<i class="fas fa-clipboard-list mr-2"></i>${subjectName} 과제`;
+            document.getElementById('selected-subject-desc').textContent = `${myGrade}학년 ${myClassNo}반`;
+
+            const listEl = document.getElementById('assignment-list');
+            listEl.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-indigo-400 text-2xl"></i></div>';
+
+            try {
+                const res = await fetch(`/api/student/my-assignments?school_id=${userInfo.school_id}&student_id=${userInfo.member_id}&subject_name=${encodeURIComponent(subjectName)}&class_grade=${myGrade}&class_no=${myClassNo}`);
+                const data = await res.json();
+
+                if (data.success && data.assignments.length > 0) {
+                    listEl.innerHTML = data.assignments.map(a => {
+                        const isOverdue = a.due_date && new Date(a.due_date) < new Date();
+                        const statusClass = a.submitted ? 'bg-green-50 border-green-200' : (isOverdue ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200');
+                        const statusBadge = a.submitted
+                            ? '<span class="px-3 py-1 bg-green-100 text-green-600 rounded-full text-xs font-bold"><i class="fas fa-check mr-1"></i>제출완료</span>'
+                            : (isOverdue ? '<span class="px-3 py-1 bg-red-100 text-red-500 rounded-full text-xs font-bold"><i class="fas fa-clock mr-1"></i>기한초과</span>'
+                                : '<span class="px-3 py-1 bg-amber-100 text-amber-600 rounded-full text-xs font-bold"><i class="fas fa-hourglass-half mr-1"></i>미제출</span>');
+
+                        return `<div class="p-5 rounded-xl border-2 ${statusClass} transition hover:shadow-md">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-slate-800 text-lg">${a.title}</h4>
+                                    ${a.description ? `<p class="text-sm text-slate-500 mt-1">${a.description}</p>` : ''}
+                                </div>
+                                ${statusBadge}
+                            </div>
+                            <div class="flex items-center gap-4 text-xs text-slate-500 mb-3">
+                                <span><i class="fas fa-user-tie mr-1"></i>${a.teacher_name || '-'}</span>
+                                <span><i class="fas fa-calendar-plus mr-1"></i>출제: ${a.created_at}</span>
+                                ${a.due_date ? `<span class="${isOverdue ? 'text-red-500 font-bold' : ''}"><i class="fas fa-calendar-check mr-1"></i>기한: ${a.due_date}</span>` : ''}
+                            </div>
+                            ${a.submitted
+                                ? `<div class="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                                       <i class="fas fa-file-check text-green-500"></i>
+                                       <span class="text-sm text-green-700 font-medium">${a.submission_file || '제출됨'}</span>
+                                       <span class="text-xs text-green-500 ml-auto">${a.submission_date}</span>
+                                   </div>
+                                   <button onclick="openSubmitModal(${a.id}, '${a.title.replace(/'/g,"\\'")}')" class="mt-3 w-full py-2.5 bg-slate-100 text-slate-500 rounded-xl font-bold text-sm hover:bg-slate-200 transition">
+                                       <i class="fas fa-redo mr-1"></i>다시 제출
+                                   </button>`
+                                : `<button onclick="openSubmitModal(${a.id}, '${a.title.replace(/'/g,"\\'")}')" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition">
+                                       <i class="fas fa-file-arrow-up mr-2"></i>과제 제출
+                                   </button>`
+                            }
+                        </div>`;
+                    }).join('');
+                } else {
+                    listEl.innerHTML = `<div class="text-center py-12 text-slate-400">
+                        <i class="fas fa-inbox text-4xl mb-3"></i>
+                        <p class="font-bold">${subjectName} 과목에 등록된 과제가 없습니다.</p>
+                        <p class="text-sm mt-1">선생님이 과제를 출제하면 여기에 표시됩니다.</p>
+                    </div>`;
+                }
+            } catch (e) {
+                listEl.innerHTML = '<div class="text-center py-8 text-red-400">과제 목록 조회 중 오류가 발생했습니다.</div>';
+            }
+        }
+
+        // ===== 과제 제출 모달 =====
+        function openSubmitModal(assignmentId, title) {
+            currentAssignmentId = assignmentId;
+            document.getElementById('modal-assignment-title').textContent = title;
+            document.getElementById('modal-file').value = '';
+            document.getElementById('modal-comment').value = '';
+            document.getElementById('submit-modal').classList.remove('hidden');
+        }
+        function closeSubmitModal() {
+            document.getElementById('submit-modal').classList.add('hidden');
+            currentAssignmentId = null;
+        }
+
+        async function submitAssignment() {
+            if (!currentAssignmentId) return;
+
+            const fileInput = document.getElementById('modal-file');
+            if (!fileInput.files.length) return alert('파일을 선택해주세요.');
+
+            const file = fileInput.files[0];
+            if (file.size > 10 * 1024 * 1024) return alert('파일 크기가 10MB를 초과합니다.');
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>제출 중...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('assignment_id', currentAssignmentId);
+            formData.append('school_id', userInfo.school_id);
+            formData.append('student_id', userInfo.member_id);
+            formData.append('student_name', userInfo.member_name);
+            formData.append('subject_name', selectedSubject);
+            formData.append('class_grade', myGrade);
+            formData.append('class_no', myClassNo);
+            formData.append('record_year', '2026');
+            formData.append('record_semester', '1');
+            formData.append('comment', document.getElementById('modal-comment').value);
+
+            try {
+                const res = await fetch('/api/subject/submission/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert('과제가 제출되었습니다!');
+                    closeSubmitModal();
+                    const activeTab = document.querySelector('.subject-tab.active');
+                    if (activeTab && selectedSubject) selectSubject(selectedSubject, activeTab);
+                } else {
+                    alert(data.message || '제출에 실패했습니다.');
+                }
+            } catch (e) {
+                alert('제출 중 네트워크 오류가 발생했습니다.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>제출하기';
+            }
+        }
+
+        // =============================================
+        // 동아리 활동 관련
+        // =============================================
+
+        async function loadMyClubs() {
+            if (!userInfo.school_id || !userInfo.member_id) return;
+
+            const area = document.getElementById('club-list-area');
+            area.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm w-full"><i class="fas fa-spinner fa-spin mr-1"></i>동아리 정보를 불러오는 중...</div>';
+
+            try {
+                const res = await fetch(`/api/student/my-clubs?school_id=${userInfo.school_id}&student_id=${userInfo.member_id}&record_year=2026&record_semester=1`);
+                const data = await res.json();
+
+                if (!data.success || data.clubs.length === 0) {
+                    area.innerHTML = `<div class="text-center py-12 text-slate-400 w-full">
+                        <i class="fas fa-puzzle-piece text-4xl mb-3"></i>
+                        <p class="font-bold">소속된 동아리가 없습니다.</p>
+                        <p class="text-sm mt-1">담당 선생님이 동아리에 배정하면 여기에 표시됩니다.</p>
+                    </div>`;
+                    return;
+                }
+
+                myClubs = data.clubs;
+                area.innerHTML = myClubs.map(c => {
+                    return `<div class="club-card p-4 rounded-xl border-2 border-slate-200 bg-white min-w-[200px] flex-1 max-w-[300px]" onclick="selectClub('${c.club_name.replace(/'/g,"\\'")}', this)">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-400 to-fuchsia-500 flex items-center justify-center text-white font-bold text-sm shadow">
+                                <i class="fas fa-puzzle-piece"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-slate-800 truncate">${c.club_name}</h4>
+                                <p class="text-xs text-slate-400">${c.teacher_name ? '지도교사: ' + c.teacher_name : ''}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-slate-500">
+                            <span class="px-2 py-0.5 bg-violet-50 text-violet-600 rounded-full font-bold"><i class="fas fa-file mr-1"></i>${c.file_count}개 파일</span>
+                            ${c.description ? `<span class="truncate">${c.description}</span>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+
+            } catch (e) {
+                console.error(e);
+                area.innerHTML = '<div class="text-center py-8 text-red-400 text-sm w-full">동아리 정보를 불러오는 중 오류가 발생했습니다.</div>';
+            }
+        }
+
+        async function selectClub(clubName, cardEl) {
+            document.querySelectorAll('.club-card').forEach(c => c.classList.remove('active'));
+            if (cardEl) cardEl.classList.add('active');
+
+            selectedClub = clubName;
+            document.getElementById('selected-club-title').innerHTML = `<i class="fas fa-puzzle-piece mr-2"></i>${clubName}`;
+            document.getElementById('selected-club-desc').textContent = '내 활동 파일';
+            document.getElementById('btn-club-upload').classList.remove('hidden');
+
+            const listEl = document.getElementById('club-file-list');
+            listEl.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-violet-400 text-2xl"></i></div>';
+
+            try {
+                const res = await fetch(`/api/student/club-files?school_id=${userInfo.school_id}&student_id=${userInfo.member_id}&club_name=${encodeURIComponent(clubName)}`);
+                const data = await res.json();
+
+                if (data.success && data.files.length > 0) {
+                    listEl.innerHTML = data.files.map(f => {
+                        const sizeStr = f.file_size >= 1048576 ? (f.file_size / 1048576).toFixed(1) + 'MB' : Math.round(f.file_size / 1024) + 'KB';
+                        const ext = f.file_name.split('.').pop().toLowerCase();
+                        const iconMap = { pdf:'fa-file-pdf text-red-500', doc:'fa-file-word text-blue-500', docx:'fa-file-word text-blue-500',
+                            hwp:'fa-file-alt text-sky-500', hwpx:'fa-file-alt text-sky-500', xls:'fa-file-excel text-green-500', xlsx:'fa-file-excel text-green-500',
+                            ppt:'fa-file-powerpoint text-orange-500', pptx:'fa-file-powerpoint text-orange-500',
+                            jpg:'fa-file-image text-pink-500', jpeg:'fa-file-image text-pink-500', png:'fa-file-image text-pink-500', gif:'fa-file-image text-pink-500',
+                            zip:'fa-file-zipper text-amber-600' };
+                        const icon = iconMap[ext] || 'fa-file text-slate-400';
+                        const uploaderBadge = f.is_mine
+                            ? '<span class="px-2 py-0.5 bg-violet-100 text-violet-600 rounded-full text-xs font-bold">내가 올림</span>'
+                            : `<span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full text-xs font-bold">${f.uploaded_name || '교사'}</span>`;
+
+                        return `<div class="flex items-center gap-4 p-4 rounded-xl border border-slate-200 bg-white hover:shadow-sm transition">
+                            <div class="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center flex-shrink-0">
+                                <i class="fas ${icon} text-lg"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-bold text-slate-800 text-sm truncate">${f.file_name}</p>
+                                <div class="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                                    ${uploaderBadge}
+                                    <span>${sizeStr}</span>
+                                    <span>${f.uploaded_at}</span>
+                                </div>
+                            </div>
+                            ${f.is_mine ? `<button onclick="deleteClubFile(${f.id}, event)" class="px-3 py-1.5 text-xs bg-red-50 text-red-500 hover:bg-red-100 rounded-lg font-bold transition flex-shrink-0" title="삭제">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>` : ''}
+                        </div>`;
+                    }).join('');
+                } else {
+                    listEl.innerHTML = `<div class="text-center py-12 text-slate-400">
+                        <i class="fas fa-cloud-arrow-up text-4xl mb-3"></i>
+                        <p class="font-bold">아직 제출된 파일이 없습니다.</p>
+                        <p class="text-sm mt-1">위의 "파일 제출" 버튼으로 동아리 활동 자료를 올려보세요.</p>
+                    </div>`;
+                }
+            } catch (e) {
+                listEl.innerHTML = '<div class="text-center py-8 text-red-400">파일 목록 조회 중 오류가 발생했습니다.</div>';
+            }
+        }
+
+        function openClubUploadModal() {
+            if (!selectedClub) return alert('동아리를 먼저 선택하세요.');
+            document.getElementById('modal-club-name').textContent = selectedClub;
+            document.getElementById('modal-club-file').value = '';
+            document.getElementById('club-upload-modal').classList.remove('hidden');
+        }
+        function closeClubUploadModal() {
+            document.getElementById('club-upload-modal').classList.add('hidden');
+        }
+
+        async function uploadClubFile() {
+            if (!selectedClub) return;
+
+            const fileInput = document.getElementById('modal-club-file');
+            if (!fileInput.files.length) return alert('파일을 선택해주세요.');
+
+            const file = fileInput.files[0];
+            if (file.size > 10 * 1024 * 1024) return alert('파일 크기가 10MB를 초과합니다.');
+
+            const btn = document.getElementById('btn-club-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>업로드 중...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('school_id', userInfo.school_id);
+            formData.append('member_school', userInfo.member_school || '');
+            formData.append('student_id', userInfo.member_id);
+            formData.append('student_name', userInfo.member_name);
+            formData.append('club_name', selectedClub);
+            formData.append('record_year', '2026');
+            formData.append('record_semester', '1');
+
+            try {
+                const res = await fetch('/api/student/club-file/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert(data.message || '파일이 업로드되었습니다.');
+                    closeClubUploadModal();
+                    const activeCard = document.querySelector('.club-card.active');
+                    selectClub(selectedClub, activeCard);
+                    loadMyClubs();
+                } else {
+                    alert(data.message || '업로드에 실패했습니다.');
+                }
+            } catch (e) {
+                alert('업로드 중 네트워크 오류가 발생했습니다.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-cloud-arrow-up mr-2"></i>업로드';
+            }
+        }
+
+        async function deleteClubFile(fileId, evt) {
+            evt.stopPropagation();
+            if (!confirm('이 파일을 삭제하시겠습니까?')) return;
+
+            try {
+                const res = await fetch('/api/student/club-file/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: fileId, student_id: userInfo.member_id })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    const activeCard = document.querySelector('.club-card.active');
+                    selectClub(selectedClub, activeCard);
+                    loadMyClubs();
+                } else {
+                    alert(data.message || '삭제에 실패했습니다.');
+                }
+            } catch (e) {
+                alert('삭제 중 오류가 발생했습니다.');
+            }
+        }
+
+        function handleLogout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('schoolus_user');
+                window.location.href = '/';
+            }
+        }
+
+        // 모바일 사이드바 토글
+        function toggleMobileSidebar() {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+            document.getElementById('mobile-overlay').classList.toggle('active');
+        }
+        document.getElementById('mobile-overlay').onclick = function() {
+            document.getElementById('sidebar').classList.remove('mobile-open');
+            this.classList.remove('active');
+        };
+    </script>
+</body>
+</html>

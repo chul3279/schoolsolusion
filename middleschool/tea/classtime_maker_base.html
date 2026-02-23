@@ -1,0 +1,2311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 반편성</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .step-btn { position: relative; color: #94a3b8; font-weight: 500; transition: all 0.2s; }
+        .step-btn:hover { color: #64748b; }
+        .step-btn.active { color: #4f46e5; font-weight: 800; }
+        .step-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 3px; background: #4f46e5; border-radius: 3px 3px 0 0; }
+
+        .form-input { border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; width: 100%; font-size: 0.9rem; transition: border-color 0.2s; }
+        .form-input:focus { border-color: #4f46e5; outline: none; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .table-input {
+            width: 100%; height: 100%; border: none; background: transparent;
+            text-align: center; font-size: 0.75rem; color: #334155; padding: 2px 4px;
+            transition: all 0.2s; outline: none;
+        }
+        .table-input:focus { background: #eef2ff; box-shadow: inset 0 0 0 2px #6366f1; }
+        .table-input:hover { background: #f8fafc; }
+
+        .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #4f46e5; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
+        .btn-sm { padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+
+        /* 프린트 스타일 - 각 Step별 */
+        @media print {
+            aside, header, #headerControls, .step-btn, #loadingOverlay, .no-print, button:not(.print-only), input[type="file"], label[for], .domain-separator { display: none !important; }
+            @page { size: A4 landscape; margin: 3mm; }
+            body { transform: none; width: 100%; height: auto !important; overflow: visible !important; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            main, .flex-1, .max-w-7xl, .h-screen { height: auto !important; overflow: visible !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border: none !important; position: static !important; display: block !important; }
+            .print-step-1 #step-1 { display: block !important; visibility: visible !important; }
+            .print-step-1 #step-2, .print-step-1 #step-3 { display: none !important; }
+            .print-step-2 #step-2 { display: block !important; visibility: visible !important; }
+            .print-step-2 #step-1, .print-step-2 #step-3 { display: none !important; }
+            .print-step-3 #step-3 { display: block !important; visibility: visible !important; }
+            .print-step-3 #step-1, .print-step-3 #step-2 { display: none !important; }
+            /* Step 3 특수 스타일 - A4 가로 방향에 맞춤 */
+            .print-step-3 #step-3 { page-break-inside: avoid; padding: 0 !important; margin: 0 !important; }
+            .print-step-3 table { font-size: 11px !important; width: 100% !important; }
+            .print-step-3 th, .print-step-3 td { padding: 4px 6px !important; height: auto !important; line-height: 1.4 !important; }
+            .print-step-3 input { font-size: 11px !important; height: auto !important; line-height: 1.4 !important; }
+            /* 과목명 컬럼 폭 확대 */
+            .print-step-3 td:nth-child(3), .print-step-3 th:nth-child(3) { min-width: 120px !important; width: auto !important; }
+            .print-step-3 td:nth-child(3) input { text-align: left !important; padding-left: 6px !important; }
+            table { width: 100%; border-collapse: collapse; margin: 0; }
+            th, td { border: 1px solid #333 !important; padding: 4px 6px !important; color: #000 !important; font-size: 11px !important; text-align: center !important; }
+            th { background: #d0d0d0 !important; font-weight: bold !important; }
+            input, select { border: none !important; padding: 0 !important; margin: 0 !important; background: transparent !important; color: #000 !important; font-weight: bold !important; width: 100% !important; box-shadow: none !important; text-align: center !important; font-size: 11px !important; }
+            .print-header { display: block !important; font-size: 16px; font-weight: bold; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #333; padding-bottom: 4px; }
+            /* 과목군 구분 - 프린트 시 굵은 선 */
+            tr[style*="background: #334155"] { display: table-row !important; }
+            tr[style*="background: #334155"] td { background: #000 !important; height: 4px !important; padding: 0 !important; }
+            .bg-slate-100, .bg-green-100, .bg-indigo-50, .bg-amber-50 { background: #e8e8e8 !important; }
+            .bg-slate-700 { background: #333 !important; }
+            .bg-slate-700 td { color: #fff !important; }
+            /* 여백 제거 */
+            .rounded-2xl, .rounded-xl { border-radius: 0 !important; padding: 5px !important; margin: 0 !important; }
+            .p-8, .p-4, .mb-6 { padding: 2px !important; margin: 0 !important; }
+            .border-b { border-bottom: none !important; }
+        }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; border-radius: 16px; padding: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .print-header { display: none; }
+
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        #mobile-overlay.active { display: block; }
+        #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
+
+        /* 모바일 큰 글씨 대응: 터치 영역 확대 + 사이드바 전체 스크롤 */
+        @media (max-width: 767px) {
+            #sidebar.mobile-open { overflow-y: auto !important; }
+            #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
+            #sidebar.mobile-open #sidebar-nav { height: auto !important; overflow: visible !important; }
+            .nav-item { min-height: 52px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 15px !important; }
+            #sidebar .space-y-1 > li { margin-bottom: 4px; }
+            #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
+            .tab-btn { min-height: 48px; padding: 12px 16px !important; font-size: 14px !important; white-space: nowrap; }
+        }
+    </style>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7LJ1TCE277');
+    </script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen flex overflow-hidden">
+
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-30 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white p-6 rounded-xl shadow-xl flex flex-col items-center">
+            <div class="loader mb-4"></div>
+            <p class="font-bold text-slate-700">데이터 처리 중입니다...</p>
+            <p class="text-xs text-slate-500 mt-1">잠시만 기다려주세요.</p>
+        </div>
+    </div>
+
+    <div id="saveFileModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-lg font-bold mb-4 flex items-center"><i class="fas fa-save mr-2 text-indigo-600"></i>파일 저장</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">파일명</label>
+                    <input type="text" id="modalFileName" class="form-input" placeholder="파일명을 입력하세요">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">저장 위치</label>
+                    <select id="modalSaveLocation" class="form-input">
+                        <option value="downloads">다운로드 폴더 (기본)</option>
+                        <option value="custom">사용자 지정</option>
+                    </select>
+                </div>
+                <div id="customPathContainer" class="hidden">
+                    <label class="block text-sm font-bold text-slate-600 mb-1">사용자 지정 경로</label>
+                    <input type="text" id="modalCustomPath" class="form-input" placeholder="예: /documents/school/">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeSaveModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-sm transition">취소</button>
+                <button onclick="confirmSaveFile()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm transition">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 찾기/바꾸기 모달 -->
+    <div id="findReplaceModal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3 class="text-lg font-bold mb-4 flex items-center"><i class="fas fa-search-plus mr-2 text-purple-600"></i>과목 찾기/바꾸기</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">찾을 과목 (현재 값)</label>
+                    <input type="text" id="findSubjectInput" class="form-input" placeholder="변경할 과목명 입력">
+                    <div id="findSubjectSuggestions" class="mt-2 max-h-32 overflow-y-auto border rounded-lg hidden"></div>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">바꿀 과목 (개설과목에서 선택)</label>
+                    <select id="replaceSubjectSelect" class="form-input">
+                        <option value="">-- 과목 선택 --</option>
+                    </select>
+                </div>
+                <div class="bg-slate-100 p-3 rounded-lg">
+                    <p class="text-sm text-slate-600"><i class="fas fa-info-circle mr-1"></i> 
+                    과목 컬럼(subject1~12)에서 찾아서 일괄 변경합니다.<br>
+                    바꿀 과목은 <strong>1. 개설과목에서 등록한 과목</strong>만 선택 가능합니다.</p>
+                </div>
+                <div id="findReplaceResult" class="hidden bg-green-50 p-3 rounded-lg text-green-700 text-sm"></div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeFindReplaceModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-sm transition">닫기</button>
+                <button onclick="executeFindReplace()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-sm transition">
+                    <i class="fas fa-exchange-alt mr-1"></i>모두 바꾸기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-overlay"></div>
+    <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 flex-col flex-shrink-0 hidden md:flex no-print shadow-2xl">
+        <div class="p-6 border-b border-slate-700/50">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                    <i class="fas fa-school text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-black text-2xl text-white tracking-tight">SchoolUs</span>
+                    <p class="text-xs text-slate-400 font-medium">스마트 교육 플랫폼</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li><a href="../tea.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-desktop w-6 mr-3"></i> 나의 대시보드</a></li>
+                <li class="px-6 pt-6 pb-2 text-xs font-bold uppercase text-slate-500">반편성 · 시간표</li>
+                <li><a href="#" class="flex items-center px-6 py-3 bg-slate-800 text-white border-l-4 border-blue-500"><i class="fas fa-database w-6 mr-3 text-green-400"></i> <span class="font-medium">기초데이터 관리</span></a></li>
+                <li><a href="class_maker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-layer-group w-6 mr-3"></i> 반편성</a></li>
+                <li><a href="timetablemaker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-edit w-6 mr-3"></i> 시간표 작성</a></li>
+                <li><a href="timetablechange.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-calendar-alt w-6 mr-3"></i> 시간표 조회/변경</a></li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-slate-700">
+            <a href="../tea.html" class="flex items-center justify-center w-full py-2 bg-slate-800 hover:bg-slate-700 rounded text-sm transition"><i class="fas fa-arrow-left mr-2"></i> 메인으로 돌아가기</a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        
+        <header class="bg-white h-16 border-b flex items-center justify-between px-8 shadow-sm z-30 flex-shrink-0 no-print">
+            <div class="flex items-center gap-4">
+                <button id="sidebar-toggle" onclick="toggleMobileSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars text-xl"></i></button>
+                <h2 class="text-xl font-bold text-slate-800">반편성 관리</h2>
+                <span id="userSchoolBadge" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold"></span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="headerControls" class="flex gap-2 flex-wrap"></div>
+                <!-- 포인트 표시 -->
+                <div class="flex items-center gap-2 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 px-3 py-1.5 rounded-full">
+                    <i class="fas fa-coins text-amber-500"></i>
+                    <span id="userPoint" class="font-bold text-amber-700 text-sm">0</span>
+                    <span class="text-amber-600 text-xs">P</span>
+                </div>
+                <!-- 사용자 정보 -->
+                <div class="flex items-center gap-2">
+                    <div id="userAvatar" class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">T</div>
+                    <span id="userName" class="text-sm font-medium text-slate-700 hidden md:block"></span>
+                </div>
+            </div>
+        </header>
+
+        <div class="bg-white border-b px-8 z-20 shadow-sm no-print">
+            <div class="flex justify-center space-x-12">
+                <button onclick="goStep(1)" id="btn-step-1" class="step-btn active py-4 text-sm px-4">1. 개설과목 관리</button>
+                <button onclick="goStep(2)" id="btn-step-2" class="step-btn py-4 text-sm px-4">2. 과목별 수강인원 처리</button>
+                <button onclick="goStep(3)" id="btn-step-3" class="step-btn py-4 text-sm px-4">3. 교사 수급</button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-8 bg-slate-50">
+            <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-8 min-h-[700px] flex flex-col">
+
+                <!-- STEP 1: 개설과목 관리 -->
+                <div id="step-1" class="fade-in flex-1 flex flex-col">
+                    <div class="print-header">개설과목 관리 - <span id="printSchool1"></span></div>
+                    
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-5 mb-6 flex items-center justify-between shadow-sm no-print">
+                        <div class="flex items-center gap-4">
+                            <div class="p-3 bg-white rounded-lg text-indigo-600 shadow-sm flex items-center justify-center">
+                                <i class="fas fa-calendar-alt text-2xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-lg">학생 과목 조사 일시 설정</h3>
+                                <p class="text-sm text-slate-500">학생들의 희망 과목 조사를 진행할 기간을 설정합니다.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 bg-white px-4 py-3 rounded-lg border border-indigo-100">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-400 mb-0.5 ml-1">시작일</span>
+                                <input type="date" id="surveyStartDate" class="form-input py-1 h-9 bg-slate-50 text-sm font-bold" style="width: 140px;">
+                            </div>
+                            <span class="text-slate-300 font-bold mt-3">~</span>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-400 mb-0.5 ml-1">종료일</span>
+                                <input type="date" id="surveyEndDate" class="form-input py-1 h-9 bg-slate-50 text-sm font-bold" style="width: 140px;">
+                            </div>
+                            <button onclick="saveSurveyPeriod()" class="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-6 h-9 rounded-lg font-bold shadow-sm transition text-sm flex items-center">
+                                <i class="fas fa-check mr-2"></i>적용
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="border-b pb-4 mb-6">
+                        <h2 class="text-xl font-bold text-slate-800 flex items-center">
+                            <i class="fas fa-book mr-2 text-green-600"></i> 개설 교과목 편집
+                        </h2>
+                        <p class="text-slate-500 text-sm mt-1">
+                            교육과정 DB를 기반으로 과목명, 학년, 시수, 과목유형 정보를 관리합니다.
+                        </p>
+                    </div>
+
+                    <datalist id="curriculumList"></datalist>
+                    <datalist id="categoryList"></datalist>
+
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 flex items-end gap-3 shadow-sm flex-wrap no-print">
+                        <div class="flex-[2] min-w-[150px]">
+                            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">과목명</label>
+                            <input type="text" id="newSubjectName" class="form-input" placeholder="검색 또는 입력" list="curriculumList">
+                        </div>
+                        <div class="w-20">
+                            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">학년</label>
+                            <select id="newSubjectGrade" class="form-input">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                            </select>
+                        </div>
+                        <div class="w-20">
+                            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">시수</label>
+                            <input type="number" id="newSubjectHours" class="form-input" value="4">
+                        </div>
+                        <div class="w-24">
+                            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">교육과정</label>
+                            <input type="text" id="newCourseYear" class="form-input" placeholder="예: 2015">
+                        </div>
+                        <div class="flex-[1.5] min-w-[120px]">
+                            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">과목 유형</label>
+                            <input type="text" id="newSubjectType" class="form-input" placeholder="예: 일반선택 등">
+                        </div>
+                        <div class="flex-[1] min-w-[100px]">
+                            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">과목군(subject_depart)</label>
+                            <input type="text" id="newSubjectDomain" class="form-input" placeholder="예: 교과" list="categoryList">
+                        </div>
+                        <div class="w-24">
+                            <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">학교급</label>
+                            <select id="newSchoolLevel" class="form-input">
+                                <option value="고등">고등</option>
+                                <option value="중등">중등</option>
+                                <option value="초등">초등</option>
+                            </select>
+                        </div>
+                        <button onclick="addOpenSubjectByInput()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-bold shadow transition h-[42px]">
+                            <i class="fas fa-plus mr-2"></i>추가
+                        </button>
+                    </div>
+
+                    <div class="flex-1 border border-slate-200 rounded-xl bg-slate-50 flex flex-col overflow-hidden shadow-inner">
+                        <div class="p-4 border-b bg-white flex justify-between items-center">
+                            <h3 class="font-bold text-slate-700"><i class="fas fa-edit mr-2"></i>등록된 개설 과목 목록</h3>
+                            <div class="text-xs text-slate-400">
+                                <span id="openSubjectCount">0</span>개 과목 등록됨
+                            </div>
+                        </div>
+                        <div class="overflow-auto p-0 flex-1">
+                            <table class="w-full text-sm text-left border-collapse">
+                                <thead class="bg-slate-100 text-slate-500 font-bold sticky top-0 z-10 shadow-sm">
+                                    <tr>
+                                        <th class="p-3 text-center w-12 bg-slate-100 border-b">No</th>
+                                        <th class="p-3 text-center bg-slate-100 border-b">과목명(subject)</th>
+                                        <th class="p-3 text-center w-16 bg-slate-100 border-b">학년(grade)</th>
+                                        <th class="p-3 text-center w-16 bg-slate-100 border-b">시수(subject_demand)</th>
+                                        <th class="p-3 text-center w-24 bg-slate-100 border-b">교육과정(course_year)</th>
+                                        <th class="p-3 text-center bg-slate-100 border-b">과목유형(subject_type)</th>
+                                        <th class="p-3 text-center w-24 bg-slate-100 border-b">과목군(subject_depart)</th>
+                                        <th class="p-3 text-center w-20 bg-slate-100 border-b">학교급(school_level)</th>
+                                        <th class="p-3 text-center w-16 bg-slate-100 border-b no-print">관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="openSubjectBody" class="bg-white divide-y divide-slate-100">
+                                    <tr><td colspan="9" class="p-10 text-center text-slate-400">등록된 과목이 없습니다.<br>위쪽 입력란을 통해 과목을 추가해주세요.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: 과목별 수강인원 처리 -->
+                <div id="step-2" class="hidden fade-in flex-1 flex flex-col">
+                    <div class="print-header">과목별 수강인원 처리 - <span id="printSchool2"></span></div>
+                    
+                    <div class="border-b pb-4 mb-6">
+                        <h2 class="text-xl font-bold text-slate-800 flex items-center">
+                            <i class="fas fa-chart-pie mr-2 text-indigo-500"></i> 과목별 수강인원 처리
+                        </h2>
+                        <p class="text-slate-500 text-sm mt-1">데이터를 직접 수정할 수 있으며, 수정된 내용은 저장 시 반영됩니다. 계산된 수강인원은 결과DB에 자동 저장됩니다.</p>
+                    </div>
+                    
+                    <div class="flex gap-6 flex-1 overflow-hidden">
+                        <div class="w-2/3 border border-slate-200 rounded-xl bg-slate-50 flex flex-col overflow-hidden shadow-inner">
+                            <div class="p-4 border-b bg-white flex justify-between items-center">
+                                <h3 class="font-bold text-slate-700"><i class="fas fa-list mr-2"></i>학생 데이터 (수정 가능)</h3>
+                                <span id="studentCountBadge" class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold">0명</span>
+                            </div>
+                            <div class="overflow-auto flex-1" id="studentListArea" style="max-height: calc(100vh - 350px);">
+                                <table class="w-full text-sm text-left border-collapse" id="studentDataTable">
+                                    <thead class="bg-slate-100 text-slate-500 font-bold sticky top-0 z-10 shadow-sm">
+                                        <tr id="tableHeaderRow">
+                                            <th class="p-2 text-center w-10 bg-slate-100 whitespace-nowrap border-b">No</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentTableBody" class="bg-white divide-y divide-slate-100">
+                                        <tr><td class="p-10 text-center text-slate-400">데이터 파일을 업로드하거나 DB에서 불러오세요.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="w-1/3 border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col overflow-hidden">
+                            <div class="p-4 border-b bg-indigo-50 flex justify-between items-center">
+                                <h3 class="font-bold text-indigo-900"><i class="fas fa-book-open mr-2"></i>과목별 수강인원</h3>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="saveStudentCountsToTimetableData()" class="bg-green-600 hover:bg-green-700 text-white border border-green-700 px-2 py-1 rounded text-xs font-bold shadow-sm transition no-print" title="수강인원을 결과DB에 저장">
+                                        <i class="fas fa-save mr-1"></i>결과DB 저장
+                                    </button>
+                                    <span id="subjectCountBadge" class="bg-white text-indigo-600 px-2 py-1 rounded text-xs font-bold shadow-sm">0과목</span>
+                                </div>
+                            </div>
+                            <div id="subjectStatsArea" class="overflow-y-auto p-4 space-y-2 flex-1">
+                                <div class="text-center text-slate-400 mt-20">
+                                    <i class="fas fa-search fa-3x mb-4 opacity-30"></i>
+                                    <div>데이터를 분석 대기중입니다.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: 교사 수급 -->
+                <div id="step-3" class="hidden fade-in flex-1 flex flex-col">
+                    <div class="print-header">교사 수급 분석 - <span id="printSchool3"></span></div>
+                    
+                    <div class="border-b pb-4 mb-6 flex justify-between items-center no-print">
+                        <div>
+                             <h2 class="text-xl font-bold text-slate-800 flex items-center">
+                                <i class="fas fa-chalkboard-teacher mr-2 text-indigo-500"></i> 교사 수급 관리
+                            </h2>
+                            <p class="text-slate-500 text-sm mt-1">분석 결과의 모든 내용을 직접 수정할 수 있으며, 수정 시 즉시 반영됩니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 flex items-center gap-6 shadow-sm no-print">
+                        <div class="flex items-center gap-2">
+                            <label class="font-bold text-slate-700">교사 1인당 평균 시수:</label>
+                            <input type="number" id="avgTeacherHours" class="form-input w-24 text-center" value="12" onchange="renderTeacherSupply()">
+                            <span class="text-slate-500 text-sm">시간/주</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="font-bold text-slate-700">학급당 기준 인원:</label>
+                            <input type="number" id="stdClassSize" class="form-input w-24 text-center" value="25" onchange="renderTeacherSupply()">
+                            <span class="text-slate-500 text-sm">명</span>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden">
+                        <div class="p-4 border-b bg-indigo-50 flex justify-between items-center">
+                            <h3 class="font-bold text-indigo-900"><i class="fas fa-users mr-2"></i>교사 수급 분석 결과</h3>
+                        </div>
+                        
+                        <div class="overflow-auto flex-1">
+                            <table class="w-full text-sm text-left border-collapse" id="teacherTable">
+                                <thead class="bg-slate-100 text-slate-600 font-bold sticky top-0 z-10 border-b">
+                                    <tr>
+                                        <th class="p-2 text-center w-10 bg-slate-100">순위</th>
+                                        <th class="p-2 text-center w-20 bg-slate-100">과목군</th>
+                                        <th class="p-2 text-left min-w-[140px] bg-slate-100">과목명</th>
+                                        <th class="p-2 text-center w-12 bg-slate-100">학년</th>
+                                        <th class="p-2 text-center w-16 bg-slate-100">수강인원</th>
+                                        <th class="p-2 text-center w-14 bg-slate-100">시수</th>
+                                        <th class="p-2 text-center w-14 bg-slate-100">반수</th>
+                                        <th class="p-2 text-center w-16 bg-slate-100">반당인원</th>
+                                        <th class="p-2 text-center w-14 bg-slate-100">총시수</th>
+                                        <th class="p-2 text-center w-20 bg-indigo-100 text-indigo-800">필요교사</th>
+                                        <th class="p-2 text-center w-20 bg-green-100 text-green-800">과목군합계</th>
+                                        <th class="p-2 text-center w-20 bg-amber-100 text-amber-800">확정교사</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teacherSupplyTableBody" class="divide-y divide-slate-100">
+                                    <tr><td colspan="12" class="p-10 text-center text-slate-400">분석된 데이터가 없습니다.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ==========================================
+        // Global Variables
+        // ==========================================
+        const IGNORE_HEADERS = [
+            '순번', 'no', '번호', '이름', '성명', 'name', '학년', '반', '학번', 'id', 'class', 'grade',
+            'member_id', 'member_name', 'member_birth', 'member_school', 'class_no', 'student_num', 'school_id'
+        ];
+
+        const HEADER_MAP = {
+            'member_id': '회원ID', 
+            'member_name': '학생 성명',
+            'member_birth': '생년월일',
+            'member_school': '소속 학교명',
+            'grade': '학년',
+            'class_no': '반',
+            'student_num': '번호',
+            'subject1': '과목1', 'subject2': '과목2', 'subject3': '과목3', 'subject4': '과목4',
+            'subject5': '과목5', 'subject6': '과목6', 'subject7': '과목7', 'subject8': '과목8',
+            'subject9': '과목9', 'subject10': '과목10', 'subject11': '과목11', 'subject12': '과목12'
+        };
+        
+        // timetable_data DB 컬럼 정의
+        const DB_COLUMNS = [
+            'school_id', 'member_school', 'subject', 'course_year', 'grade', 
+            'subject_demand', 'subject_type', 'subject_depart', 
+            'stu_count', 'class_demand', 'tea_demand', 'tea_1person'
+        ];
+        
+        // timetable_stu DB 컬럼 정의
+        const STU_DB_COLUMNS = [
+            'member_id', 'school_id', 'member_name', 'member_birth', 'member_school',
+            'grade', 'class_no', 'student_num',
+            'subject1', 'subject2', 'subject3', 'subject4', 'subject5', 'subject6',
+            'subject7', 'subject8', 'subject9', 'subject10', 'subject11', 'subject12'
+        ];
+        
+        let curriculumData = []; 
+        let openSubjects = [];   
+        let globalHeaders = []; 
+        let globalDataRows = [];
+        let latestSubjectCounts = {}; 
+        let saveFileCallback = null;
+
+        // 사용자 정보 (로그인 시 설정됨 - schoolus_user 키 사용)
+        let currentUser = null;
+
+        // ==========================================
+        // 초기화 - 사용자 정보 표시
+        // ==========================================
+        function initUserInfo() {
+            const userStr = localStorage.getItem('schoolus_user');
+            if (!userStr) {
+                alert('로그인이 필요합니다.');
+                window.location.href = '/';
+                return;
+            }
+
+            currentUser = JSON.parse(userStr);
+
+            // school_id 필수 체크
+            if (!currentUser.school_id) {
+                alert('학교 정보(school_id)가 없습니다.\n다시 로그인해주세요.');
+                window.location.href = '/';
+                return;
+            }
+
+            // 학교 배지 표시
+            const schoolBadge = document.getElementById('userSchoolBadge');
+            schoolBadge.textContent = currentUser.member_school || currentUser.school_id;
+
+            // 프린트용 학교명 설정
+            document.getElementById('printSchool1').textContent = currentUser.member_school || '';
+            document.getElementById('printSchool2').textContent = currentUser.member_school || '';
+            document.getElementById('printSchool3').textContent = currentUser.member_school || '';
+
+            // 사용자 이름 표시
+            const userName = document.getElementById('userName');
+            const userAvatar = document.getElementById('userAvatar');
+            if (currentUser.member_name) {
+                if (userName) userName.textContent = currentUser.member_name + ' 선생님';
+                if (userAvatar) userAvatar.textContent = currentUser.member_name.charAt(0);
+            }
+
+            // 포인트 정보 로드
+            loadUserPoint();
+            // 교육과정 과목 DB 로드 → datalist 채우기
+            loadCurriculumFromDB();
+            // 과목 조사 기간 로드
+            loadSurveyPeriod();
+        }
+
+        // ==========================================
+        // 교육과정 과목 DB 로드 → datalist 자동완성
+        // ==========================================
+        async function loadCurriculumFromDB() {
+            try {
+                const res = await fetch('/api/cours-subject/list?school_level=고등');
+                const data = await res.json();
+                if (data.success && data.subjects) {
+                    curriculumData = data.subjects.map(s => s.subject);
+                    // 중복 제거
+                    curriculumData = [...new Set(curriculumData)].sort();
+                    updateCurriculumDatalist();
+
+                    // domain 카테고리도 수집
+                    const domains = [...new Set(data.subjects.map(s => s.domain).filter(Boolean))].sort();
+                    const catDl = document.getElementById('categoryList');
+                    catDl.innerHTML = domains.map(d => '<option value="' + d + '">').join('');
+
+                    // 과목별 상세정보 캐시 (자동 입력용)
+                    window._coursSubjectCache = {};
+                    data.subjects.forEach(s => {
+                        if (!window._coursSubjectCache[s.subject]) {
+                            window._coursSubjectCache[s.subject] = s;
+                        }
+                    });
+                    console.log('[기초DB] 교육과정 과목 ' + curriculumData.length + '개 로드 완료');
+                }
+            } catch (e) {
+                console.error('교육과정 DB 로드 오류:', e);
+            }
+        }
+
+        // ==========================================
+        // 과목 조사 기간 로드/저장
+        // ==========================================
+        async function loadSurveyPeriod() {
+            try {
+                const res = await fetch('/api/timetable-survey/get?school_id=' + encodeURIComponent(currentUser.school_id));
+                const data = await res.json();
+                if (data.success && data.survey) {
+                    const startEl = document.getElementById('surveyStartDate');
+                    const endEl = document.getElementById('surveyEndDate');
+                    if (startEl && data.survey.survey_start) startEl.value = data.survey.survey_start;
+                    if (endEl && data.survey.survey_end) endEl.value = data.survey.survey_end;
+                }
+            } catch (e) {
+                console.error('조사 기간 로드 오류:', e);
+            }
+        }
+
+        async function saveSurveyPeriod() {
+            const startEl = document.getElementById('surveyStartDate');
+            const endEl = document.getElementById('surveyEndDate');
+            if (!startEl || !endEl || !startEl.value || !endEl.value) {
+                alert('시작일과 종료일을 모두 입력해주세요.');
+                return;
+            }
+            if (startEl.value > endEl.value) {
+                alert('종료일이 시작일보다 빠를 수 없습니다.');
+                return;
+            }
+            try {
+                const res = await fetch('/api/timetable-survey/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        school_id: currentUser.school_id,
+                        member_school: currentUser.member_school,
+                        survey_start: startEl.value,
+                        survey_end: endEl.value,
+                        survey_status: 'active'
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('과목 조사 기간이 저장되었습니다.\n' + startEl.value + ' ~ ' + endEl.value);
+                } else {
+                    alert(data.message || '저장 실패');
+                }
+            } catch (e) {
+                alert('저장 중 오류: ' + e.message);
+            }
+        }
+        
+        // 포인트 정보 로드
+        async function loadUserPoint() {
+            try {
+                const url = `/api/teacher/info?member_id=${encodeURIComponent(currentUser.member_id)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success && data.teacher) {
+                    displayPoint(data.teacher.point);
+                    // school_id 동기화
+                    if (data.teacher.school_id && !currentUser.school_id) {
+                        currentUser.school_id = data.teacher.school_id;
+                        localStorage.setItem('schoolus_user', JSON.stringify(currentUser));
+                    }
+                }
+            } catch (error) {
+                console.error('포인트 로드 오류:', error);
+            }
+        }
+        
+        // 포인트 표시
+        function displayPoint(point) {
+            const el = document.getElementById('userPoint');
+            if (!el) return;
+            
+            if (point === 'free' || point === 'Free') {
+                el.textContent = 'Free';
+            } else if (point === null || point === undefined || point === '') {
+                el.textContent = '0';
+            } else {
+                const num = parseInt(point);
+                el.textContent = isNaN(num) ? '0' : num.toLocaleString();
+            }
+        }
+
+        // ==========================================
+        // Common Functions
+        // ==========================================
+        function toggleLoading(show) {
+            const el = document.getElementById('loadingOverlay');
+            if(show) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+        }
+
+        function showSaveModal(defaultName, callback) {
+            document.getElementById('modalFileName').value = defaultName;
+            document.getElementById('saveFileModal').classList.remove('hidden');
+            saveFileCallback = callback;
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveFileModal').classList.add('hidden');
+            saveFileCallback = null;
+        }
+
+        function confirmSaveFile() {
+            const fileName = document.getElementById('modalFileName').value.trim();
+            if (!fileName) {
+                alert('파일명을 입력해주세요.');
+                return;
+            }
+            if (saveFileCallback) {
+                saveFileCallback(fileName);
+            }
+            closeSaveModal();
+        }
+
+        document.getElementById('modalSaveLocation').addEventListener('change', function() {
+            const customContainer = document.getElementById('customPathContainer');
+            if (this.value === 'custom') {
+                customContainer.classList.remove('hidden');
+            } else {
+                customContainer.classList.add('hidden');
+            }
+        });
+        
+        // ==========================================
+        // 프린트 함수
+        // ==========================================
+        function printStep(stepNum) {
+            document.body.classList.remove('print-step-1', 'print-step-2', 'print-step-3');
+            document.body.classList.add(`print-step-${stepNum}`);
+            window.print();
+            document.body.classList.remove(`print-step-${stepNum}`);
+        }
+
+        function goStep(n) {
+            document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-step-${n}`).classList.add('active');
+
+            for(let i=1; i<=3; i++) {
+                const el = document.getElementById(`step-${i}`);
+                if(i === n) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            }
+
+            // Step 이동 시 자동 데이터 전파
+            if(n === 2) {
+                // Step 1 → 2: 학생 데이터가 있으면 과목 통계 자동 재계산
+                if (globalDataRows.length > 0) {
+                    calculateSubjectStats();
+                }
+            }
+            if(n === 3) {
+                // Step 2 → 3: 교사 수급 자동 렌더링
+                renderTeacherSupply();
+            }
+
+            const headerContainer = document.getElementById('headerControls');
+            headerContainer.innerHTML = '';
+
+            if (n === 1) {
+                headerContainer.innerHTML = `
+                    <div class="btn-group">
+                        <!-- 엑셀 업로드 / 양식 다운로드 -->
+                        <label for="excelUpload" class="btn-sm bg-amber-600 hover:bg-amber-700 text-white shadow cursor-pointer">
+                            <i class="fas fa-file-upload"></i> 엑셀 업로드
+                        </label>
+                        <input type="file" id="excelUpload" accept=".xlsx, .xls" class="hidden" onchange="handleExcelUpload(event)">
+                        <button onclick="downloadExcelForm()" class="btn-sm bg-amber-500 hover:bg-amber-600 text-white shadow">
+                            <i class="fas fa-file-download"></i> 양식 다운로드
+                        </button>
+                        
+                        <span class="border-l border-slate-300 mx-1"></span>
+                        
+                        <!-- 결과DB (timetable_data) -->
+                        <button onclick="loadFromTimetableDataDB()" class="btn-sm bg-green-500 hover:bg-green-600 text-white shadow">
+                            <i class="fas fa-download"></i> 결과DB 불러오기
+                        </button>
+                        <button onclick="saveToTimetableDataDB()" class="btn-sm bg-green-600 hover:bg-green-700 text-white shadow">
+                            <i class="fas fa-upload"></i> 결과DB 저장
+                        </button>
+                        
+                        <span class="border-l border-slate-300 mx-1"></span>
+                        
+                        <!-- 프린트 -->
+                        <button onclick="printStep(1)" class="btn-sm bg-slate-700 hover:bg-slate-800 text-white shadow">
+                            <i class="fas fa-print"></i> 프린터 출력
+                        </button>
+                    </div>
+                `;
+            } else if (n === 2) {
+                headerContainer.innerHTML = `
+                    <div class="btn-group">
+                        <!-- 엑셀 업로드 / 양식 다운로드 -->
+                        <label for="studentUpload" class="btn-sm bg-amber-600 hover:bg-amber-700 text-white shadow cursor-pointer">
+                            <i class="fas fa-file-upload"></i> 엑셀 업로드
+                        </label>
+                        <input type="file" id="studentUpload" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleStudentUpload(event)">
+                        <button onclick="downloadStudentExcelForm()" class="btn-sm bg-amber-500 hover:bg-amber-600 text-white shadow">
+                            <i class="fas fa-file-download"></i> 양식 다운로드
+                        </button>
+                        
+                        <span class="border-l border-slate-300 mx-1"></span>
+                        
+                        <!-- DB (timetable_stu) -->
+                        <button onclick="loadFromTimetableStuDB()" class="btn-sm bg-blue-500 hover:bg-blue-600 text-white shadow">
+                            <i class="fas fa-download"></i> 학생DB 불러오기
+                        </button>
+                        <button onclick="saveToTimetableStuDB()" class="btn-sm bg-blue-600 hover:bg-blue-700 text-white shadow">
+                            <i class="fas fa-upload"></i> 학생DB 저장
+                        </button>
+                        
+                        <span class="border-l border-slate-300 mx-1"></span>
+                        
+                        <!-- 찾기/바꾸기 (Ctrl+F) -->
+                        <button onclick="showFindReplaceModal()" class="btn-sm bg-purple-500 hover:bg-purple-600 text-white shadow">
+                            <i class="fas fa-search"></i> 찾기/바꾸기
+                        </button>
+                        
+                        <span class="border-l border-slate-300 mx-1"></span>
+                        
+                        <!-- 엑셀 저장 -->
+                        <button onclick="exportData()" class="btn-sm bg-green-600 hover:bg-green-700 text-white shadow">
+                            <i class="fas fa-file-excel"></i> 엑셀 저장
+                        </button>
+                        
+                        <!-- 프린트 -->
+                        <button onclick="printStep(2)" class="btn-sm bg-slate-700 hover:bg-slate-800 text-white shadow">
+                            <i class="fas fa-print"></i> 프린터 출력
+                        </button>
+                        
+                        <span class="border-l border-slate-300 mx-1"></span>
+                        
+                        <!-- 데이터 초기화 -->
+                        <button onclick="clearStudentData()" class="btn-sm bg-red-500 hover:bg-red-600 text-white shadow">
+                            <i class="fas fa-trash-alt"></i> 데이터 초기화
+                        </button>
+                    </div>
+                `;
+            } else if (n === 3) {
+                 headerContainer.innerHTML = `
+                    <div class="btn-group">
+                        <!-- DB 불러오기/저장 -->
+                        <button onclick="loadTeacherSupplyFromDB()" class="btn-sm bg-blue-500 hover:bg-blue-600 text-white shadow">
+                            <i class="fas fa-download"></i> 결과DB 불러오기
+                        </button>
+                        <button onclick="saveTeacherSupplyToDB()" class="btn-sm bg-blue-600 hover:bg-blue-700 text-white shadow">
+                            <i class="fas fa-upload"></i> 결과DB 저장
+                        </button>
+                        
+                        <span class="border-l border-slate-300 mx-1"></span>
+                        
+                        <button onclick="exportTeacherSupply()" class="btn-sm bg-green-600 hover:bg-green-700 text-white shadow">
+                            <i class="fas fa-file-excel"></i> 엑셀 저장
+                        </button>
+                        <button onclick="printStep(3)" class="btn-sm bg-slate-700 hover:bg-slate-800 text-white shadow">
+                            <i class="fas fa-print"></i> 프린터 출력
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // ==========================================
+        // Step 1: 엑셀폼 다운로드 (timetable_data 컬럼 기준)
+        // ==========================================
+        function downloadExcelForm() {
+            const wb = XLSX.utils.book_new();
+            
+            // 컬럼 헤더 (school_id, member_school 제외 - 자동입력됨)
+            const headers = ['subject', 'course_year', 'grade', 'subject_demand', 'subject_type', 'subject_depart', 'stu_count', 'class_demand', 'tea_demand', 'tea_1person'];
+            
+            // 샘플 데이터 (예시)
+            const sampleData = [
+                headers,
+                ['국어', '2022', '1', '4', '일반선택', '국어', '', '', '', ''],
+                ['수학I', '2022', '2', '4', '일반선택', '수학', '', '', '', ''],
+                ['영어', '2022', '1', '4', '일반선택', '영어', '', '', '', '']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(sampleData);
+            
+            // 컬럼 너비 설정
+            ws['!cols'] = [
+                {wch: 20}, // subject
+                {wch: 12}, // course_year
+                {wch: 8},  // grade
+                {wch: 14}, // subject_demand
+                {wch: 15}, // subject_type
+                {wch: 15}, // subject_depart
+                {wch: 12}, // stu_count
+                {wch: 12}, // class_demand
+                {wch: 12}, // tea_demand
+                {wch: 12}  // tea_1person
+            ];
+            
+            XLSX.utils.book_append_sheet(wb, ws, '개설과목');
+            
+            showSaveModal('timetable_data_form', function(fileName) {
+                XLSX.writeFile(wb, fileName + '.xlsx');
+            });
+        }
+
+        // ==========================================
+        // Step 1: 엑셀정보 불러오기
+        // ==========================================
+        function handleExcelUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            toggleLoading(true);
+            
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    const data = new Uint8Array(ev.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
+                    
+                    if (jsonData.length < 2) {
+                        alert("데이터가 없습니다. 헤더와 데이터 행이 필요합니다.");
+                        toggleLoading(false);
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    const headers = jsonData[0].map(h => String(h).trim().toLowerCase());
+                    const dataRows = jsonData.slice(1);
+                    
+                    // 컬럼 인덱스 매핑
+                    const colMap = {};
+                    headers.forEach((h, idx) => {
+                        // DB 컬럼명과 매칭
+                        if (DB_COLUMNS.includes(h) || h === 'subject' || h === 'course_year' || h === 'grade' || 
+                            h === 'subject_demand' || h === 'subject_type' || h === 'subject_depart' ||
+                            h === 'stu_count' || h === 'class_demand' || h === 'tea_demand' || h === 'tea_1person') {
+                            colMap[h] = idx;
+                        }
+                    });
+                    
+                    if (!colMap.hasOwnProperty('subject')) {
+                        alert("'subject' 컬럼이 필요합니다.");
+                        toggleLoading(false);
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    // 데이터 파싱
+                    let loadedCount = 0;
+                    dataRows.forEach(row => {
+                        const subject = row[colMap['subject']] ? String(row[colMap['subject']]).trim() : '';
+                        if (!subject) return; // 과목명 없으면 스킵
+                        
+                        const subjectData = {
+                            name: subject,
+                            grade: colMap.hasOwnProperty('grade') && row[colMap['grade']] ? String(row[colMap['grade']]) : '1',
+                            hours: colMap.hasOwnProperty('subject_demand') && row[colMap['subject_demand']] ? parseInt(row[colMap['subject_demand']]) || 4 : 4,
+                            courseYear: colMap.hasOwnProperty('course_year') && row[colMap['course_year']] ? String(row[colMap['course_year']]) : '',
+                            subjectType: colMap.hasOwnProperty('subject_type') && row[colMap['subject_type']] ? String(row[colMap['subject_type']]) : '',
+                            domain: colMap.hasOwnProperty('subject_depart') && row[colMap['subject_depart']] ? String(row[colMap['subject_depart']]) : '',
+                            schoolLevel: '고등',
+                            // 추가 데이터
+                            stuCount: colMap.hasOwnProperty('stu_count') && row[colMap['stu_count']] ? String(row[colMap['stu_count']]) : '',
+                            classDemand: colMap.hasOwnProperty('class_demand') && row[colMap['class_demand']] ? String(row[colMap['class_demand']]) : '',
+                            teaDemand: colMap.hasOwnProperty('tea_demand') && row[colMap['tea_demand']] ? String(row[colMap['tea_demand']]) : '',
+                            tea1person: colMap.hasOwnProperty('tea_1person') && row[colMap['tea_1person']] ? String(row[colMap['tea_1person']]) : ''
+                        };
+                        
+                        openSubjects.push(subjectData);
+                        loadedCount++;
+                    });
+                    
+                    renderOpenSubjects();
+                    alert(`엑셀에서 ${loadedCount}개 과목을 불러왔습니다.`);
+                    
+                } catch (err) {
+                    console.error(err);
+                    alert("엑셀 파일 읽기 오류: " + err.message);
+                } finally {
+                    toggleLoading(false);
+                    e.target.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ==========================================
+        // timetable_data DB 불러오기 (결과DB)
+        // ==========================================
+        function loadFromTimetableDataDB() {
+            const schoolId = currentUser.school_id;
+            if (!schoolId) {
+                alert('school_id가 없습니다. 다시 로그인해주세요.');
+                return;
+            }
+
+            toggleLoading(true);
+
+            fetch('/api/timetable-data/list?school_id=' + encodeURIComponent(schoolId))
+                .then(res => { if (!res.ok) throw new Error('서버 오류 (' + res.status + ')'); return res.json(); })
+                .then(data => {
+                    if (data.success && data.data) {
+                        openSubjects = data.data.map(d => ({
+                            name: d.subject || '',
+                            grade: String(d.grade || '1'),
+                            hours: parseInt(d.subject_demand) || 4,
+                            courseYear: d.course_year || '',
+                            subjectType: d.subject_type || '',
+                            domain: d.subject_depart || '',
+                            schoolLevel: '고등',
+                            stuCount: d.stu_count || '',
+                            classDemand: d.class_demand || '',
+                            teaDemand: d.tea_demand || '',
+                            tea1person: d.tea_1person || ''
+                        }));
+                        renderOpenSubjects();
+                        alert('결과DB에서 ' + openSubjects.length + '개 과목을 불러왔습니다.');
+                    } else {
+                        alert(data.message || '결과DB 불러오기 실패');
+                    }
+                })
+                .catch(err => { console.error(err); alert('DB 연결 오류: ' + err.message); })
+                .finally(() => toggleLoading(false));
+        }
+
+        // ==========================================
+        // timetable_data DB 저장하기 (결과DB) - school_id, member_school 자동 입력
+        // ==========================================
+        function saveToTimetableDataDB() {
+            if (openSubjects.length === 0) {
+                alert('저장할 과목이 없습니다.');
+                return;
+            }
+            
+            const memberSchool = currentUser.member_school;
+            const schoolId = currentUser.school_id;
+            
+            if (!schoolId) {
+                alert('school_id가 없습니다.\n로그인 정보를 확인해주세요.');
+                return;
+            }
+            
+            if (!confirm(`${openSubjects.length}개 과목을 결과DB에 저장하시겠습니까?\n(학교: ${memberSchool})`)) return;
+            
+            toggleLoading(true);
+            
+            // timetable_data 컬럼: school_id, member_school, subject, course_year, grade, subject_demand, subject_type, subject_depart
+            // school_id와 member_school은 현재 사용자 정보에서 자동 입력
+            const timetableData = openSubjects.map(s => ({
+                school_id: schoolId,
+                member_school: memberSchool,
+                subject: s.name || '',
+                course_year: s.courseYear || '',
+                grade: parseInt(s.grade) || 1,
+                subject_demand: parseInt(s.hours) || 4,
+                subject_type: s.subjectType || '',
+                subject_depart: s.domain || ''
+            }));
+            
+            fetch('/api/timetable-data/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    school_id: schoolId,
+                    member_school: memberSchool,
+                    data: timetableData
+                })
+            })
+            .then(res => { if (!res.ok) throw new Error('서버 오류 (' + res.status + ')'); return res.json(); })
+            .then(data => {
+                if (data.success) {
+                    alert(data.message || '결과DB 저장 완료');
+                } else {
+                    alert(data.message || '결과DB 저장 실패');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('DB 저장 오류: ' + err.message);
+            })
+            .finally(() => toggleLoading(false));
+        }
+
+        // ==========================================
+        // Step 2: 엑셀폼 다운로드 (timetable_stu 컬럼 기준)
+        // ==========================================
+        function downloadStudentExcelForm() {
+            const wb = XLSX.utils.book_new();
+            
+            // 컬럼 헤더 (school_id 제외 - 자동입력됨)
+            const headers = ['member_id', 'member_name', 'member_birth', 'grade', 'class_no', 'student_num',
+                'subject1', 'subject2', 'subject3', 'subject4', 'subject5', 'subject6',
+                'subject7', 'subject8', 'subject9', 'subject10', 'subject11', 'subject12'];
+            
+            // 샘플 데이터 (예시)
+            const sampleData = [
+                headers,
+                ['stu001', '홍길동', '2007-03-15', '2', '1', '1', '국어', '수학I', '영어', '물리학I', '', '', '', '', '', '', '', ''],
+                ['stu002', '김철수', '2007-05-20', '2', '1', '2', '국어', '수학II', '영어', '화학I', '', '', '', '', '', '', '', '']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(sampleData);
+            
+            // 컬럼 너비 설정
+            ws['!cols'] = [
+                {wch: 10}, {wch: 12}, {wch: 12}, {wch: 8}, {wch: 8}, {wch: 8},
+                {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12},
+                {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}
+            ];
+            
+            XLSX.utils.book_append_sheet(wb, ws, '학생데이터');
+            
+            showSaveModal('timetable_stu_form', function(fileName) {
+                XLSX.writeFile(wb, fileName + '.xlsx');
+            });
+        }
+
+        // ==========================================
+        // Step 2: timetable_stu DB 불러오기 (완전 교체)
+        // ==========================================
+        function loadFromTimetableStuDB() {
+            const schoolId = currentUser.school_id;
+            if (!schoolId) {
+                alert('school_id가 없습니다. 다시 로그인해주세요.');
+                return;
+            }
+
+            toggleLoading(true);
+
+            fetch('/api/timetable-stu/list?school_id=' + encodeURIComponent(schoolId))
+                .then(res => { if (!res.ok) throw new Error('서버 오류 (' + res.status + ')'); return res.json(); })
+                .then(data => {
+                    if (data.success && data.data) {
+                        // 기존 데이터 완전 교체
+                        globalHeaders = ['member_id', 'member_name', 'member_birth', 'grade', 'class_no', 'student_num',
+                            'subject1', 'subject2', 'subject3', 'subject4', 'subject5', 'subject6',
+                            'subject7', 'subject8', 'subject9', 'subject10', 'subject11', 'subject12'];
+                        
+                        globalDataRows = data.data.map(d => [
+                            d.member_id || '',
+                            d.member_name || '',
+                            d.member_birth || '',
+                            String(d.grade || ''),
+                            String(d.class_no || ''),
+                            String(d.student_num || ''),
+                            d.subject1 || '', d.subject2 || '', d.subject3 || '', d.subject4 || '',
+                            d.subject5 || '', d.subject6 || '', d.subject7 || '', d.subject8 || '',
+                            d.subject9 || '', d.subject10 || '', d.subject11 || '', d.subject12 || ''
+                        ]);
+                        
+                        // 데이터 렌더링
+                        renderStudentTable();
+                        calculateSubjectStats();
+                        renderTeacherSupply();
+                        
+                        alert(`학생DB에서 ${globalDataRows.length}명의 데이터를 불러왔습니다.\n(학교: ${memberSchool})`);
+                    } else {
+                        alert(data.message || '학생DB 불러오기 실패');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('DB 연결 오류: ' + err.message);
+                })
+                .finally(() => toggleLoading(false));
+        }
+        
+        // 과목 통계 계산 함수
+        function calculateSubjectStats() {
+            let subjectIndices = [];
+            
+            globalHeaders.forEach((h, idx) => {
+                if(!h) return;
+                const lowerH = String(h).toLowerCase().trim();
+                
+                // subject로 시작하는 컬럼은 과목으로 처리
+                if (lowerH.startsWith('subject') && /subject\d+/.test(lowerH)) {
+                    subjectIndices.push(idx);
+                }
+            });
+
+            const subjectCounts = {};
+            globalDataRows.forEach(row => {
+                subjectIndices.forEach(colIdx => {
+                    if(row[colIdx]) {
+                        const s = String(row[colIdx]).trim();
+                        if(s) subjectCounts[s] = (subjectCounts[s] || 0) + 1;
+                    }
+                });
+            });
+
+            // openSubjects에 없는 과목 자동 추가
+            Object.keys(subjectCounts).forEach(subjName => {
+                if (!openSubjects.some(os => os.name === subjName)) {
+                    openSubjects.push({ 
+                        name: subjName, 
+                        grade: "1", 
+                        hours: 4, 
+                        courseYear: "", 
+                        subjectType: "학생데이터추가", 
+                        domain: "",
+                        schoolLevel: "고등"
+                    });
+                }
+            });
+            
+            latestSubjectCounts = subjectCounts;
+            renderSubjectStats(subjectCounts);
+        }
+
+        // ==========================================
+        // Step 2: timetable_stu DB 저장하기
+        // ==========================================
+        function saveToTimetableStuDB() {
+            if (globalDataRows.length === 0) {
+                alert('저장할 학생 데이터가 없습니다.');
+                return;
+            }
+            
+            const schoolId = currentUser.school_id;
+            const memberSchool = currentUser.member_school;
+            
+            if (!schoolId) {
+                alert('school_id가 없습니다.\n로그인 정보를 확인해주세요.');
+                return;
+            }
+            
+            if (!confirm(`${globalDataRows.length}명의 학생 데이터를 DB에 저장하시겠습니까?\n(학교: ${memberSchool})`)) return;
+            
+            toggleLoading(true);
+            
+            // 헤더 인덱스 매핑
+            const headerIndexMap = {};
+            globalHeaders.forEach((h, idx) => {
+                headerIndexMap[String(h).toLowerCase()] = idx;
+            });
+            
+            // 데이터 변환
+            const stuData = globalDataRows.map(row => {
+                const getVal = (key) => {
+                    const idx = headerIndexMap[key.toLowerCase()];
+                    return idx !== undefined ? (row[idx] || '') : '';
+                };
+                
+                // member_birth 빈 값 처리
+                const birthVal = getVal('member_birth');
+                const memberBirth = (birthVal && birthVal.trim() !== '') ? birthVal : null;
+                
+                return {
+                    school_id: schoolId,
+                    member_school: memberSchool,
+                    member_id: getVal('member_id') || null,
+                    member_name: getVal('member_name'),
+                    member_birth: memberBirth,
+                    grade: getVal('grade'),
+                    class_no: getVal('class_no'),
+                    student_num: getVal('student_num'),
+                    subject1: getVal('subject1'),
+                    subject2: getVal('subject2'),
+                    subject3: getVal('subject3'),
+                    subject4: getVal('subject4'),
+                    subject5: getVal('subject5'),
+                    subject6: getVal('subject6'),
+                    subject7: getVal('subject7'),
+                    subject8: getVal('subject8'),
+                    subject9: getVal('subject9'),
+                    subject10: getVal('subject10'),
+                    subject11: getVal('subject11'),
+                    subject12: getVal('subject12')
+                };
+            });
+            
+            fetch('/api/timetable-stu/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    school_id: schoolId,
+                    member_school: memberSchool,
+                    data: stuData
+                })
+            })
+            .then(res => { if (!res.ok) throw new Error('서버 오류 (' + res.status + ')'); return res.json(); })
+            .then(data => {
+                if (data.success) {
+                    alert(data.message || '학생DB 저장 완료');
+                } else {
+                    alert(data.message || '학생DB 저장 실패');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('DB 저장 오류: ' + err.message);
+            })
+            .finally(() => toggleLoading(false));
+        }
+
+        // ==========================================
+        // Step 2: 과목별 수강인원을 timetable_data의 stu_count에 저장
+        // ==========================================
+        function saveStudentCountsToTimetableData() {
+            if (Object.keys(latestSubjectCounts).length === 0) {
+                alert('저장할 수강인원 데이터가 없습니다.\n학생 데이터를 먼저 불러오세요.');
+                return;
+            }
+            
+            const schoolId = currentUser.school_id;
+            const memberSchool = currentUser.member_school;
+            
+            if (!schoolId) {
+                alert('school_id가 없습니다.\n로그인 정보를 확인해주세요.');
+                return;
+            }
+            
+            if (!confirm(`과목별 수강인원을 결과DB에 저장하시겠습니까?\n(${Object.keys(latestSubjectCounts).length}개 과목)`)) return;
+            
+            toggleLoading(true);
+            
+            // 수강인원 데이터 준비
+            const countData = Object.entries(latestSubjectCounts).map(([subject, count]) => ({
+                subject: subject,
+                stu_count: count
+            }));
+            
+            fetch('/api/timetable-data/update-stu-count', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    school_id: schoolId,
+                    member_school: memberSchool,
+                    data: countData
+                })
+            })
+            .then(res => { if (!res.ok) throw new Error('서버 오류 (' + res.status + ')'); return res.json(); })
+            .then(data => {
+                if (data.success) {
+                    alert(data.message || '수강인원 저장 완료');
+                } else {
+                    alert(data.message || '수강인원 저장 실패');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('DB 저장 오류: ' + err.message);
+            })
+            .finally(() => toggleLoading(false));
+        }
+
+        // ==========================================
+        // Datalist 업데이트
+        // ==========================================
+        function updateCurriculumDatalist() {
+            const dl = document.getElementById('curriculumList');
+            dl.innerHTML = curriculumData.map(s => `<option value="${s}">`).join('');
+        }
+        
+        function updateCategoryDatalist() {
+            const dl = document.getElementById('categoryList');
+            const categories = new Set();
+            openSubjects.forEach(s => { 
+                if(s.domain) categories.add(s.domain.trim()); 
+            });
+            dl.innerHTML = Array.from(categories).sort().map(c => `<option value="${c}">`).join('');
+        }
+
+        // ==========================================
+        // 개설과목 목록 렌더링
+        // ==========================================
+        function renderOpenSubjects() {
+            const tbody = document.getElementById('openSubjectBody');
+            tbody.innerHTML = '';
+            if(openSubjects.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-slate-400">등록된 과목이 없습니다.</td></tr>`;
+                document.getElementById('openSubjectCount').innerText = 0;
+                return;
+            }
+            updateCategoryDatalist();
+            openSubjects.forEach((subj, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="text-center text-slate-400 text-xs bg-slate-50 border-r border-slate-100">${idx+1}</td>
+                    <td class="p-0 h-10 border-r border-slate-100"><input type="text" class="table-input w-full font-bold text-slate-700" value="${subj.name || ''}" list="curriculumList" onchange="updateOpenSubject(${idx}, 'name', this.value)" placeholder="과목명"></td>
+                    <td class="p-0 h-10 w-16 border-r border-slate-100"><input type="number" class="table-input" value="${subj.grade || '1'}" onchange="updateOpenSubject(${idx}, 'grade', this.value)"></td>
+                    <td class="p-0 h-10 w-16 border-r border-slate-100"><input type="number" class="table-input" value="${subj.hours || 4}" onchange="updateOpenSubject(${idx}, 'hours', this.value)"></td>
+                    <td class="p-0 h-10 border-r border-slate-100"><input type="text" class="table-input w-full text-slate-600" value="${subj.courseYear || ''}" placeholder="2022" onchange="updateOpenSubject(${idx}, 'courseYear', this.value)"></td>
+                    <td class="p-0 h-10 border-r border-slate-100"><input type="text" class="table-input w-full text-slate-600" value="${subj.subjectType || ''}" placeholder="일반선택" onchange="updateOpenSubject(${idx}, 'subjectType', this.value)"></td>
+                    <td class="p-0 h-10 border-r border-slate-100"><input type="text" class="table-input w-full text-slate-600" value="${subj.domain || ''}" placeholder="과목군" list="categoryList" onchange="updateOpenSubject(${idx}, 'domain', this.value)"></td>
+                    <td class="p-0 h-10 border-r border-slate-100">
+                        <select class="table-input w-full text-slate-600" onchange="updateOpenSubject(${idx}, 'schoolLevel', this.value)">
+                            <option value="고등" ${subj.schoolLevel === '고등' ? 'selected' : ''}>고등</option>
+                            <option value="중등" ${subj.schoolLevel === '중등' ? 'selected' : ''}>중등</option>
+                            <option value="초등" ${subj.schoolLevel === '초등' ? 'selected' : ''}>초등</option>
+                        </select>
+                    </td>
+                    <td class="text-center p-1 no-print"><button onclick="removeOpenSubject(${idx})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded transition"><i class="fas fa-trash-alt"></i></button></td>`;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('openSubjectCount').innerText = openSubjects.length;
+        }
+
+        function addOpenSubjectRow() { 
+            openSubjects.push({ 
+                name: "", 
+                grade: "1", 
+                hours: 4, 
+                courseYear: "", 
+                subjectType: "", 
+                domain: "",
+                schoolLevel: "고등"
+            }); 
+            renderOpenSubjects(); 
+        }
+
+        function addOpenSubjectByInput() {
+            const name = document.getElementById('newSubjectName').value.trim();
+            if(name) {
+                // cours_subject 캐시에서 자동 채우기
+                const cached = window._coursSubjectCache ? window._coursSubjectCache[name] : null;
+                const courseYearInput = document.getElementById('newCourseYear').value.trim();
+                const subjectTypeInput = document.getElementById('newSubjectType').value.trim();
+                const domainInput = document.getElementById('newSubjectDomain').value.trim();
+
+                openSubjects.push({
+                    name: name,
+                    grade: document.getElementById('newSubjectGrade').value,
+                    hours: parseInt(document.getElementById('newSubjectHours').value) || 4,
+                    courseYear: courseYearInput || (cached ? cached.course_year : ''),
+                    subjectType: subjectTypeInput || '',
+                    domain: domainInput || (cached ? cached.domain : ''),
+                    schoolLevel: document.getElementById('newSchoolLevel').value
+                });
+                document.getElementById('newSubjectName').value = '';
+                renderOpenSubjects();
+            } else {
+                alert("과목명을 입력해주세요.");
+            }
+        }
+
+        // 과목명 입력 시 교육과정 DB에서 자동 완성
+        document.getElementById('newSubjectName').addEventListener('change', function() {
+            const name = this.value.trim();
+            const cached = window._coursSubjectCache ? window._coursSubjectCache[name] : null;
+            if (cached) {
+                const cyEl = document.getElementById('newCourseYear');
+                const domainEl = document.getElementById('newSubjectDomain');
+                if (cyEl && !cyEl.value) cyEl.value = cached.course_year || '';
+                if (domainEl && !domainEl.value) domainEl.value = cached.domain || '';
+            }
+        });
+
+        function updateOpenSubject(idx, field, val) { 
+            openSubjects[idx][field] = val; 
+            if(field === 'domain') updateCategoryDatalist(); 
+        }
+
+        function removeOpenSubject(idx) { 
+            openSubjects.splice(idx, 1); 
+            renderOpenSubjects(); 
+        }
+
+        // ==========================================
+        // STEP 2: 학생 데이터 처리 (엑셀 불러오기 - 완전 교체)
+        // ==========================================
+        function handleStudentUpload(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            toggleLoading(true);
+            setTimeout(() => {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    try {
+                        const data = new Uint8Array(ev.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
+                        if(jsonData.length < 2) { alert("데이터 없음"); toggleLoading(false); return; }
+                        
+                        // 기존 데이터 완전 교체
+                        globalHeaders = jsonData[0];
+                        globalDataRows = jsonData.slice(1).filter(row => {
+                            // 빈 행 제거
+                            return row.some(cell => cell && String(cell).trim() !== '');
+                        });
+                        
+                        processData();
+                        alert(`엑셀에서 ${globalDataRows.length}명의 데이터를 불러왔습니다.`);
+                    } catch (err) { 
+                        console.error(err); 
+                        alert("오류 발생: " + err.message); 
+                    } finally { 
+                        toggleLoading(false); 
+                        e.target.value = ''; 
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }, 100);
+        }
+        
+        // 학생 데이터 초기화
+        function clearStudentData() {
+            if (globalDataRows.length === 0) {
+                alert('초기화할 데이터가 없습니다.');
+                return;
+            }
+            
+            if (!confirm(`현재 화면의 학생 데이터 ${globalDataRows.length}명을 모두 초기화하시겠습니까?\n\n⚠️ DB에 저장된 데이터는 삭제되지 않습니다.`)) {
+                return;
+            }
+            
+            globalHeaders = [];
+            globalDataRows = [];
+            latestSubjectCounts = {};
+            
+            renderStudentTable();
+            renderSubjectStats({});
+            renderTeacherSupply();
+            
+            alert('학생 데이터가 초기화되었습니다.');
+        }
+        
+        // ==========================================
+        // 찾기/바꾸기 기능 (Ctrl+F)
+        // ==========================================
+        function showFindReplaceModal() {
+            if (globalDataRows.length === 0) {
+                alert('학생 데이터가 없습니다.\n먼저 데이터를 불러오세요.');
+                return;
+            }
+            
+            // 바꿀 과목 드롭다운 채우기 (개설과목만)
+            const replaceSelect = document.getElementById('replaceSubjectSelect');
+            replaceSelect.innerHTML = '<option value="">-- 과목 선택 --</option>';
+            openSubjects.forEach(subj => {
+                replaceSelect.innerHTML += `<option value="${subj.name}">${subj.name} (${subj.grade}학년)</option>`;
+            });
+            
+            // 찾을 과목 입력 초기화
+            document.getElementById('findSubjectInput').value = '';
+            document.getElementById('findReplaceResult').classList.add('hidden');
+            
+            // 현재 데이터에서 사용 중인 과목 목록 표시
+            updateFindSuggestions();
+            
+            document.getElementById('findReplaceModal').classList.remove('hidden');
+        }
+        
+        function closeFindReplaceModal() {
+            document.getElementById('findReplaceModal').classList.add('hidden');
+        }
+        
+        // 현재 데이터에서 사용 중인 과목 목록
+        function updateFindSuggestions() {
+            const suggestionsDiv = document.getElementById('findSubjectSuggestions');
+            const subjectCounts = {};
+            
+            // 과목 컬럼 인덱스 찾기
+            const subjectColIndices = [];
+            globalHeaders.forEach((h, idx) => {
+                const lowerH = String(h).toLowerCase().trim();
+                if (lowerH.startsWith('subject') && /subject\d+/.test(lowerH)) {
+                    subjectColIndices.push(idx);
+                }
+            });
+            
+            // 과목별 사용 횟수 카운트
+            globalDataRows.forEach(row => {
+                subjectColIndices.forEach(colIdx => {
+                    const val = String(row[colIdx] || '').trim();
+                    if (val) {
+                        subjectCounts[val] = (subjectCounts[val] || 0) + 1;
+                    }
+                });
+            });
+            
+            // 정렬 후 표시
+            const sorted = Object.entries(subjectCounts).sort((a, b) => b[1] - a[1]);
+            
+            if (sorted.length === 0) {
+                suggestionsDiv.classList.add('hidden');
+                return;
+            }
+            
+            let html = '<div class="text-xs text-slate-500 p-2 border-b">현재 사용 중인 과목 (클릭하여 선택)</div>';
+            sorted.forEach(([subj, count]) => {
+                html += `<div class="p-2 hover:bg-slate-100 cursor-pointer text-sm border-b" onclick="selectFindSubject('${subj.replace(/'/g, "\\'")}')">
+                    ${subj} <span class="text-slate-400">(${count}회)</span>
+                </div>`;
+            });
+            
+            suggestionsDiv.innerHTML = html;
+            suggestionsDiv.classList.remove('hidden');
+        }
+        
+        function selectFindSubject(subj) {
+            document.getElementById('findSubjectInput').value = subj;
+        }
+        
+        function executeFindReplace() {
+            const findValue = document.getElementById('findSubjectInput').value.trim();
+            const replaceValue = document.getElementById('replaceSubjectSelect').value;
+            
+            if (!findValue) {
+                alert('찾을 과목을 입력하세요.');
+                return;
+            }
+            
+            if (!replaceValue) {
+                alert('바꿀 과목을 선택하세요.\n(개설과목에서 등록한 과목만 선택 가능)');
+                return;
+            }
+            
+            if (findValue === replaceValue) {
+                alert('찾을 과목과 바꿀 과목이 같습니다.');
+                return;
+            }
+            
+            // 과목 컬럼 인덱스 찾기
+            const subjectColIndices = [];
+            globalHeaders.forEach((h, idx) => {
+                const lowerH = String(h).toLowerCase().trim();
+                if (lowerH.startsWith('subject') && /subject\d+/.test(lowerH)) {
+                    subjectColIndices.push(idx);
+                }
+            });
+            
+            // 찾아서 바꾸기
+            let replaceCount = 0;
+            globalDataRows.forEach(row => {
+                subjectColIndices.forEach(colIdx => {
+                    if (String(row[colIdx] || '').trim() === findValue) {
+                        row[colIdx] = replaceValue;
+                        replaceCount++;
+                    }
+                });
+            });
+            
+            if (replaceCount === 0) {
+                alert(`"${findValue}" 과목을 찾을 수 없습니다.`);
+                return;
+            }
+            
+            // 결과 표시
+            const resultDiv = document.getElementById('findReplaceResult');
+            resultDiv.innerHTML = `<i class="fas fa-check-circle mr-1"></i> "${findValue}" → "${replaceValue}" : <strong>${replaceCount}건</strong> 변경 완료`;
+            resultDiv.classList.remove('hidden');
+            
+            // 테이블 및 통계 갱신
+            processData();
+            
+            // 과목 목록 갱신
+            updateFindSuggestions();
+        }
+        
+        // Ctrl+F 단축키 (Step 2에서만)
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                const step2 = document.getElementById('stepContent-2');
+                if (step2 && !step2.classList.contains('hidden')) {
+                    e.preventDefault();
+                    showFindReplaceModal();
+                }
+            }
+            // ESC로 모달 닫기
+            if (e.key === 'Escape') {
+                closeFindReplaceModal();
+                closeSaveModal();
+            }
+        });
+
+        function processData() {
+            let subjectIndices = [];
+            let gradeIndex = -1;
+
+            globalHeaders.forEach((h, idx) => {
+                if(!h) return;
+                const lowerH = String(h).toLowerCase().trim();
+                if (lowerH === 'grade' || lowerH === '학년') gradeIndex = idx;
+
+                // 과목 컬럼 체크 (subject로 시작하는 컬럼은 무조건 과목으로 처리)
+                if (lowerH.startsWith('subject') && /subject\d+/.test(lowerH)) {
+                    subjectIndices.push(idx);
+                    return;
+                }
+                
+                // IGNORE_HEADERS에 포함된 컬럼은 무시 (정확히 일치하는 경우만)
+                let isIdentity = IGNORE_HEADERS.some(ignore => lowerH === ignore.toLowerCase());
+                if(!isIdentity) subjectIndices.push(idx);
+            });
+
+            const subjectCounts = {};
+            globalDataRows.forEach(row => {
+                subjectIndices.forEach(colIdx => {
+                    if(row[colIdx]) {
+                        const s = String(row[colIdx]).trim();
+                        if(s) subjectCounts[s] = (subjectCounts[s] || 0) + 1;
+                    }
+                });
+            });
+
+            Object.keys(subjectCounts).forEach(subjName => {
+                if (!openSubjects.some(os => os.name === subjName)) {
+                    openSubjects.push({ 
+                        name: subjName, 
+                        grade: "1", 
+                        hours: 4, 
+                        courseYear: "", 
+                        subjectType: "학생데이터추가", 
+                        domain: "",
+                        schoolLevel: "고등"
+                    });
+                }
+            });
+            
+            latestSubjectCounts = subjectCounts;
+            renderStudentTable(); 
+            renderSubjectStats(subjectCounts); 
+            renderTeacherSupply();
+        }
+
+        // 학년별 과목 옵션 생성 함수
+        function getSubjectOptionsForGrade(studentGrade, currentValue) {
+            const grade = String(studentGrade).trim();
+            // 해당 학년의 개설과목 필터링 (모든 학년 과목도 포함)
+            const subjects = openSubjects.filter(s => {
+                const subjGrade = String(s.grade).trim();
+                return subjGrade === grade || subjGrade === '' || subjGrade === '0';
+            });
+            
+            let options = '<option value="">-- 선택 --</option>';
+            subjects.forEach(s => {
+                const selected = (s.name === currentValue) ? 'selected' : '';
+                options += `<option value="${s.name}" ${selected}>${s.name}</option>`;
+            });
+            
+            // 현재 값이 목록에 없으면 그대로 추가 (미등록 표시 없이)
+            if (currentValue && !subjects.some(s => s.name === currentValue)) {
+                options += `<option value="${currentValue}" selected>${currentValue}</option>`;
+            }
+            
+            return options;
+        }
+        
+        // 과목 컬럼인지 확인
+        function isSubjectColumn(headerName) {
+            const h = String(headerName).toLowerCase();
+            return h.startsWith('subject') && /subject\d+/.test(h);
+        }
+
+        function renderStudentTable() {
+            const thead = document.getElementById('tableHeaderRow');
+            thead.innerHTML = '<th class="p-2 text-center w-10 bg-slate-100 sticky top-0 border-b z-20 text-xs">No</th>';
+            let visibleColIndices = [];
+            let gradeColIdx = -1;
+            let nameColIdx = -1;
+            
+            // 컬럼별 너비 설정
+            const colWidths = {
+                'member_name': 'min-w-[80px]', '이름': 'min-w-[80px]', '성명': 'min-w-[80px]', 'name': 'min-w-[80px]',
+                'member_birth': 'min-w-[90px]', '생년월일': 'min-w-[90px]', 'birth': 'min-w-[90px]',
+                'grade': 'min-w-[50px]', '학년': 'min-w-[50px]',
+                'class_no': 'min-w-[50px]', '반': 'min-w-[50px]',
+                'student_num': 'min-w-[50px]', '번호': 'min-w-[50px]',
+                'member_school': 'min-w-[100px]', '학교': 'min-w-[100px]'
+            };
+            
+            // 학년 및 이름 컬럼 인덱스 찾기
+            globalHeaders.forEach((h, idx) => {
+                const lowerH = String(h).toLowerCase().trim();
+                if (lowerH === 'grade' || lowerH === '학년') gradeColIdx = idx;
+                if (lowerH === 'member_name' || lowerH === '이름' || lowerH === '성명' || lowerH === 'name') nameColIdx = idx;
+            });
+            
+            // 동명이인 체크를 위한 이름 카운트 (빈 이름 제외)
+            const nameCounts = {};
+            globalDataRows.forEach(row => {
+                const name = nameColIdx >= 0 ? String(row[nameColIdx] || '').trim() : '';
+                if (name && name.length > 0) {
+                    nameCounts[name] = (nameCounts[name] || 0) + 1;
+                }
+            });
+            
+            globalHeaders.forEach((h, idx) => {
+                if(h === 'member_id' || h === 'school_id') return;
+                visibleColIndices.push(idx);
+                const lowerH = String(h).toLowerCase().trim();
+                const width = colWidths[lowerH] || colWidths[h] || (isSubjectColumn(h) ? 'min-w-[120px]' : 'min-w-[70px]');
+                thead.innerHTML += `<th class="p-2 text-center bg-slate-100 sticky top-0 border-b whitespace-nowrap ${width} z-20 text-xs">${HEADER_MAP[h] || h}</th>`;
+            });
+            
+            const tbody = document.getElementById('studentTableBody');
+            let htmlBuffer = '';
+            
+            globalDataRows.forEach((row, rowIdx) => {
+                const studentGrade = gradeColIdx >= 0 ? row[gradeColIdx] : '1';
+                const studentName = nameColIdx >= 0 ? String(row[nameColIdx] || '').trim() : '';
+                const isDuplicate = studentName.length > 0 && nameCounts[studentName] > 1;
+                
+                let rowClass = isDuplicate ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-slate-50';
+                let tr = `<tr class="${rowClass} transition"><td class="text-center text-slate-400 text-xs bg-slate-50 border-r border-slate-100 p-1">${rowIdx+1}</td>`;
+                
+                visibleColIndices.forEach(colIdx => {
+                    const headerName = globalHeaders[colIdx];
+                    const cellValue = row[colIdx] || '';
+                    const lowerHeader = String(headerName).toLowerCase().trim();
+                    
+                    // 이름 컬럼인지 확인
+                    const isNameCol = (lowerHeader === 'member_name' || lowerHeader === '이름' || lowerHeader === '성명' || lowerHeader === 'name');
+                    let cellClass = isNameCol && isDuplicate ? 'bg-yellow-100' : '';
+                    
+                    if (isSubjectColumn(headerName)) {
+                        // 과목 컬럼은 드롭다운으로 표시
+                        const options = getSubjectOptionsForGrade(studentGrade, cellValue);
+                        tr += `<td class="border-b border-slate-100 border-r p-0 h-9 ${cellClass}">
+                            <select class="table-input w-full text-xs h-full" onchange="updateCell(${rowIdx}, ${colIdx}, this.value)">
+                                ${options}
+                            </select>
+                        </td>`;
+                    } else if (isNameCol) {
+                        // 이름 컬럼 - 동명이인이면 아래에 표시
+                        const dupLabel = isDuplicate ? `<div class="text-xs text-yellow-600 font-bold leading-tight">동명이인</div>` : '';
+                        tr += `<td class="border-b border-slate-100 border-r p-0 ${cellClass}">
+                            <div class="flex flex-col items-center justify-center h-full py-1">
+                                <input type="text" class="table-input text-xs w-full" style="height:auto;" value="${cellValue}" onchange="updateCell(${rowIdx}, ${colIdx}, this.value)">
+                                ${dupLabel}
+                            </div>
+                        </td>`;
+                    } else {
+                        // 일반 컬럼은 input으로 표시
+                        tr += `<td class="border-b border-slate-100 border-r p-0 h-9 ${cellClass}">
+                            <input type="text" class="table-input text-xs h-full px-1" value="${cellValue}" onchange="updateCell(${rowIdx}, ${colIdx}, this.value)">
+                        </td>`;
+                    }
+                });
+                htmlBuffer += tr + '</tr>';
+            });
+            
+            if(globalDataRows.length === 0) {
+                htmlBuffer = `<tr><td colspan="${visibleColIndices.length + 1}" class="p-10 text-center text-slate-400">데이터가 없습니다.</td></tr>`;
+            }
+            
+            tbody.innerHTML = htmlBuffer;
+            document.getElementById('studentCountBadge').innerText = `${globalDataRows.length}명`;
+        }
+
+        function updateCell(rowIdx, colIdx, value) { 
+            globalDataRows[rowIdx][colIdx] = value; 
+            setTimeout(() => { recalcStats(); }, 0); 
+        }
+
+        function recalcStats() { processData(); }
+
+        function renderSubjectStats(counts) {
+            const container = document.getElementById('subjectStatsArea');
+            container.innerHTML = '';
+            const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+            document.getElementById('subjectCountBadge').innerText = `${sorted.length}과목`;
+            sorted.forEach(([subj, count], index) => {
+                let rankColor = index < 3 ? (index===0?"bg-yellow-100 text-yellow-700":index===1?"bg-gray-200 text-gray-700":"bg-orange-100 text-orange-700") : "bg-slate-100 text-slate-600";
+                container.innerHTML += `<div class="flex justify-between items-center p-3 rounded-lg border ${index < 3 ? 'border-transparent' : 'border-slate-100'} ${rankColor} mb-2 shadow-sm"><div class="flex items-center gap-3 overflow-hidden"><span class="font-bold opacity-50 w-6 text-center text-sm">${index + 1}</span><span class="font-bold truncate" title="${subj}">${subj}</span></div><span class="font-bold text-lg bg-white bg-opacity-60 px-2 rounded">${count}명</span></div>`;
+            });
+        }
+
+        function exportData() {
+            if(globalDataRows.length === 0) return alert("데이터 없음");
+            showSaveModal('class_maker_updated', function(fileName) {
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([globalHeaders, ...globalDataRows]), "Students");
+                XLSX.writeFile(wb, fileName + ".xlsx");
+            });
+        }
+
+        function exportStats() {
+            if (globalDataRows.length === 0) return alert("데이터 없음");
+            showSaveModal('subject_counts', function(fileName) {
+                const ws_data = [['과목명', '수강인원']];
+                Object.entries(latestSubjectCounts).sort((a,b)=>b[1]-a[1]).forEach(r => ws_data.push(r));
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ws_data), "Stats");
+                XLSX.writeFile(wb, fileName + ".xlsx");
+            });
+        }
+
+        // ==========================================
+        // STEP 3: 교사 수급 분석
+        // ==========================================
+        function renderTeacherSupply() {
+            const tbody = document.getElementById('teacherSupplyTableBody');
+            if(!tbody) return; 
+            tbody.innerHTML = '';
+            const counts = latestSubjectCounts;
+            if(Object.keys(counts).length === 0) {
+                tbody.innerHTML = `<tr><td colspan="12" class="p-10 text-center text-slate-400">데이터를 분석 후 확인 가능합니다 (Step 2 완료 필요).</td></tr>`;
+                return;
+            }
+
+            const avgHours = parseFloat(document.getElementById('avgTeacherHours').value) || 12;
+            const classLimit = parseInt(document.getElementById('stdClassSize').value) || 25;
+
+            let rowDataList = [];
+            Object.entries(counts).forEach(([subjName, studentCount]) => {
+                const foundSubj = openSubjects.find(s => s.name === subjName);
+                const hoursPerWeek = foundSubj ? parseInt(foundSubj.hours) : 4; 
+                let domain = (foundSubj && foundSubj.domain) ? foundSubj.domain.trim() : "미분류";
+                const grade = foundSubj ? parseInt(foundSubj.grade) : 99;
+
+                // DB에서 불러온 값이 있으면 사용, 없으면 계산
+                let classCount, totalReqHours, requiredTeachers, stuPerClass;
+                
+                if (foundSubj && foundSubj.classDemand && foundSubj.classDemand > 0) {
+                    // DB에서 불러온 값 사용
+                    classCount = parseInt(foundSubj.classDemand);
+                    totalReqHours = classCount * hoursPerWeek;
+                    requiredTeachers = foundSubj.teaDemand ? parseFloat(foundSubj.teaDemand).toFixed(1) : (totalReqHours / avgHours).toFixed(1);
+                    stuPerClass = classCount > 0 ? (studentCount / classCount).toFixed(1) : 0;
+                } else {
+                    // 새로 계산
+                    classCount = Math.ceil(studentCount / classLimit);
+                    totalReqHours = classCount * hoursPerWeek;
+                    requiredTeachers = (totalReqHours / avgHours).toFixed(1);
+                    stuPerClass = classCount > 0 ? (studentCount / classCount).toFixed(1) : 0;
+                }
+                
+                // 확정 교사수 (DB에서 불러온 값)
+                const confirmedTeachers = foundSubj && foundSubj.teaConclusion ? foundSubj.teaConclusion : '';
+
+                rowDataList.push({
+                    subjName, studentCount, hoursPerWeek, domain, grade,
+                    classCount, totalReqHours, requiredTeachers, stuPerClass, confirmedTeachers
+                });
+            });
+
+            rowDataList.sort((a, b) => {
+                if (a.domain < b.domain) return -1;
+                if (a.domain > b.domain) return 1;
+                if (a.grade !== b.grade) return a.grade - b.grade;
+                return a.subjName.localeCompare(b.subjName);
+            });
+
+            let currentDomain = null;
+            let domainRows = [];
+            let totalRowIndex = 0;
+            let totalAllTeachers = 0;
+            let totalConfirmedTeachers = 0;
+            let isFirstGroup = true;
+
+            const renderGroup = (rows) => {
+                if(rows.length === 0) return;
+                let groupTeacherTotal = 0;
+                rows.forEach(r => { groupTeacherTotal += parseFloat(r.requiredTeachers); });
+                totalAllTeachers += groupTeacherTotal;
+                const groupTotalStr = groupTeacherTotal.toFixed(1);
+                
+                // 과목군의 확정 교사수 (첫 번째 과목의 값 사용)
+                const domainName = rows[0].domain;
+                const confirmedVal = rows[0].confirmedTeachers || '';
+                if (confirmedVal && !isNaN(parseFloat(confirmedVal))) {
+                    totalConfirmedTeachers += parseFloat(confirmedVal);
+                }
+                
+                // 과목군 구분선 (첫 그룹 제외)
+                if (!isFirstGroup) {
+                    const separatorRow = document.createElement('tr');
+                    separatorRow.className = 'domain-separator';
+                    separatorRow.innerHTML = `<td colspan="12" style="height: 6px; background: #334155; padding: 0; border: none;"></td>`;
+                    tbody.appendChild(separatorRow);
+                }
+                
+                rows.forEach((row, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.className = `hover:bg-indigo-50 transition border-b border-slate-200 group-row`;
+                    tr.dataset.domain = row.domain;
+                    tr.dataset.index = totalRowIndex;
+
+                    let html = `<td class="text-center text-slate-500 text-sm p-2 border-r border-slate-200">${totalRowIndex + 1}</td>`;
+                    if (idx === 0) html += `<td class="text-center font-bold text-slate-700 bg-slate-100 border-r-2 border-slate-400 align-middle text-sm" rowspan="${rows.length}">${row.domain}</td>`;
+                    
+                    html += `
+                        <td class="p-0 h-9 border-r border-slate-200 min-w-[140px]"><input type="text" class="table-input w-full font-bold text-slate-700 text-sm text-left pl-2" value="${row.subjName}" data-field="subject" data-row="${totalRowIndex}"></td>
+                        <td class="p-0 h-9 border-r border-slate-200 w-12"><input type="text" class="table-input text-slate-500 text-sm" value="${row.grade === 99 ? '-' : row.grade}" data-field="grade" data-row="${totalRowIndex}"></td>
+                        <td class="p-0 h-9 border-r border-slate-200 w-16"><input type="number" class="table-input text-sm" id="ts_stu_${totalRowIndex}" value="${row.studentCount}" onchange="updateTeacherSupplyRow(${totalRowIndex})"></td>
+                        <td class="p-0 h-9 border-r border-slate-200 w-14"><input type="number" class="table-input text-sm" id="ts_hours_${totalRowIndex}" value="${row.hoursPerWeek}" onchange="updateTeacherSupplyRow(${totalRowIndex})"></td>
+                        <td class="p-0 h-9 border-r border-slate-200 w-14"><input type="number" class="table-input font-bold text-blue-600 text-sm" id="ts_class_${totalRowIndex}" value="${row.classCount}" onchange="updateTeacherSupplyRow(${totalRowIndex})"></td>
+                        <td class="p-0 h-9 border-r border-slate-200 w-16"><input type="text" class="table-input text-slate-600 text-sm" id="ts_perclass_${totalRowIndex}" value="${row.stuPerClass}" readonly></td>
+                        <td class="p-0 h-9 border-r border-slate-200 w-14"><input type="number" class="table-input text-slate-500 text-sm" id="ts_total_${totalRowIndex}" value="${row.totalReqHours}" readonly></td>
+                        <td class="p-0 h-9 border-r border-slate-200 w-20"><input type="text" class="table-input font-bold text-indigo-600 bg-indigo-50 req-teacher-val text-sm" id="ts_req_${totalRowIndex}" value="${row.requiredTeachers}" readonly></td>
+                    `;
+                    if (idx === 0) {
+                        html += `<td class="text-center font-bold text-green-700 bg-green-100 align-middle domain-total-cell border-l-2 border-green-400 text-sm" data-domain-name="${row.domain}" rowspan="${rows.length}">${groupTotalStr}</td>`;
+                        html += `<td class="p-0 bg-amber-50 align-middle border-l-2 border-amber-400" rowspan="${rows.length}">
+                            <input type="number" step="0.1" class="table-input font-bold text-amber-700 text-center text-sm confirmed-teacher-val" 
+                                   data-domain="${row.domain}" value="${confirmedVal}" 
+                                   onchange="updateConfirmedTeacherTotal()" placeholder="-">
+                        </td>`;
+                    }
+                    
+                    tr.innerHTML = html;
+                    tbody.appendChild(tr);
+                    totalRowIndex++;
+                });
+                isFirstGroup = false;
+            };
+
+            rowDataList.forEach(row => {
+                if (row.domain !== currentDomain) { 
+                    renderGroup(domainRows); 
+                    domainRows = []; 
+                    currentDomain = row.domain; 
+                }
+                domainRows.push(row);
+            });
+            renderGroup(domainRows);
+
+            const footerRow = document.createElement('tr');
+            footerRow.className = "bg-slate-700 text-white font-bold";
+            footerRow.innerHTML = `
+                <td colspan="10" class="p-3 text-right">총 필요 교사 수 합계:</td>
+                <td class="p-3 text-center text-lg" id="grandTotalTeacher">${totalAllTeachers.toFixed(1)}</td>
+                <td class="p-3 text-center text-lg bg-amber-600" id="grandTotalConfirmed">${totalConfirmedTeachers > 0 ? totalConfirmedTeachers.toFixed(1) : '-'}</td>
+            `;
+            tbody.appendChild(footerRow);
+        }
+        
+        // 확정 교사수 합계 업데이트
+        function updateConfirmedTeacherTotal() {
+            let total = 0;
+            document.querySelectorAll('.confirmed-teacher-val').forEach(input => {
+                const val = parseFloat(input.value);
+                if (!isNaN(val)) total += val;
+            });
+            const grandTotalCell = document.getElementById('grandTotalConfirmed');
+            if (grandTotalCell) {
+                grandTotalCell.innerText = total > 0 ? total.toFixed(1) : '-';
+            }
+        }
+        
+        function updateTeacherSupplySubject(index, value) {
+            // 과목명 수정 시 처리 (필요시 구현)
+        }
+        
+        function updateTeacherSupplyGrade(index, value) {
+            // 학년 수정 시 처리 (필요시 구현)
+        }
+
+        function updateTeacherSupplyRow(index) {
+            const avgHours = parseFloat(document.getElementById('avgTeacherHours').value) || 12;
+            const stuCountInput = document.getElementById(`ts_stu_${index}`);
+            const hoursInput = document.getElementById(`ts_hours_${index}`);
+            const classCountInput = document.getElementById(`ts_class_${index}`);
+            const perClassInput = document.getElementById(`ts_perclass_${index}`);
+            const totalInput = document.getElementById(`ts_total_${index}`);
+            const reqInput = document.getElementById(`ts_req_${index}`);
+
+            const studentCount = parseInt(stuCountInput.value) || 0;
+            const hoursPerWeek = parseInt(hoursInput.value) || 0;
+            const classCount = parseInt(classCountInput.value) || 0;
+
+            const totalReqHours = classCount * hoursPerWeek;
+            const requiredTeachers = (totalReqHours / avgHours).toFixed(1);
+            const stuPerClass = classCount > 0 ? (studentCount / classCount).toFixed(1) : 0;
+
+            totalInput.value = totalReqHours;
+            reqInput.value = requiredTeachers;
+            perClassInput.value = stuPerClass;
+
+            const currentRow = reqInput.closest('tr');
+            const domain = currentRow.dataset.domain;
+            const sameDomainRows = document.querySelectorAll(`tr[data-domain="${domain}"]`);
+            let groupTotal = 0;
+            sameDomainRows.forEach(row => { groupTotal += parseFloat(row.querySelector('.req-teacher-val').value) || 0; });
+            const firstRow = sameDomainRows[0];
+            const totalCell = firstRow.querySelector('.domain-total-cell');
+            if(totalCell) totalCell.innerText = groupTotal.toFixed(1);
+
+            let grandTotal = 0;
+            document.querySelectorAll('.req-teacher-val').forEach(input => { grandTotal += parseFloat(input.value) || 0; });
+            const grandTotalCell = document.getElementById('grandTotalTeacher');
+            if(grandTotalCell) grandTotalCell.innerText = grandTotal.toFixed(1);
+        }
+
+        function exportTeacherSupply() {
+             const tbody = document.getElementById('teacherSupplyTableBody');
+             if(!tbody || tbody.rows.length === 0 || tbody.innerText.includes('데이터를 분석')) return alert("데이터 없음");
+             
+             showSaveModal('teacher_demand', function(fileName) {
+                 toggleLoading(true);
+                 setTimeout(() => {
+                     try {
+                         const avgHours = parseFloat(document.getElementById('avgTeacherHours').value) || 12;
+                         const ws_data = [['id', 'subject_depart', 'subject', 'grade', 'stu_count', 'tea_1person', 'tea_demand', 'class_demand']];
+                         let currentDomain = "", currentDomainTotal = "";
+                         Array.from(tbody.rows).forEach((row, index) => {
+                            if(row.classList.contains('bg-slate-200')) return;
+                            const inputs = row.getElementsByTagName('input');
+                            if(inputs.length > 0) {
+                                const domainCell = row.querySelector('.domain-total-cell');
+                                if (domainCell) { 
+                                    currentDomain = row.dataset.domain; 
+                                    currentDomainTotal = domainCell.innerText; 
+                                }
+                                ws_data.push([
+                                     index + 1, currentDomain, inputs[0].value, inputs[1].value, inputs[2].value,
+                                     avgHours, inputs[7].value, inputs[4].value
+                                 ]);
+                            }
+                         });
+                         const wb = XLSX.utils.book_new();
+                         const ws = XLSX.utils.aoa_to_sheet(ws_data);
+                         ws['!cols'] = [{wch:8}, {wch:15}, {wch:25}, {wch:8}, {wch:10}, {wch:12}, {wch:12}, {wch:12}];
+                         XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                         XLSX.writeFile(wb, `${fileName}.xlsx`);
+                     } catch (e) { 
+                         console.error(e); 
+                         alert("저장 실패"); 
+                     } finally { 
+                         toggleLoading(false); 
+                     }
+                 }, 100);
+             });
+        }
+        
+        // ==========================================
+        // Step 3: 결과DB 불러오기 (timetable_data)
+        // ==========================================
+        function loadTeacherSupplyFromDB() {
+            const schoolId = currentUser.school_id;
+            if (!schoolId) {
+                alert('school_id가 없습니다. 다시 로그인해주세요.');
+                return;
+            }
+
+            toggleLoading(true);
+
+            fetch('/api/timetable-data/list?school_id=' + encodeURIComponent(schoolId))
+                .then(res => { if (!res.ok) throw new Error('서버 오류 (' + res.status + ')'); return res.json(); })
+                .then(data => {
+                    if (data.success && data.data && data.data.length > 0) {
+                        // openSubjects와 latestSubjectCounts 갱신
+                        openSubjects = [];
+                        latestSubjectCounts = {};
+                        
+                        data.data.forEach(d => {
+                            const subjectName = d.subject || '';
+                            if (!subjectName) return;
+                            
+                            // openSubjects에 추가
+                            openSubjects.push({
+                                name: subjectName,
+                                grade: String(d.grade || '1'),
+                                hours: d.subject_demand || 4,
+                                courseYear: d.course_year || '',
+                                subjectType: d.subject_type || '',
+                                domain: d.subject_depart || '미분류',
+                                schoolLevel: '고등',
+                                stuCount: d.stu_count || 0,
+                                classDemand: d.class_demand || 0,
+                                teaDemand: d.tea_demand || 0,
+                                tea1person: d.tea_1person || 12,
+                                teaConclusion: d.subject_type_tea_conclution || ''
+                            });
+                            
+                            // 모든 과목을 latestSubjectCounts에 추가 (stu_count가 0이어도)
+                            latestSubjectCounts[subjectName] = d.stu_count || 0;
+                        });
+                        
+                        // 테이블 렌더링
+                        renderOpenSubjects();
+                        renderTeacherSupply();
+                        
+                        alert(`결과DB에서 ${data.data.length}개 과목을 불러왔습니다.\n(학교: ${memberSchool})`);
+                    } else {
+                        alert(data.message || '결과DB에 저장된 데이터가 없습니다.');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('DB 연결 오류: ' + err.message);
+                })
+                .finally(() => toggleLoading(false));
+        }
+        
+        // ==========================================
+        // Step 3: 결과DB 저장 (timetable_data)
+        // ==========================================
+        function saveTeacherSupplyToDB() {
+            const schoolId = currentUser.school_id;
+            const memberSchool = currentUser.member_school;
+            
+            if (!schoolId) {
+                alert('학교 ID가 없습니다. 다시 로그인해주세요.');
+                return;
+            }
+            
+            const tbody = document.getElementById('teacherSupplyTableBody');
+            if (!tbody || tbody.rows.length === 0 || tbody.innerText.includes('데이터를 분석')) {
+                alert('저장할 데이터가 없습니다.\nStep 2에서 데이터 분석을 먼저 완료하세요.');
+                return;
+            }
+            
+            toggleLoading(true);
+            
+            const avgHours = parseFloat(document.getElementById('avgTeacherHours').value) || 12;
+            const timetableData = [];
+            let currentDomain = '';
+            
+            // 과목군별 확정 교사수 수집 (빈 값도 포함)
+            const confirmedByDomain = {};
+            document.querySelectorAll('.confirmed-teacher-val').forEach(input => {
+                const domain = input.dataset.domain;
+                const val = input.value.trim();
+                if (domain) {
+                    // 값이 있으면 숫자로, 없으면 null
+                    confirmedByDomain[domain] = val !== '' ? parseFloat(val) : null;
+                }
+            });
+            
+            console.log('확정 교사수 수집:', confirmedByDomain); // 디버깅용
+            
+            Array.from(tbody.rows).forEach(row => {
+                // 합계 행, 구분선 행 제외
+                if (row.classList.contains('bg-slate-700') || row.classList.contains('domain-separator')) return;
+                
+                const inputs = row.getElementsByTagName('input');
+                if (inputs.length >= 8) {
+                    // domain 가져오기 - dataset에서 우선 확인
+                    if (row.dataset.domain) {
+                        currentDomain = row.dataset.domain;
+                    } else {
+                        const domainCell = row.querySelector('td[rowspan]');
+                        if (domainCell && !domainCell.classList.contains('domain-total-cell')) {
+                            currentDomain = domainCell.innerText.trim();
+                        }
+                    }
+                    
+                    const subject = inputs[0].value || '';
+                    const grade = inputs[1].value || '';
+                    const stuCount = parseInt(inputs[2].value) || 0;
+                    const subjectDemand = parseInt(inputs[3].value) || 4;
+                    const classDemand = parseInt(inputs[4].value) || 0;
+                    const teaDemand = parseFloat(inputs[7].value) || 0;
+                    
+                    // openSubjects에서 추가 정보 가져오기
+                    const foundSubj = openSubjects.find(s => s.name === subject);
+                    
+                    // 해당 과목군의 확정 교사수
+                    const teaConclusion = confirmedByDomain.hasOwnProperty(currentDomain) ? confirmedByDomain[currentDomain] : null;
+                    
+                    console.log(`과목: ${subject}, 과목군: ${currentDomain}, 확정교사: ${teaConclusion}`); // 디버깅용
+                    
+                    timetableData.push({
+                        subject: subject,
+                        course_year: foundSubj ? foundSubj.courseYear : '',
+                        grade: grade === '-' ? null : parseInt(grade) || null,
+                        subject_demand: subjectDemand,
+                        subject_type: foundSubj ? foundSubj.subjectType : '',
+                        subject_depart: currentDomain,
+                        stu_count: stuCount,
+                        class_demand: classDemand,
+                        tea_demand: teaDemand,
+                        tea_1person: avgHours,
+                        subject_type_tea_conclution: teaConclusion
+                    });
+                }
+            });
+            
+            if (timetableData.length === 0) {
+                alert('저장할 데이터가 없습니다.');
+                toggleLoading(false);
+                return;
+            }
+            
+            fetch('/api/timetable-data/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    school_id: schoolId,
+                    member_school: memberSchool,
+                    data: timetableData
+                })
+            })
+            .then(res => { if (!res.ok) throw new Error('서버 오류 (' + res.status + ')'); return res.json(); })
+            .then(data => {
+                if (data.success) {
+                    alert(`결과DB 저장 완료!\n${timetableData.length}개 과목 저장됨\n(학교: ${memberSchool})`);
+                } else {
+                    alert('저장 실패: ' + (data.message || '알 수 없는 오류'));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('DB 저장 오류: ' + err.message);
+            })
+            .finally(() => toggleLoading(false));
+        }
+
+        // 초기화
+        initUserInfo();
+        goStep(1);
+
+        function toggleMobileSidebar() {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+            document.getElementById('mobile-overlay').classList.toggle('active');
+        }
+        document.getElementById('mobile-overlay').onclick = function() {
+            document.getElementById('sidebar').classList.remove('mobile-open');
+            this.classList.remove('active');
+        };
+    </script>
+</body>
+</html>

@@ -16,107 +16,36 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; }
         
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        #sidebar ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
-        #sidebar ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
         
-        /* Sidebar */
-        .sidebar-gradient { background: linear-gradient(180deg, #0f0618 0%, #150d25 40%, #1e1535 100%); }
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.8); }
         
-        /* Glass card */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(226, 232, 240, 0.6);
-        }
-        
-        /* Nav items */
-        .nav-item {
-            position: relative;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .nav-item::before {
-            content: '';
-            position: absolute;
-            left: 0; top: 0;
-            height: 100%; width: 0;
-            background: linear-gradient(90deg, rgba(168, 85, 247, 0.12), transparent);
-            border-radius: inherit;
-            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .nav-item { position: relative; transition: all 0.3s ease; }
+        .nav-item::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 0; background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), transparent); transition: width 0.3s ease; }
         .nav-item:hover::before { width: 100%; }
-        .nav-item:hover { color: #f1f5f9; }
-        .nav-item.active {
-            background: rgba(168, 85, 247, 0.12);
-            border-left: 3px solid #a855f7;
-            color: white;
-        }
+        .nav-item.active { background: linear-gradient(90deg, rgba(59, 130, 246, 0.2), transparent); border-left: 3px solid #3b82f6; }
         
-        /* Tab buttons */
-        .tab-btn { @apply px-5 py-3 text-sm font-bold text-slate-400 border-b-2 border-transparent hover:text-blue-500 transition-all duration-300 cursor-pointer; }
-        .tab-btn.active { @apply text-blue-600 border-blue-600 bg-blue-50/50; }
+        .point-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .charge-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); transition: all 0.3s ease; }
+        .charge-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4); }
+        .avatar-ring { background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899); padding: 3px; }
         
-        /* Point card */
-        .point-card {
-            background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        }
-        
-        /* Charge button */
-        .charge-btn {
-            background: rgba(255,255,255,0.18);
-            backdrop-filter: blur(4px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .charge-btn:hover {
-            background: rgba(255,255,255,0.28);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        /* Avatar ring */
-        .avatar-ring { background: linear-gradient(135deg, #a855f7, #ec4899, #f43f5e); padding: 2.5px; }
-        
-        /* Nav scroll hint */
-        .nav-wrap { position: relative; }
-        .nav-scroll-hint {
-            position: absolute; bottom: 0; left: 0; right: 0; height: 40px;
-            background: linear-gradient(to bottom, transparent, rgba(10,22,40,0.95));
-            display: flex; align-items: flex-end; justify-content: center;
-            padding-bottom: 4px; pointer-events: none; transition: opacity 0.3s;
-        }
-        .nav-scroll-hint.hidden { opacity: 0; }
-        .nav-scroll-hint i { color: rgba(148,163,184,0.5); font-size: 14px; animation: bounceDown 1.5s infinite; }
-        @keyframes bounceDown { 0%,100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
-        
-        /* Modal */
-        .modal-overlay { animation: fadeIn 0.2s ease; }
-        .modal-content { animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Stat card */
-        .stat-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
-        }
-        
-        /* Mobile sidebar drawer */
-        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 40; }
+        .stat-card { transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-4px); }
+
+        /* 모바일 사이드바 드로어 */
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
         #mobile-overlay.active { display: block; }
         #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
-        
-        /* Mobile touch targets */
+
+        /* 모바일 큰 글씨 대응: 터치 영역 확대 + 사이드바 전체 스크롤 */
         @media (max-width: 767px) {
             #sidebar.mobile-open { overflow-y: auto !important; }
             #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
@@ -126,67 +55,16 @@
             #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
             .tab-btn { min-height: 48px; padding: 12px 16px !important; font-size: 14px !important; white-space: nowrap; }
         }
-        
-        /* Calendar */
+
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
         .cal-day-header { @apply text-xs font-bold text-slate-400 py-2; }
-        .cal-cell {
-            @apply h-10 flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all duration-200 relative text-sm font-medium;
-            background: white;
-        }
+        .cal-cell { @apply h-10 flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all duration-200 relative text-sm font-medium; background: white; }
         .cal-cell:hover { @apply bg-slate-100 shadow-sm; transform: scale(1.05); }
-        .cal-cell.today {
-            background: linear-gradient(135deg, #a855f7, #ec4899);
-            color: white;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
-        }
+        .cal-cell.today { @apply bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30; }
         .cal-cell.today .schedule-dot { background: white; }
-        .cal-cell.selected { @apply ring-2 ring-offset-1; ring-color: #a855f7; }
+        .cal-cell.selected { @apply ring-2 ring-indigo-500 ring-offset-1; }
         .cal-cell.other-month { @apply text-slate-300 bg-slate-50; }
-        .schedule-dot {
-            position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
-            width: 5px; height: 5px; background: #a855f7; border-radius: 50%;
-        }
-
-        /* === Enhanced Design Overrides === */
-        
-        /* Sidebar brand section - tighter spacing */
-        #sidebar > div:first-child {
-            border-color: rgba(255,255,255,0.04) !important;
-        }
-        
-        /* Profile section */
-        #sidebar > div:nth-child(2) {
-            border-color: rgba(255,255,255,0.04) !important;
-            background: rgba(255,255,255,0.02) !important;
-        }
-        
-        /* Sidebar footer links */
-        #sidebar .p-4.border-t {
-            border-color: rgba(255,255,255,0.04) !important;
-        }
-        
-        /* Header bar refinement */
-        header {
-            background: rgba(255,255,255,0.92) !important;
-            backdrop-filter: blur(16px) saturate(180%) !important;
-            -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-            border-color: rgba(226,232,240,0.5) !important;
-        }
-        
-        /* Main content - subtle pattern */
-        main {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #eef2ff 100%) !important;
-        }
-        
-        /* Widget cards - cleaner borders */
-        .glass-card {
-            box-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.03);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .glass-card:hover {
-            box-shadow: 0 4px 12px rgba(15,23,42,0.06), 0 12px 32px rgba(15,23,42,0.06);
-        }
+        .schedule-dot { position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: #6366f1; border-radius: 50%; }
     </style>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#3b82f6">
@@ -1171,7 +1049,7 @@
     function formatMsgTime(t){if(!t)return '';const d=new Date(t.replace(' ','T'));const now=new Date();const diff=now-d;if(diff<60000)return '방금';if(diff<3600000)return Math.floor(diff/60000)+'분 전';if(diff<86400000)return Math.floor(diff/3600000)+'시간 전';if(diff<604800000)return Math.floor(diff/86400000)+'일 전';return (d.getMonth()+1)+'/'+d.getDate();}
     loadDashMessages(); setInterval(loadDashMessages,30000);
     </script>
-    <script src="js/messenger-popup.js?v=20260223d"></script>
+    <script src="js/messenger-popup.js?v=20260223c"></script>
     <script>initMsgPopup();</script>
 </body>
 </html>

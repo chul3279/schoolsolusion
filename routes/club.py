@@ -795,24 +795,30 @@ def list_club_files():
         record_year = sanitize_input(request.args.get('record_year'), 4)
         record_semester = sanitize_input(request.args.get('record_semester'), 1)
 
-        if not all([school_id, student_id, club_name]):
-            missing = []
-            if not school_id: missing.append('school_id')
-            if not student_id: missing.append('student_id')
-            if not club_name: missing.append('club_name')
-            return jsonify({'success': False, 'message': f'필수 정보가 누락되었습니다: {", ".join(missing)}'})
+        if not school_id or not club_name:
+            return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다: school_id, club_name'})
 
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
 
         cursor = conn.cursor()
-        # [보안] 교사는 동아리 담당자만 파일 조회
-        if session.get('user_role') == 'teacher' and not is_club_authorized(cursor, school_id, club_name, session.get('user_id')):
-            return jsonify({'success': False, 'message': '담당 교사만 조회할 수 있습니다.'}), 403
-        query = """SELECT id, original_name, file_size, created_at
-                   FROM club_files WHERE school_id = %s AND student_id = %s AND club_name = %s"""
-        params = [school_id, student_id, club_name]
+        # [보안] 교사는 동아리 담당자만 파일 조회 (student_id 선택)
+        if session.get('user_role') == 'teacher':
+            if not is_club_authorized(cursor, school_id, club_name, session.get('user_id')):
+                return jsonify({'success': False, 'message': '담당 교사만 조회할 수 있습니다.'}), 403
+            query = """SELECT id, original_name, file_size, created_at
+                       FROM club_files WHERE school_id = %s AND club_name = %s"""
+            params = [school_id, club_name]
+            if student_id:
+                query += " AND student_id = %s"
+                params.append(student_id)
+        else:
+            if not student_id:
+                return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다: student_id'})
+            query = """SELECT id, original_name, file_size, created_at
+                       FROM club_files WHERE school_id = %s AND student_id = %s AND club_name = %s"""
+            params = [school_id, student_id, club_name]
         if record_year:
             query += " AND record_year = %s"
             params.append(record_year)

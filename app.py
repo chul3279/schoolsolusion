@@ -73,6 +73,7 @@ AUTH_WHITELIST = {
     '/api/push/vapid-key',      # PWA 푸시 VAPID 공개키 (인증 불필요)
     '/api/find-id',             # 아이디 찾기 (비인증)
     '/api/find-password',       # 비밀번호 찾기 (비인증)
+    '/api/public/stats',        # 홈페이지 통계 (비인증)
 }
 
 AUTH_WHITELIST_PREFIXES = (
@@ -346,6 +347,34 @@ def security_after_request(response):
         print(f"[SECURITY] after_request 브루트포스 오류: {e}")
     return response
 
+
+# ============================================
+# 공개 통계 API (홈페이지용, 로그인 불필요)
+# ============================================
+@app.route('/api/public/stats')
+def public_stats():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(DISTINCT school_id) AS cnt FROM tea_all")
+        schools = cursor.fetchone()['cnt'] or 0
+        cursor.execute("SELECT COUNT(*) AS cnt FROM tea_all")
+        teachers = cursor.fetchone()['cnt'] or 0
+        cursor.execute("SELECT COUNT(*) AS cnt FROM stu_all")
+        students = cursor.fetchone()['cnt'] or 0
+        cursor.execute("SELECT COUNT(*) AS cnt FROM fm_all")
+        parents = cursor.fetchone()['cnt'] or 0
+        cursor.close()
+        conn.close()
+        return jsonify({
+            'success': True,
+            'schools': schools,
+            'teachers': teachers,
+            'students': students,
+            'parents': parents
+        })
+    except Exception as e:
+        return jsonify({'success': True, 'schools': 0, 'teachers': 0, 'students': 0, 'parents': 0})
 
 # ============================================
 # Blueprint 등록

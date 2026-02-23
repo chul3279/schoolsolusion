@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SchoolUs - 메시지</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+        .nav-item { position: relative; transition: all 0.3s ease; }
+        .nav-item::before { content:''; position:absolute; left:0; top:0; height:100%; width:0; background:linear-gradient(90deg,rgba(59,130,246,0.3),transparent); transition:width 0.3s ease; }
+        .nav-item:hover::before { width:100%; }
+        .nav-item.active { background:linear-gradient(90deg,rgba(59,130,246,0.2),transparent); border-left:3px solid #3b82f6; }
+        #mobile-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:40; }
+        #mobile-overlay.active { display:block; }
+        #sidebar.mobile-open { display:flex!important; position:fixed!important; left:0!important; top:0!important; bottom:0!important; z-index:50!important; flex-direction:column!important; }
+        .msg-container { display:flex; height:calc(100vh - 64px); overflow:hidden; }
+        .room-list { width:340px; min-width:340px; border-right:1px solid #e2e8f0; display:flex; flex-direction:column; background:#f8fafc; }
+        .chat-panel { flex:1; display:flex; flex-direction:column; background:#fff; }
+        .chat-empty { flex:1; display:flex; align-items:center; justify-content:center; color:#94a3b8; }
+        .room-item { padding:14px 16px; border-bottom:1px solid #f1f5f9; cursor:pointer; transition:background 0.15s; display:flex; gap:12px; align-items:center; }
+        .room-item:hover { background:#e2e8f0; }
+        .room-item.active { background:#dbeafe; border-left:3px solid #3b82f6; }
+        .msg-bubble { max-width:75%; padding:10px 14px; border-radius:16px; font-size:14px; line-height:1.6; word-break:break-word; }
+        .msg-mine { background:#3b82f6; color:#fff; border-bottom-right-radius:4px; margin-left:auto; }
+        .msg-other { background:#f1f5f9; color:#1e293b; border-bottom-left-radius:4px; }
+        .msg-system { background:#fef3c7; color:#92400e; font-size:12px; text-align:center; margin:0 auto; padding:6px 16px; border-radius:20px; max-width:80%; }
+        .msg-input-area { border-top:1px solid #e2e8f0; padding:12px 16px; background:#fff; display:flex; gap:8px; align-items:flex-end; }
+        .msg-input-area textarea { flex:1; resize:none; border:1px solid #e2e8f0; border-radius:12px; padding:10px 14px; font-size:14px; max-height:120px; outline:none; font-family:inherit; }
+        .msg-input-area textarea:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.1); }
+        .badge-red { background:#ef4444; color:#fff; font-size:11px; font-weight:700; border-radius:999px; min-width:20px; height:20px; display:flex; align-items:center; justify-content:center; padding:0 6px; }
+        .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:none; align-items:center; justify-content:center; }
+        .modal-bg.active { display:flex; }
+        .modal-box { background:#fff; border-radius:16px; width:90%; max-width:480px; max-height:80vh; overflow:hidden; display:flex; flex-direction:column; }
+        .date-divider { display:flex; align-items:center; gap:12px; margin:16px 0; font-size:12px; color:#94a3b8; }
+        .date-divider::before, .date-divider::after { content:''; flex:1; height:1px; background:#e2e8f0; }
+        @media (max-width: 768px) {
+            .room-list { width:100%; min-width:100%; }
+            .chat-panel { display:none; position:absolute; inset:0; z-index:30; }
+            .chat-panel.mobile-show { display:flex; }
+            .msg-container { position:relative; }
+            .msg-bubble { max-width:85%; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 overflow-hidden">
+    <div id="mobile-overlay"></div>
+    <div class="flex h-screen">
+        <aside id="sidebar" class="sidebar-gradient w-72 hidden md:flex flex-col text-slate-300 flex-shrink-0">
+            <div class="p-5 border-b border-slate-700/50">
+                <a href="/highschool/fm.html" class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-graduation-cap text-white text-lg"></i>
+                    </div>
+                    <div><h1 class="text-white font-black text-lg tracking-tight">SchoolUs</h1><p class="text-xs text-slate-400">학부모</p></div>
+                </a>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-4">
+                <ul class="space-y-1 px-3 mb-4">
+                    <li><a href="/highschool/fm.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-desktop w-6 mr-3 text-blue-400"></i> 대시보드</a></li>
+                </ul>
+                <ul class="space-y-1 px-3">
+                    <li><a href="/highschool/fm_homeroom.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-users w-6 mr-3 text-green-400"></i> 학급정보</a></li>
+                    <li><a href="/highschool/admission/admission.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-graduation-cap w-6 mr-3 text-pink-400"></i> 입시상담</a></li>
+                    <li><a href="/highschool/fm/message.html" class="nav-item active flex items-center px-4 py-3 rounded-xl text-white font-medium"><i class="fas fa-comments w-6 mr-3 text-cyan-400"></i> 메시지</a></li>
+                </ul>
+            </nav>
+            <div class="p-4 border-t border-slate-700/50 space-y-2">
+                <a href="/highschool/mypage.html" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-blue-500/20 hover:text-blue-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-user-cog mr-2"></i> 회원정보 수정</a>
+                <a href="#" onclick="handleLogout()" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-red-500/20 hover:text-red-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-sign-out-alt mr-2"></i> 로그아웃</a>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col h-screen overflow-hidden">
+            <header class="bg-white/80 backdrop-blur-lg h-16 border-b border-slate-200/50 flex items-center justify-between px-4 md:px-6 shadow-sm z-10 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <button class="md:hidden text-slate-600" onclick="toggleMobileSidebar()"><i class="fas fa-bars text-xl"></i></button>
+                    <span class="text-sm font-bold text-slate-700"><i class="fas fa-comments text-cyan-500 mr-2"></i>메시지</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="/highschool/fm.html" class="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-200 transition"><i class="fas fa-home"></i></a>
+                </div>
+            </header>
+
+            <div class="msg-container" id="msgContainer">
+                <div class="room-list" id="roomListPanel">
+                    <div class="p-3 border-b border-slate-200 flex items-center gap-2">
+                        <div class="flex-1 relative">
+                            <input type="text" id="roomSearch" placeholder="대화 검색..." class="w-full pl-9 pr-3 py-2 bg-slate-100 border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        </div>
+                        <button onclick="openNewChat()" class="w-9 h-9 bg-blue-500 text-white rounded-lg flex items-center justify-center hover:bg-blue-600 transition flex-shrink-0" title="새 대화">
+                            <i class="fas fa-pen-to-square"></i>
+                        </button>
+                    </div>
+                    <div id="roomList" class="flex-1 overflow-y-auto">
+                        <div class="flex items-center justify-center h-32 text-slate-400 text-sm">대화방을 불러오는 중...</div>
+                    </div>
+                </div>
+                <div class="chat-panel" id="chatPanel">
+                    <div class="chat-empty" id="chatEmpty">
+                        <div class="text-center">
+                            <i class="fas fa-comments text-5xl text-slate-200 mb-4"></i>
+                            <p class="text-slate-400 font-medium">대화를 선택하거나<br>새 대화를 시작하세요</p>
+                        </div>
+                    </div>
+                    <div id="chatHeader" class="hidden border-b border-slate-200 px-4 py-3 flex items-center justify-between bg-white flex-shrink-0">
+                        <div class="flex items-center gap-3">
+                            <button class="md:hidden text-slate-500 mr-1" onclick="backToList()"><i class="fas fa-arrow-left"></i></button>
+                            <div>
+                                <h3 id="chatTitle" class="font-bold text-slate-800 text-sm"></h3>
+                                <p id="chatSubtitle" class="text-xs text-slate-400"></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openRoomMenu()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 transition"><i class="fas fa-ellipsis-v"></i></button>
+                        </div>
+                    </div>
+                    <div id="chatMessages" class="hidden flex-1 overflow-y-auto p-4 space-y-2"></div>
+                    <div id="chatInput" class="hidden msg-input-area">
+                        <label class="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 cursor-pointer transition flex-shrink-0">
+                            <i class="fas fa-paperclip"></i>
+                            <input type="file" id="fileInput" class="hidden" onchange="onFileSelected()">
+                        </label>
+                        <div class="flex-1 relative">
+                            <textarea id="msgInput" rows="1" placeholder="메시지를 입력하세요..." onkeydown="onMsgKeydown(event)" oninput="autoResize(this)"></textarea>
+                            <div id="filePreview" class="hidden absolute bottom-full left-0 right-0 mb-1 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700 flex items-center justify-between">
+                                <span id="filePreviewName"></span>
+                                <button onclick="clearFile()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                        <button onclick="sendMsg()" class="w-9 h-9 bg-blue-500 text-white rounded-lg flex items-center justify-center hover:bg-blue-600 transition flex-shrink-0"><i class="fas fa-paper-plane text-sm"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 새 대화 모달 — 학부모는 교사에게만 가능 -->
+    <div class="modal-bg" id="newChatModal">
+        <div class="modal-box">
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="font-bold text-slate-800">새 대화</h3>
+                <button onclick="closeNewChat()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-3 border-b border-slate-100">
+                <p class="text-xs text-slate-400 mb-2">교사에게 메시지를 보낼 수 있습니다.</p>
+                <input type="text" id="contactSearch" placeholder="교사 이름 검색..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" oninput="searchContacts()">
+            </div>
+            <div id="selectedUsers" class="hidden px-3 py-2 border-b border-slate-100 flex flex-wrap gap-1"></div>
+            <div id="contactList" class="flex-1 overflow-y-auto" style="max-height:300px;">
+                <div class="p-4 text-center text-sm text-slate-400">연락처를 불러오는 중...</div>
+            </div>
+            <div class="p-3 border-t border-slate-200">
+                <button onclick="startChat()" id="startChatBtn" class="w-full py-2.5 bg-blue-500 text-white rounded-lg font-bold text-sm hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>대화 시작</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 방 메뉴 -->
+    <div class="modal-bg" id="roomMenuModal">
+        <div class="modal-box" style="max-width:320px">
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="font-bold text-slate-800 text-sm">대화 설정</h3>
+                <button onclick="closeRoomMenu()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-2">
+                <button onclick="leaveRoom()" class="w-full text-left px-4 py-3 rounded-lg hover:bg-red-50 text-sm flex items-center gap-3 text-red-500"><i class="fas fa-sign-out-alt w-5"></i> 대화방 나가기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const currentUser = JSON.parse(localStorage.getItem('schoolus_user') || '{}');
+    const memberId = currentUser.member_id || '';
+    const schoolId = currentUser.school_id || '';
+    const userRole = currentUser.role || 'parent';
+    const userName = currentUser.member_name || '';
+    let currentRoomId = null, currentRoom = null, allRooms = [], selectedContacts = {}, lastMessageId = 0, pollTimer = null, roomPollTimer = null;
+    const urlParams = new URLSearchParams(window.location.search);
+    const initRoom = urlParams.get('room');
+    if (!memberId) { alert('로그인이 필요합니다.'); window.location.href = '/'; }
+    loadRooms();
+    roomPollTimer = setInterval(loadRooms, 60000);
+
+    async function loadRooms() {
+        try {
+            const res = await fetch('/api/message/rooms?page=1&limit=50');
+            const data = await res.json();
+            if (!data.success) return;
+            allRooms = data.rooms || [];
+            renderRooms(allRooms);
+            if (initRoom && !currentRoomId) openRoom(parseInt(initRoom));
+        } catch(e) { console.error('loadRooms:', e); }
+    }
+    function renderRooms(rooms) {
+        const c = document.getElementById('roomList');
+        if (!rooms.length) { c.innerHTML = '<div class="flex flex-col items-center justify-center h-32 text-slate-400 text-sm"><i class="fas fa-inbox text-2xl mb-2"></i>대화가 없습니다</div>'; return; }
+        c.innerHTML = rooms.map(r => {
+            const title = getRoomTitle(r), lastMsg = r.last_message ? truncate(r.last_message,30) : '대화를 시작하세요', time = r.last_msg_time ? formatTime(r.last_msg_time) : '', unread = r.unread_count||0, isActive = currentRoomId===r.id;
+            return `<div class="room-item ${isActive?'active':''}" onclick="openRoom(${r.id})"><div class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">${title.charAt(0)}</div><div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-1"><span class="font-bold text-sm text-slate-800 truncate">${escHtml(title)}</span><span class="text-xs text-slate-400 flex-shrink-0 ml-2">${time}</span></div><div class="flex items-center justify-between"><span class="text-xs text-slate-500 truncate">${escHtml(lastMsg)}</span>${unread>0?`<span class="badge-red flex-shrink-0 ml-2">${unread>99?'99+':unread}</span>`:''}</div></div></div>`;
+        }).join('');
+    }
+    function getRoomTitle(room) { if(room.room_title) return room.room_title; if(room.members){ const o=room.members.filter(m=>m.member_id!==memberId); return o.length?o.map(m=>m.member_name).join(', '):'나'; } return '대화'; }
+    document.getElementById('roomSearch').addEventListener('input', function(){ const q=this.value.trim().toLowerCase(); if(!q){renderRooms(allRooms);return;} renderRooms(allRooms.filter(r=>getRoomTitle(r).toLowerCase().includes(q))); });
+
+    async function openRoom(roomId) {
+        currentRoomId = roomId;
+        document.getElementById('chatPanel').classList.add('mobile-show');
+        document.getElementById('chatEmpty').classList.add('hidden');
+        document.getElementById('chatHeader').classList.remove('hidden');
+        document.getElementById('chatHeader').classList.add('flex');
+        document.getElementById('chatMessages').classList.remove('hidden');
+        document.getElementById('chatInput').classList.remove('hidden');
+        renderRooms(allRooms);
+        await loadMessages(roomId);
+        markRead(roomId);
+        startPolling();
+    }
+    async function loadMessages(roomId) {
+        try {
+            const res = await fetch(`/api/message/list?room_id=${roomId}&limit=50`);
+            const data = await res.json();
+            if(!data.success) return;
+            currentRoom = data.room;
+            const members = data.members||[], msgs = data.messages||[];
+            const title = currentRoom.room_title || members.filter(m=>m.member_id!==memberId).map(m=>m.member_name).join(', ')||'대화';
+            document.getElementById('chatTitle').textContent = title;
+            const other = members.find(m=>m.member_id!==memberId);
+            document.getElementById('chatSubtitle').textContent = members.length>2 ? `${members.length}명 참여 중` : roleLabel(other?.member_role);
+            renderMessages(msgs);
+            lastMessageId = msgs.length ? msgs[msgs.length-1].id : 0;
+            scrollToBottom();
+        } catch(e) { console.error('loadMessages:', e); }
+    }
+    function renderMessages(msgs) {
+        const c = document.getElementById('chatMessages');
+        if(!msgs.length){c.innerHTML='<div class="text-center text-sm text-slate-400 py-8">아직 메시지가 없습니다.<br>첫 메시지를 보내보세요!</div>';return;}
+        let html='',lastDate='';
+        msgs.forEach(m => {
+            const date=m.created_at?m.created_at.split(' ')[0]:'';
+            if(date&&date!==lastDate){html+=`<div class="date-divider">${formatDate(date)}</div>`;lastDate=date;}
+            if(m.is_system){html+=`<div class="flex justify-center my-2"><div class="msg-system">${escHtml(m.content)}</div></div>`;return;}
+            const isMine=m.sender_id===memberId, time=m.created_at?formatTime(m.created_at):'';
+            let ch=escHtml(m.content||'').replace(/\n/g,'<br>');
+            if(m.file_name){const cls=isMine?'text-blue-100 underline':'text-blue-600 underline';ch+=`<div class="mt-2"><a href="/api/message/file/download?message_id=${m.id}" class="text-xs ${cls}"><i class="fas fa-${m.message_type==='image'?'image':'file-download'} mr-1"></i>${escHtml(m.file_name)}</a></div>`;}
+            if(isMine){html+=`<div class="flex justify-end items-end gap-2 mb-1"><span class="text-xs text-slate-400 mb-1">${time}</span><div class="msg-bubble msg-mine">${ch}</div></div>`;}
+            else{html+=`<div class="flex items-start gap-2 mb-1"><div class="w-8 h-8 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-1">${(m.sender_name||'?').charAt(0)}</div><div class="min-w-0"><div class="text-xs text-slate-500 font-medium mb-1">${escHtml(m.sender_name||'')}<span class="ml-1 text-slate-300">${roleLabel(m.sender_role)}</span></div><div class="msg-bubble msg-other">${ch}</div></div><span class="text-xs text-slate-400 self-end mb-1">${time}</span></div>`;}
+        });
+        c.innerHTML=html;
+    }
+    function appendMessage(m) {
+        const c=document.getElementById('chatMessages'); const em=c.querySelector('.text-center'); if(em)c.innerHTML='';
+        const isMine=m.sender_id===memberId, time=m.created_at?formatTime(m.created_at):'';
+        let ch=escHtml(m.content||'').replace(/\n/g,'<br>');
+        if(m.file_name){const cls=isMine?'text-blue-100 underline':'text-blue-600 underline';ch+=`<div class="mt-2"><a href="/api/message/file/download?message_id=${m.id}" class="text-xs ${cls}"><i class="fas fa-${m.message_type==='image'?'image':'file-download'} mr-1"></i>${escHtml(m.file_name)}</a></div>`;}
+        if(m.is_system){c.insertAdjacentHTML('beforeend',`<div class="flex justify-center my-2"><div class="msg-system">${escHtml(m.content)}</div></div>`);}
+        else if(isMine){c.insertAdjacentHTML('beforeend',`<div class="flex justify-end items-end gap-2 mb-1"><span class="text-xs text-slate-400 mb-1">${time}</span><div class="msg-bubble msg-mine">${ch}</div></div>`);}
+        else{c.insertAdjacentHTML('beforeend',`<div class="flex items-start gap-2 mb-1"><div class="w-8 h-8 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-1">${(m.sender_name||'?').charAt(0)}</div><div class="min-w-0"><div class="text-xs text-slate-500 font-medium mb-1">${escHtml(m.sender_name||'')}<span class="ml-1 text-slate-300">${roleLabel(m.sender_role)}</span></div><div class="msg-bubble msg-other">${ch}</div></div><span class="text-xs text-slate-400 self-end mb-1">${time}</span></div>`);}
+        scrollToBottom();
+    }
+    async function sendMsg() {
+        const input=document.getElementById('msgInput'), fileInput=document.getElementById('fileInput');
+        const content=input.value.trim(), file=fileInput.files[0];
+        if(!content&&!file) return; if(!currentRoomId) return;
+        const fd=new FormData(); fd.append('room_id',currentRoomId); fd.append('content',content); if(file) fd.append('file',file);
+        input.value=''; input.style.height='auto'; clearFile();
+        try {
+            const res=await fetch('/api/message/send',{method:'POST',body:fd}), data=await res.json();
+            if(data.success){appendMessage({id:data.message_id,sender_id:memberId,sender_name:userName,content,file_name:file?file.name:null,message_type:file?(file.type.startsWith('image/')?'image':'file'):'text',created_at:data.created_at||new Date().toISOString().replace('T',' ').substring(0,19),is_system:false});lastMessageId=data.message_id;loadRooms();}
+            else alert(data.message||'전송 실패');
+        } catch(e){alert('메시지 전송 중 오류가 발생했습니다.');}
+    }
+    function onMsgKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
+    function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+    function onFileSelected(){const f=document.getElementById('fileInput');if(f.files.length){document.getElementById('filePreview').classList.remove('hidden');document.getElementById('filePreviewName').textContent=f.files[0].name;}}
+    function clearFile(){document.getElementById('fileInput').value='';document.getElementById('filePreview').classList.add('hidden');}
+    function startPolling(){if(pollTimer)clearInterval(pollTimer);pollTimer=setInterval(pollNewMessages,5000);}
+    async function pollNewMessages(){if(!currentRoomId||document.hidden)return;try{const res=await fetch(`/api/message/poll?room_id=${currentRoomId}&after_id=${lastMessageId}`),data=await res.json();if(data.success&&data.messages&&data.messages.length){data.messages.forEach(m=>{if(m.sender_id!==memberId)appendMessage(m);if(m.id>lastMessageId)lastMessageId=m.id;});markRead(currentRoomId);loadRooms();}}catch(e){}}
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden&&currentRoomId)pollNewMessages();});
+    async function markRead(roomId){try{await fetch('/api/message/read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({room_id:roomId})});}catch(e){}}
+
+    function openNewChat(){document.getElementById('newChatModal').classList.add('active');selectedContacts={};renderSelectedUsers();loadContacts();}
+    function closeNewChat(){document.getElementById('newChatModal').classList.remove('active');}
+    let allContacts=[];
+    async function loadContacts(){try{const p=new URLSearchParams();p.append('role','teacher');const s=document.getElementById('contactSearch').value.trim();if(s)p.append('search',s);const res=await fetch(`/api/message/users?${p}`),data=await res.json();if(data.success){allContacts=data.users||[];renderContacts(allContacts);}}catch(e){}}
+    function searchContacts(){loadContacts();}
+    function renderContacts(contacts){const c=document.getElementById('contactList');if(!contacts.length){c.innerHTML='<div class="p-4 text-center text-sm text-slate-400">검색 결과가 없습니다.</div>';return;}c.innerHTML=contacts.map(u=>{const ck=selectedContacts[u.member_id]?'checked':'';const info=[];if(u.class_grade&&u.class_no)info.push(`${u.class_grade}학년 ${u.class_no}반 담임`);return `<label class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50"><input type="checkbox" ${ck} onchange="toggleContact('${u.member_id}','${escAttr(u.member_name)}','${u.member_role}')" class="w-4 h-4 rounded text-blue-500"><div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">${u.member_name.charAt(0)}</div><div class="min-w-0"><div class="text-sm font-medium text-slate-800">${escHtml(u.member_name)} <span class="text-xs text-green-500">교사</span></div>${info.length?`<div class="text-xs text-slate-400">${info.join(' ')}</div>`:''}</div></label>`;}).join('');}
+    function toggleContact(id,name,role){if(selectedContacts[id])delete selectedContacts[id];else selectedContacts[id]={name,role};renderSelectedUsers();document.getElementById('startChatBtn').disabled=Object.keys(selectedContacts).length===0;}
+    function renderSelectedUsers(){const c=document.getElementById('selectedUsers'),ids=Object.keys(selectedContacts);if(!ids.length){c.classList.add('hidden');return;}c.classList.remove('hidden');c.innerHTML=ids.map(id=>`<span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full"><span>${escHtml(selectedContacts[id].name)}</span><button onclick="toggleContact('${id}','${escAttr(selectedContacts[id].name)}','${selectedContacts[id].role}');renderContacts(allContacts)" class="hover:text-red-500"><i class="fas fa-times text-xs"></i></button></span>`).join('');}
+    async function startChat(){const ids=Object.keys(selectedContacts);if(!ids.length)return;try{const res=await fetch('/api/message/room/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({room_type:'direct',room_title:'',target_ids:ids})}),data=await res.json();if(data.success){closeNewChat();await loadRooms();openRoom(data.room_id);}else alert(data.message||'대화방 생성 실패');}catch(e){alert('오류가 발생했습니다.');}}
+
+    function openRoomMenu(){document.getElementById('roomMenuModal').classList.add('active');}
+    function closeRoomMenu(){document.getElementById('roomMenuModal').classList.remove('active');}
+    async function leaveRoom(){if(!currentRoomId||!confirm('이 대화방을 나가시겠습니까?'))return;try{const res=await fetch('/api/message/room/leave',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({room_id:currentRoomId})}),data=await res.json();if(data.success){closeRoomMenu();currentRoomId=null;currentRoom=null;document.getElementById('chatPanel').classList.remove('mobile-show');document.getElementById('chatEmpty').classList.remove('hidden');document.getElementById('chatHeader').classList.add('hidden');document.getElementById('chatMessages').classList.add('hidden');document.getElementById('chatInput').classList.add('hidden');loadRooms();}}catch(e){alert('오류가 발생했습니다.');}}
+    function backToList(){document.getElementById('chatPanel').classList.remove('mobile-show');if(pollTimer)clearInterval(pollTimer);currentRoomId=null;loadRooms();}
+
+    function scrollToBottom(){const el=document.getElementById('chatMessages');setTimeout(()=>{el.scrollTop=el.scrollHeight;},50);}
+    function formatTime(dt){if(!dt)return '';const d=new Date(dt.replace(' ','T')),now=new Date(),h=d.getHours(),m=String(d.getMinutes()).padStart(2,'0'),ampm=h<12?'오전':'오후',h12=h%12||12;if(d.toDateString()===now.toDateString())return `${ampm} ${h12}:${m}`;const y=new Date(now);y.setDate(now.getDate()-1);if(d.toDateString()===y.toDateString())return '어제';return `${d.getMonth()+1}/${d.getDate()}`;}
+    function formatDate(ds){const d=new Date(ds),now=new Date();if(d.toDateString()===now.toDateString())return '오늘';const y=new Date(now);y.setDate(now.getDate()-1);if(d.toDateString()===y.toDateString())return '어제';return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;}
+    function truncate(s,l){return s.length>l?s.substring(0,l)+'...':s;}
+    function escHtml(s){if(!s)return '';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+    function escAttr(s){return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+    function roleLabel(r){return {teacher:'교사',student:'학생',parent:'학부모'}[r]||r||'';}
+    function handleLogout(){if(confirm('로그아웃 하시겠습니까?')){localStorage.removeItem('schoolus_user');window.location.href='/';}}
+    function toggleMobileSidebar(){document.getElementById('sidebar').classList.toggle('mobile-open');document.getElementById('mobile-overlay').classList.toggle('active');}
+    document.getElementById('mobile-overlay').onclick=function(){document.getElementById('sidebar').classList.remove('mobile-open');this.classList.remove('active');};
+    </script>
+</body>
+</html>

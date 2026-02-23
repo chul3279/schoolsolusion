@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SchoolUs - 메시지</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+        .nav-item { position: relative; transition: all 0.3s ease; }
+        .nav-item::before { content:''; position:absolute; left:0; top:0; height:100%; width:0; background:linear-gradient(90deg,rgba(59,130,246,0.3),transparent); transition:width 0.3s ease; }
+        .nav-item:hover::before { width:100%; }
+        .nav-item.active { background:linear-gradient(90deg,rgba(59,130,246,0.2),transparent); border-left:3px solid #3b82f6; }
+
+        #mobile-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:40; }
+        #mobile-overlay.active { display:block; }
+        #sidebar.mobile-open { display:flex!important; position:fixed!important; left:0!important; top:0!important; bottom:0!important; z-index:50!important; flex-direction:column!important; }
+
+        /* 메시지 레이아웃 */
+        .msg-container { display:flex; height:calc(100vh - 64px); overflow:hidden; }
+        .room-list { width:340px; min-width:340px; border-right:1px solid #e2e8f0; display:flex; flex-direction:column; background:#f8fafc; }
+        .chat-panel { flex:1; display:flex; flex-direction:column; background:#fff; }
+        .chat-empty { flex:1; display:flex; align-items:center; justify-content:center; color:#94a3b8; }
+
+        .room-item { padding:14px 16px; border-bottom:1px solid #f1f5f9; cursor:pointer; transition:background 0.15s; display:flex; gap:12px; align-items:center; }
+        .room-item:hover { background:#e2e8f0; }
+        .room-item.active { background:#dbeafe; border-left:3px solid #3b82f6; }
+
+        .msg-bubble { max-width:75%; padding:10px 14px; border-radius:16px; font-size:14px; line-height:1.6; word-break:break-word; }
+        .msg-mine { background:#3b82f6; color:#fff; border-bottom-right-radius:4px; margin-left:auto; }
+        .msg-other { background:#f1f5f9; color:#1e293b; border-bottom-left-radius:4px; }
+        .msg-system { background:#fef3c7; color:#92400e; font-size:12px; text-align:center; margin:0 auto; padding:6px 16px; border-radius:20px; max-width:80%; }
+
+        .msg-input-area { border-top:1px solid #e2e8f0; padding:12px 16px; background:#fff; display:flex; gap:8px; align-items:flex-end; }
+        .msg-input-area textarea { flex:1; resize:none; border:1px solid #e2e8f0; border-radius:12px; padding:10px 14px; font-size:14px; max-height:120px; outline:none; font-family:inherit; }
+        .msg-input-area textarea:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.1); }
+
+        .badge-red { background:#ef4444; color:#fff; font-size:11px; font-weight:700; border-radius:999px; min-width:20px; height:20px; display:flex; align-items:center; justify-content:center; padding:0 6px; }
+
+        /* 모달 */
+        .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:none; align-items:center; justify-content:center; }
+        .modal-bg.active { display:flex; }
+        .modal-box { background:#fff; border-radius:16px; width:90%; max-width:480px; max-height:80vh; overflow:hidden; display:flex; flex-direction:column; }
+
+        /* 날짜 구분선 */
+        .date-divider { display:flex; align-items:center; gap:12px; margin:16px 0; font-size:12px; color:#94a3b8; }
+        .date-divider::before, .date-divider::after { content:''; flex:1; height:1px; background:#e2e8f0; }
+
+        /* 모바일 */
+        @media (max-width: 768px) {
+            .room-list { width:100%; min-width:100%; }
+            .chat-panel { display:none; position:absolute; inset:0; z-index:30; }
+            .chat-panel.mobile-show { display:flex; }
+            .msg-container { position:relative; }
+            .msg-bubble { max-width:85%; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 overflow-hidden">
+    <div id="mobile-overlay"></div>
+    <div class="flex h-screen">
+        <!-- 사이드바 -->
+        <aside id="sidebar" class="sidebar-gradient w-64 hidden md:flex flex-col text-slate-300 flex-shrink-0">
+            <div class="p-5 border-b border-slate-700/50">
+                <a href="/highschool/tea.html" class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-graduation-cap text-white text-lg"></i>
+                    </div>
+                    <div><h1 class="text-white font-black text-lg tracking-tight">SchoolUs</h1><p class="text-xs text-slate-400">교사</p></div>
+                </a>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-4">
+                <ul class="space-y-1 px-3 mb-4">
+                    <li><a href="/highschool/tea.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-desktop w-6 mr-3 text-blue-400"></i> 대시보드</a></li>
+                </ul>
+                <ul class="space-y-1 px-3">
+                    <li><a href="/highschool/tea/homeroom.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-chalkboard-user w-6 mr-3 text-green-400"></i> 담임업무</a></li>
+                    <li><a href="/highschool/tea/subject.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-book-open w-6 mr-3 text-purple-400"></i> 교과업무</a></li>
+                    <li><a href="/highschool/admission/admission.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-graduation-cap w-6 mr-3 text-pink-400"></i> 입시상담</a></li>
+                    <li><a href="/highschool/tea/schooladmin.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-cog w-6 mr-3 text-yellow-400"></i> 행정업무</a></li>
+                    <li><a href="/highschool/tea/message.html" class="nav-item active flex items-center px-4 py-3 rounded-xl text-white font-medium"><i class="fas fa-comments w-6 mr-3 text-cyan-400"></i> 메시지</a></li>
+                </ul>
+            </nav>
+            <div class="p-4 border-t border-slate-700/50 space-y-2">
+                <a href="/highschool/mypage.html" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-blue-500/20 hover:text-blue-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-user-cog mr-2"></i> 회원정보 수정</a>
+                <a href="#" onclick="handleLogout()" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-red-500/20 hover:text-red-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-sign-out-alt mr-2"></i> 로그아웃</a>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col h-screen overflow-hidden">
+            <!-- 헤더 -->
+            <header class="bg-white/80 backdrop-blur-lg h-16 border-b border-slate-200/50 flex items-center justify-between px-4 md:px-6 shadow-sm z-10 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <button class="md:hidden text-slate-600" onclick="toggleMobileSidebar()"><i class="fas fa-bars text-xl"></i></button>
+                    <span class="text-sm font-bold text-slate-700"><i class="fas fa-comments text-cyan-500 mr-2"></i>메시지</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="/highschool/tea.html" class="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-200 transition"><i class="fas fa-home"></i></a>
+                </div>
+            </header>
+
+            <!-- 메시지 컨테이너 -->
+            <div class="msg-container" id="msgContainer">
+                <!-- 대화방 목록 -->
+                <div class="room-list" id="roomListPanel">
+                    <div class="p-3 border-b border-slate-200 flex items-center gap-2">
+                        <div class="flex-1 relative">
+                            <input type="text" id="roomSearch" placeholder="대화 검색..." class="w-full pl-9 pr-3 py-2 bg-slate-100 border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        </div>
+                        <button onclick="openNewChat()" class="w-9 h-9 bg-blue-500 text-white rounded-lg flex items-center justify-center hover:bg-blue-600 transition flex-shrink-0" title="새 대화">
+                            <i class="fas fa-pen-to-square"></i>
+                        </button>
+                    </div>
+                    <div id="roomList" class="flex-1 overflow-y-auto">
+                        <div class="flex items-center justify-center h-32 text-slate-400 text-sm">대화방을 불러오는 중...</div>
+                    </div>
+                </div>
+
+                <!-- 대화 내용 -->
+                <div class="chat-panel" id="chatPanel">
+                    <div class="chat-empty" id="chatEmpty">
+                        <div class="text-center">
+                            <i class="fas fa-comments text-5xl text-slate-200 mb-4"></i>
+                            <p class="text-slate-400 font-medium">대화를 선택하거나<br>새 대화를 시작하세요</p>
+                        </div>
+                    </div>
+                    <!-- 대화 헤더 (숨김) -->
+                    <div id="chatHeader" class="hidden border-b border-slate-200 px-4 py-3 flex items-center justify-between bg-white flex-shrink-0">
+                        <div class="flex items-center gap-3">
+                            <button class="md:hidden text-slate-500 mr-1" onclick="backToList()"><i class="fas fa-arrow-left"></i></button>
+                            <div>
+                                <h3 id="chatTitle" class="font-bold text-slate-800 text-sm"></h3>
+                                <p id="chatSubtitle" class="text-xs text-slate-400"></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openRoomMenu()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 transition"><i class="fas fa-ellipsis-v"></i></button>
+                        </div>
+                    </div>
+                    <!-- 메시지 영역 -->
+                    <div id="chatMessages" class="hidden flex-1 overflow-y-auto p-4 space-y-2"></div>
+                    <!-- 입력 영역 -->
+                    <div id="chatInput" class="hidden msg-input-area">
+                        <label class="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 cursor-pointer transition flex-shrink-0">
+                            <i class="fas fa-paperclip"></i>
+                            <input type="file" id="fileInput" class="hidden" onchange="onFileSelected()">
+                        </label>
+                        <div class="flex-1 relative">
+                            <textarea id="msgInput" rows="1" placeholder="메시지를 입력하세요..." onkeydown="onMsgKeydown(event)" oninput="autoResize(this)"></textarea>
+                            <div id="filePreview" class="hidden absolute bottom-full left-0 right-0 mb-1 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700 flex items-center justify-between">
+                                <span id="filePreviewName"></span>
+                                <button onclick="clearFile()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                        <button onclick="sendMsg()" class="w-9 h-9 bg-blue-500 text-white rounded-lg flex items-center justify-center hover:bg-blue-600 transition flex-shrink-0"><i class="fas fa-paper-plane text-sm"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 새 대화 모달 -->
+    <div class="modal-bg" id="newChatModal">
+        <div class="modal-box" style="max-width:520px">
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="font-bold text-slate-800">새 대화</h3>
+                <button onclick="closeNewChat()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <!-- 개인/단체 탭 -->
+            <div class="flex border-b border-slate-200">
+                <button onclick="switchNewChatTab('individual')" id="tabIndividual" class="flex-1 py-2.5 text-sm font-bold text-blue-600 border-b-2 border-blue-600 text-center">개인 선택</button>
+                <button onclick="switchNewChatTab('group')" id="tabGroup" class="flex-1 py-2.5 text-sm font-medium text-slate-400 border-b-2 border-transparent text-center hover:text-slate-600">단체 선택</button>
+            </div>
+            <!-- 개인 선택 패널 -->
+            <div id="panelIndividual">
+                <div class="p-3 border-b border-slate-100">
+                    <div class="flex gap-2 mb-3">
+                        <button onclick="filterContacts('')" class="contact-filter active text-xs px-3 py-1.5 rounded-full bg-blue-500 text-white font-medium">전체</button>
+                        <button onclick="filterContacts('teacher')" class="contact-filter text-xs px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 font-medium hover:bg-slate-200">교사</button>
+                        <button onclick="filterContacts('student')" class="contact-filter text-xs px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 font-medium hover:bg-slate-200">학생</button>
+                        <button onclick="filterContacts('parent')" class="contact-filter text-xs px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 font-medium hover:bg-slate-200">학부모</button>
+                    </div>
+                    <input type="text" id="contactSearch" placeholder="이름 검색..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" oninput="searchContacts()">
+                </div>
+                <div id="contactList" class="flex-1 overflow-y-auto" style="max-height:280px;">
+                    <div class="p-4 text-center text-sm text-slate-400">연락처를 불러오는 중...</div>
+                </div>
+            </div>
+            <!-- 단체 선택 패널 -->
+            <div id="panelGroup" class="hidden">
+                <div class="p-3 border-b border-slate-100">
+                    <p class="text-xs text-slate-500 mb-2">학년, 반, 역할별로 단체 선택할 수 있습니다.</p>
+                </div>
+                <div id="groupList" class="overflow-y-auto" style="max-height:320px;"></div>
+            </div>
+            <!-- 선택된 인원 표시 (공통) -->
+            <div id="selectedUsers" class="hidden px-3 py-2 border-b border-slate-100 flex flex-wrap gap-1 max-h-20 overflow-y-auto"></div>
+            <div class="p-3 border-t border-slate-200 flex items-center justify-between">
+                <span id="selectedCount" class="text-xs text-slate-400">0명 선택됨</span>
+                <button onclick="startChat()" id="startChatBtn" class="px-6 py-2.5 bg-blue-500 text-white rounded-lg font-bold text-sm hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>대화 시작</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 방 메뉴 모달 -->
+    <div class="modal-bg" id="roomMenuModal">
+        <div class="modal-box" style="max-width:320px">
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="font-bold text-slate-800 text-sm">대화 설정</h3>
+                <button onclick="closeRoomMenu()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-2" id="roomMenuContent">
+                <button onclick="inviteToRoom()" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 text-sm flex items-center gap-3"><i class="fas fa-user-plus text-blue-500 w-5"></i> 멤버 초대</button>
+                <button onclick="toggleAnnouncement()" id="btnToggleAnnounce" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-50 text-sm flex items-center gap-3"><i class="fas fa-bullhorn text-yellow-500 w-5"></i> <span id="announceLabel">공지모드 켜기</span></button>
+                <div class="border-t border-slate-100 my-1"></div>
+                <button onclick="leaveRoom()" class="w-full text-left px-4 py-3 rounded-lg hover:bg-red-50 text-sm flex items-center gap-3 text-red-500"><i class="fas fa-sign-out-alt w-5"></i> 대화방 나가기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ============================================
+    // 전역 변수
+    // ============================================
+    const currentUser = JSON.parse(localStorage.getItem('schoolus_user') || '{}');
+    const memberId = currentUser.member_id || '';
+    const schoolId = currentUser.school_id || '';
+    const userRole = currentUser.role || 'teacher';
+    const userName = currentUser.member_name || '';
+
+    let currentRoomId = null;
+    let currentRoom = null;
+    let allRooms = [];
+    let selectedContacts = {};
+    let lastMessageId = 0;
+    let pollTimer = null;
+    let roomPollTimer = null;
+
+    // URL에서 room 파라미터 확인
+    const urlParams = new URLSearchParams(window.location.search);
+    const initRoom = urlParams.get('room');
+
+    // ============================================
+    // 초기화
+    // ============================================
+    if (!memberId) {
+        alert('로그인이 필요합니다.');
+        window.location.href = '/';
+    }
+
+    loadRooms();
+    // 60초마다 방 목록 갱신
+    roomPollTimer = setInterval(loadRooms, 60000);
+
+    // ============================================
+    // 대화방 목록
+    // ============================================
+    async function loadRooms() {
+        try {
+            const res = await fetch(`/api/message/rooms?page=1&limit=50`);
+            const data = await res.json();
+            if (!data.success) return;
+            allRooms = data.rooms || [];
+            renderRooms(allRooms);
+
+            // URL param으로 방 열기
+            if (initRoom && !currentRoomId) {
+                openRoom(parseInt(initRoom));
+            }
+        } catch(e) {
+            console.error('loadRooms error:', e);
+        }
+    }
+
+    function renderRooms(rooms) {
+        const container = document.getElementById('roomList');
+        if (!rooms.length) {
+            container.innerHTML = '<div class="flex flex-col items-center justify-center h-32 text-slate-400 text-sm"><i class="fas fa-inbox text-2xl mb-2"></i>대화가 없습니다</div>';
+            return;
+        }
+        container.innerHTML = rooms.map(r => {
+            const title = getRoomTitle(r);
+            const lastMsg = r.last_message ? truncate(r.last_message, 30) : '대화를 시작하세요';
+            const time = r.last_msg_time ? formatTime(r.last_msg_time) : '';
+            const unread = r.unread_count || 0;
+            const isActive = currentRoomId === r.id;
+            const typeIcon = r.room_type === 'group' ? '<i class="fas fa-users text-xs text-blue-400 mr-1"></i>' : '';
+            return `
+                <div class="room-item ${isActive ? 'active' : ''}" onclick="openRoom(${r.id})">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        ${title.charAt(0)}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-bold text-sm text-slate-800 truncate">${typeIcon}${escHtml(title)}</span>
+                            <span class="text-xs text-slate-400 flex-shrink-0 ml-2">${time}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-slate-500 truncate">${escHtml(lastMsg)}</span>
+                            ${unread > 0 ? `<span class="badge-red flex-shrink-0 ml-2">${unread > 99 ? '99+' : unread}</span>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    function getRoomTitle(room) {
+        if (room.room_title) return room.room_title;
+        if (room.members) {
+            const others = room.members.filter(m => m.member_id !== memberId);
+            if (others.length === 0) return '나';
+            return others.map(m => m.member_name).join(', ');
+        }
+        return '대화';
+    }
+
+    // 검색
+    document.getElementById('roomSearch').addEventListener('input', function() {
+        const q = this.value.trim().toLowerCase();
+        if (!q) { renderRooms(allRooms); return; }
+        const filtered = allRooms.filter(r => {
+            const title = getRoomTitle(r).toLowerCase();
+            return title.includes(q);
+        });
+        renderRooms(filtered);
+    });
+
+    // ============================================
+    // 대화 열기
+    // ============================================
+    async function openRoom(roomId) {
+        currentRoomId = roomId;
+        // 모바일: 채팅 패널 표시
+        document.getElementById('chatPanel').classList.add('mobile-show');
+        document.getElementById('chatEmpty').classList.add('hidden');
+        document.getElementById('chatHeader').classList.remove('hidden');
+        document.getElementById('chatHeader').classList.add('flex');
+        document.getElementById('chatMessages').classList.remove('hidden');
+        document.getElementById('chatInput').classList.remove('hidden');
+
+        // 방 목록 active 표시 갱신
+        renderRooms(allRooms);
+
+        // 메시지 로드
+        await loadMessages(roomId);
+
+        // 읽음 처리
+        markRead(roomId);
+
+        // 폴링 시작
+        startPolling();
+    }
+
+    async function loadMessages(roomId) {
+        try {
+            const res = await fetch(`/api/message/list?room_id=${roomId}&limit=50`);
+            const data = await res.json();
+            if (!data.success) return;
+
+            currentRoom = data.room;
+            const members = data.members || [];
+            const msgs = data.messages || [];
+
+            // 헤더 설정
+            const title = currentRoom.room_title || members.filter(m => m.member_id !== memberId).map(m => m.member_name).join(', ') || '대화';
+            document.getElementById('chatTitle').textContent = title;
+            const memberCount = members.length;
+            document.getElementById('chatSubtitle').textContent = memberCount > 2 ? `${memberCount}명 참여 중` : (members.find(m => m.member_id !== memberId)?.member_role === 'teacher' ? '교사' : members.find(m => m.member_id !== memberId)?.member_role === 'student' ? '학생' : '학부모');
+
+            // 공지모드 버튼 텍스트
+            if (currentRoom) {
+                document.getElementById('announceLabel').textContent = currentRoom.announcement_only ? '공지모드 끄기' : '공지모드 켜기';
+            }
+
+            renderMessages(msgs);
+            lastMessageId = msgs.length ? msgs[msgs.length - 1].id : 0;
+
+            // 스크롤 하단
+            scrollToBottom();
+        } catch(e) {
+            console.error('loadMessages error:', e);
+        }
+    }
+
+    function renderMessages(msgs) {
+        const container = document.getElementById('chatMessages');
+        if (!msgs.length) {
+            container.innerHTML = '<div class="text-center text-sm text-slate-400 py-8">아직 메시지가 없습니다.<br>첫 메시지를 보내보세요!</div>';
+            return;
+        }
+        let html = '';
+        let lastDate = '';
+        msgs.forEach(m => {
+            const date = m.created_at ? m.created_at.split(' ')[0] : '';
+            if (date && date !== lastDate) {
+                html += `<div class="date-divider">${formatDate(date)}</div>`;
+                lastDate = date;
+            }
+            if (m.is_system) {
+                html += `<div class="flex justify-center my-2"><div class="msg-system">${escHtml(m.content)}</div></div>`;
+                return;
+            }
+            const isMine = m.sender_id === memberId;
+            const time = m.created_at ? formatTime(m.created_at) : '';
+            let contentHtml = escHtml(m.content || '').replace(/\n/g, '<br>');
+
+            // 파일 첨부
+            if (m.file_name) {
+                const isImage = m.message_type === 'image';
+                if (isImage) {
+                    contentHtml += `<div class="mt-2"><a href="/api/message/file/download?message_id=${m.id}" target="_blank" class="text-xs ${isMine ? 'text-blue-100 underline' : 'text-blue-600 underline'}"><i class="fas fa-image mr-1"></i>${escHtml(m.file_name)}</a></div>`;
+                } else {
+                    contentHtml += `<div class="mt-2"><a href="/api/message/file/download?message_id=${m.id}" class="text-xs ${isMine ? 'text-blue-100 underline' : 'text-blue-600 underline'}"><i class="fas fa-file-download mr-1"></i>${escHtml(m.file_name)}</a></div>`;
+                }
+            }
+
+            if (isMine) {
+                html += `
+                <div class="flex justify-end items-end gap-2 mb-1" data-msg-id="${m.id}">
+                    <span class="text-xs text-slate-400 flex-shrink-0 mb-1">${time}</span>
+                    <div class="msg-bubble msg-mine">${contentHtml}</div>
+                </div>`;
+            } else {
+                html += `
+                <div class="flex items-start gap-2 mb-1" data-msg-id="${m.id}">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-1">${(m.sender_name||'?').charAt(0)}</div>
+                    <div class="min-w-0">
+                        <div class="text-xs text-slate-500 font-medium mb-1">${escHtml(m.sender_name || '')}<span class="ml-1 text-slate-300">${roleLabel(m.sender_role)}</span></div>
+                        <div class="msg-bubble msg-other">${contentHtml}</div>
+                    </div>
+                    <span class="text-xs text-slate-400 flex-shrink-0 self-end mb-1">${time}</span>
+                </div>`;
+            }
+        });
+        container.innerHTML = html;
+    }
+
+    function appendMessage(m) {
+        const container = document.getElementById('chatMessages');
+        const emptyMsg = container.querySelector('.text-center');
+        if (emptyMsg) container.innerHTML = '';
+
+        const isMine = m.sender_id === memberId;
+        const time = m.created_at ? formatTime(m.created_at) : '';
+        let contentHtml = escHtml(m.content || '').replace(/\n/g, '<br>');
+
+        if (m.file_name) {
+            const isImage = m.message_type === 'image';
+            contentHtml += `<div class="mt-2"><a href="/api/message/file/download?message_id=${m.id}" class="text-xs ${isMine ? 'text-blue-100 underline' : 'text-blue-600 underline'}"><i class="fas fa-${isImage ? 'image' : 'file-download'} mr-1"></i>${escHtml(m.file_name)}</a></div>`;
+        }
+
+        if (m.is_system) {
+            container.insertAdjacentHTML('beforeend', `<div class="flex justify-center my-2"><div class="msg-system">${escHtml(m.content)}</div></div>`);
+        } else if (isMine) {
+            container.insertAdjacentHTML('beforeend', `
+            <div class="flex justify-end items-end gap-2 mb-1" data-msg-id="${m.id}">
+                <span class="text-xs text-slate-400 flex-shrink-0 mb-1">${time}</span>
+                <div class="msg-bubble msg-mine">${contentHtml}</div>
+            </div>`);
+        } else {
+            container.insertAdjacentHTML('beforeend', `
+            <div class="flex items-start gap-2 mb-1" data-msg-id="${m.id}">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-1">${(m.sender_name||'?').charAt(0)}</div>
+                <div class="min-w-0">
+                    <div class="text-xs text-slate-500 font-medium mb-1">${escHtml(m.sender_name || '')}<span class="ml-1 text-slate-300">${roleLabel(m.sender_role)}</span></div>
+                    <div class="msg-bubble msg-other">${contentHtml}</div>
+                </div>
+                <span class="text-xs text-slate-400 flex-shrink-0 self-end mb-1">${time}</span>
+            </div>`);
+        }
+        scrollToBottom();
+    }
+
+    // ============================================
+    // 메시지 전송
+    // ============================================
+    async function sendMsg() {
+        const input = document.getElementById('msgInput');
+        const fileInput = document.getElementById('fileInput');
+        const content = input.value.trim();
+        const file = fileInput.files[0];
+
+        if (!content && !file) return;
+        if (!currentRoomId) return;
+
+        const formData = new FormData();
+        formData.append('room_id', currentRoomId);
+        formData.append('content', content);
+        if (file) formData.append('file', file);
+
+        input.value = '';
+        input.style.height = 'auto';
+        clearFile();
+
+        try {
+            const res = await fetch('/api/message/send', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+                // 즉시 UI에 표시
+                appendMessage({
+                    id: data.message_id,
+                    sender_id: memberId,
+                    sender_name: userName,
+                    content: content,
+                    file_name: file ? file.name : null,
+                    message_type: file ? (file.type.startsWith('image/') ? 'image' : 'file') : 'text',
+                    created_at: data.created_at || new Date().toISOString().replace('T',' ').substring(0,19),
+                    is_system: false
+                });
+                lastMessageId = data.message_id;
+                // 방 목록 갱신
+                loadRooms();
+            } else {
+                alert(data.message || '전송 실패');
+            }
+        } catch(e) {
+            console.error('sendMsg error:', e);
+            alert('메시지 전송 중 오류가 발생했습니다.');
+        }
+    }
+
+    function onMsgKeydown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMsg();
+        }
+    }
+
+    function autoResize(el) {
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    }
+
+    // ============================================
+    // 파일 첨부
+    // ============================================
+    function onFileSelected() {
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput.files.length) {
+            document.getElementById('filePreview').classList.remove('hidden');
+            document.getElementById('filePreviewName').textContent = fileInput.files[0].name;
+        }
+    }
+
+    function clearFile() {
+        document.getElementById('fileInput').value = '';
+        document.getElementById('filePreview').classList.add('hidden');
+    }
+
+    // ============================================
+    // 폴링
+    // ============================================
+    function startPolling() {
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(pollNewMessages, 5000);
+    }
+
+    async function pollNewMessages() {
+        if (!currentRoomId || document.hidden) return;
+        try {
+            const res = await fetch(`/api/message/poll?room_id=${currentRoomId}&after_id=${lastMessageId}`);
+            const data = await res.json();
+            if (data.success && data.messages && data.messages.length) {
+                data.messages.forEach(m => {
+                    if (m.sender_id !== memberId) {
+                        appendMessage(m);
+                    }
+                    if (m.id > lastMessageId) lastMessageId = m.id;
+                });
+                markRead(currentRoomId);
+                loadRooms(); // 뱃지 갱신
+            }
+        } catch(e) {}
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && currentRoomId) {
+            pollNewMessages();
+        }
+    });
+
+    // ============================================
+    // 읽음 처리
+    // ============================================
+    async function markRead(roomId) {
+        try {
+            await fetch('/api/message/read', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({room_id: roomId})
+            });
+        } catch(e) {}
+    }
+
+    // ============================================
+    // 새 대화
+    // ============================================
+    let currentTab = 'individual';
+    let groupData = null;
+
+    function switchNewChatTab(tab) {
+        currentTab = tab;
+        const tabInd = document.getElementById('tabIndividual');
+        const tabGrp = document.getElementById('tabGroup');
+        const panelInd = document.getElementById('panelIndividual');
+        const panelGrp = document.getElementById('panelGroup');
+        if (tab === 'individual') {
+            tabInd.className = 'flex-1 py-2.5 text-sm font-bold text-blue-600 border-b-2 border-blue-600 text-center';
+            tabGrp.className = 'flex-1 py-2.5 text-sm font-medium text-slate-400 border-b-2 border-transparent text-center hover:text-slate-600';
+            panelInd.classList.remove('hidden');
+            panelGrp.classList.add('hidden');
+        } else {
+            tabGrp.className = 'flex-1 py-2.5 text-sm font-bold text-blue-600 border-b-2 border-blue-600 text-center';
+            tabInd.className = 'flex-1 py-2.5 text-sm font-medium text-slate-400 border-b-2 border-transparent text-center hover:text-slate-600';
+            panelGrp.classList.remove('hidden');
+            panelInd.classList.add('hidden');
+            if (!groupData) loadGroupData();
+        }
+    }
+
+    function openNewChat() {
+        document.getElementById('newChatModal').classList.add('active');
+        selectedContacts = {};
+        updateSelectedUI();
+        switchNewChatTab('individual');
+        loadContacts('');
+        // 초대 모드 복원
+        document.getElementById('startChatBtn').textContent = '대화 시작';
+        document.getElementById('startChatBtn').onclick = startChat;
+    }
+
+    function closeNewChat() {
+        document.getElementById('newChatModal').classList.remove('active');
+    }
+
+    let allContacts = [];
+    let contactFilter = '';
+
+    async function loadContacts(roleFilter) {
+        try {
+            const search = document.getElementById('contactSearch').value.trim();
+            const params = new URLSearchParams();
+            if (roleFilter) params.append('role', roleFilter);
+            if (search) params.append('search', search);
+            const res = await fetch(`/api/message/users?${params}`);
+            const data = await res.json();
+            if (data.success) {
+                allContacts = data.users || [];
+                renderContacts(allContacts);
+            }
+        } catch(e) {
+            console.error('loadContacts error:', e);
+        }
+    }
+
+    function filterContacts(role) {
+        contactFilter = role;
+        document.querySelectorAll('.contact-filter').forEach(btn => {
+            btn.className = btn.className.replace(/bg-blue-500 text-white/g, 'bg-slate-100 text-slate-600');
+        });
+        event.target.className = event.target.className.replace(/bg-slate-100 text-slate-600/g, 'bg-blue-500 text-white');
+        loadContacts(role);
+    }
+
+    function searchContacts() {
+        loadContacts(contactFilter);
+    }
+
+    function renderContacts(contacts) {
+        const container = document.getElementById('contactList');
+        if (!contacts.length) {
+            container.innerHTML = '<div class="p-4 text-center text-sm text-slate-400">검색 결과가 없습니다.</div>';
+            return;
+        }
+        container.innerHTML = contacts.map(c => {
+            const checked = selectedContacts[c.member_id] ? 'checked' : '';
+            const info = [];
+            if (c.class_grade && c.class_no) info.push(`${c.class_grade}학년 ${c.class_no}반`);
+            if (c.class_num) info.push(`${c.class_num}번`);
+            if (c.parent_of_name) info.push(`${c.parent_of_name} 학부모`);
+            return `
+            <label class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50">
+                <input type="checkbox" ${checked} onchange="toggleContact('${c.member_id}','${escAttr(c.member_name)}','${c.member_role}')" class="w-4 h-4 rounded text-blue-500 focus:ring-blue-300">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br ${c.member_role === 'teacher' ? 'from-green-400 to-emerald-500' : c.member_role === 'student' ? 'from-blue-400 to-cyan-500' : 'from-pink-400 to-rose-500'} flex items-center justify-center text-white text-xs font-bold flex-shrink-0">${c.member_name.charAt(0)}</div>
+                <div class="min-w-0">
+                    <div class="text-sm font-medium text-slate-800">${escHtml(c.member_name)} <span class="text-xs ${c.member_role === 'teacher' ? 'text-green-500' : c.member_role === 'student' ? 'text-blue-500' : 'text-pink-500'}">${roleLabel(c.member_role)}</span></div>
+                    ${info.length ? `<div class="text-xs text-slate-400">${info.join(' ')}</div>` : ''}
+                </div>
+            </label>`;
+        }).join('');
+    }
+
+    function toggleContact(id, name, role) {
+        if (selectedContacts[id]) {
+            delete selectedContacts[id];
+        } else {
+            selectedContacts[id] = {name, role};
+        }
+        updateSelectedUI();
+    }
+
+    function updateSelectedUI() {
+        const container = document.getElementById('selectedUsers');
+        const ids = Object.keys(selectedContacts);
+        const cnt = ids.length;
+        document.getElementById('selectedCount').textContent = `${cnt}명 선택됨`;
+        document.getElementById('startChatBtn').disabled = cnt === 0;
+        if (!cnt) {
+            container.classList.add('hidden');
+            return;
+        }
+        container.classList.remove('hidden');
+        if (cnt <= 20) {
+            container.innerHTML = ids.map(id => {
+                const c = selectedContacts[id];
+                return `<span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full"><span>${escHtml(c.name)}</span><button onclick="toggleContact('${id}','${escAttr(c.name)}','${c.role}')" class="hover:text-red-500"><i class="fas fa-times text-xs"></i></button></span>`;
+            }).join('');
+        } else {
+            // 20명 초과 시 요약 표시
+            const first5 = ids.slice(0, 5).map(id => escHtml(selectedContacts[id].name)).join(', ');
+            container.innerHTML = `<span class="text-xs text-blue-700">${first5} 외 ${cnt - 5}명 <button onclick="clearAllContacts()" class="ml-2 text-red-500 hover:text-red-700 font-bold">전체 해제</button></span>`;
+        }
+    }
+
+    function clearAllContacts() {
+        selectedContacts = {};
+        updateSelectedUI();
+        // 체크박스 리셋
+        if (currentTab === 'individual') renderContacts(allContacts);
+        if (currentTab === 'group' && groupData) renderGroupList();
+    }
+
+    // ============================================
+    // 단체 선택
+    // ============================================
+    async function loadGroupData() {
+        try {
+            const res = await fetch('/api/message/users/groups');
+            const data = await res.json();
+            if (data.success) {
+                groupData = data;
+                renderGroupList();
+            }
+        } catch(e) { console.error('loadGroupData:', e); }
+    }
+
+    function renderGroupList() {
+        const container = document.getElementById('groupList');
+        if (!groupData || !groupData.grades.length) {
+            container.innerHTML = '<div class="p-4 text-center text-sm text-slate-400">학년/반 정보가 없습니다.</div>';
+            return;
+        }
+        let html = '';
+
+        // 전체 교사
+        html += `
+        <div class="border-b border-slate-100">
+            <button onclick="selectGroup('teacher','','')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-green-50 transition text-left">
+                <div class="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center"><i class="fas fa-chalkboard-user text-green-600"></i></div>
+                <div class="flex-1"><div class="text-sm font-bold text-slate-800">전체 교사</div><div class="text-xs text-slate-400">${groupData.teacher_count}명</div></div>
+                <i class="fas fa-plus-circle text-green-400"></i>
+            </button>
+        </div>`;
+
+        // 학년별
+        groupData.grades.forEach(g => {
+            const totalParents = g.classes.reduce((sum, c) => sum + (groupData.parent_map[`${g.grade}_${c.class_no}`] || 0), 0);
+            html += `
+            <div class="border-b border-slate-100">
+                <div class="px-4 py-2.5 bg-slate-50 flex items-center justify-between">
+                    <span class="text-sm font-bold text-slate-700"><i class="fas fa-layer-group text-blue-400 mr-2"></i>${g.grade}학년</span>
+                    <span class="text-xs text-slate-400">학생 ${g.total_students}명</span>
+                </div>
+                <!-- 학년 전체 선택 -->
+                <button onclick="selectGroup('student','${g.grade}','')" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 transition text-left border-b border-slate-50">
+                    <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center"><i class="fas fa-users text-blue-500 text-xs"></i></div>
+                    <div class="flex-1"><div class="text-sm font-medium text-slate-700">${g.grade}학년 전체 학생</div><div class="text-xs text-slate-400">${g.total_students}명</div></div>
+                    <i class="fas fa-plus-circle text-blue-400"></i>
+                </button>`;
+            if (totalParents > 0) {
+                html += `
+                <button onclick="selectGroup('parent','${g.grade}','')" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-pink-50 transition text-left border-b border-slate-50">
+                    <div class="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center"><i class="fas fa-user-friends text-pink-500 text-xs"></i></div>
+                    <div class="flex-1"><div class="text-sm font-medium text-slate-700">${g.grade}학년 전체 학부모</div><div class="text-xs text-slate-400">${totalParents}명</div></div>
+                    <i class="fas fa-plus-circle text-pink-400"></i>
+                </button>`;
+            }
+            // 반별
+            html += `<div class="pl-6">`;
+            g.classes.forEach(c => {
+                const parentCnt = groupData.parent_map[`${g.grade}_${c.class_no}`] || 0;
+                html += `
+                <div class="flex items-center gap-2 px-3 py-2 border-b border-slate-50">
+                    <span class="text-xs font-medium text-slate-600 w-14">${c.class_no}반</span>
+                    <button onclick="selectGroup('student','${g.grade}','${c.class_no}')" class="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition">학생 ${c.student_count}명 <i class="fas fa-plus text-xs ml-0.5"></i></button>`;
+                if (parentCnt > 0) {
+                    html += `<button onclick="selectGroup('parent','${g.grade}','${c.class_no}')" class="text-xs px-2.5 py-1 rounded-full bg-pink-50 text-pink-600 hover:bg-pink-100 transition">학부모 ${parentCnt}명 <i class="fas fa-plus text-xs ml-0.5"></i></button>`;
+                }
+                html += `</div>`;
+            });
+            html += `</div></div>`;
+        });
+
+        container.innerHTML = html;
+    }
+
+    async function selectGroup(role, grade, classNo) {
+        try {
+            const params = new URLSearchParams();
+            params.append('role', role);
+            if (grade) params.append('grade', grade);
+            if (classNo) params.append('class_no', classNo);
+            const res = await fetch(`/api/message/users/by-group?${params}`);
+            const data = await res.json();
+            if (data.success && data.users) {
+                let added = 0;
+                data.users.forEach(u => {
+                    if (!selectedContacts[u.member_id]) {
+                        selectedContacts[u.member_id] = {name: u.member_name, role: u.member_role};
+                        added++;
+                    }
+                });
+                updateSelectedUI();
+                const label = role === 'teacher' ? '교사' : role === 'student' ? '학생' : '학부모';
+                const scope = grade ? (classNo ? `${grade}학년 ${classNo}반` : `${grade}학년 전체`) : '전체';
+                // 잠시 피드백 표시
+                const btn = event.target.closest('button');
+                if (btn) {
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = `<i class="fas fa-check text-green-500"></i> ${added}명 추가됨`;
+                    btn.disabled = true;
+                    setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1500);
+                }
+            }
+        } catch(e) { console.error('selectGroup:', e); }
+    }
+
+    async function startChat() {
+        const ids = Object.keys(selectedContacts);
+        if (!ids.length) return;
+
+        const roomType = ids.length === 1 ? 'direct' : 'group';
+        const roomTitle = ids.length > 1 ? (ids.length <= 5 ? ids.map(id => selectedContacts[id].name).join(', ') : `${selectedContacts[ids[0]].name} 외 ${ids.length - 1}명`) : '';
+
+        try {
+            const res = await fetch('/api/message/room/create', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    room_type: roomType,
+                    room_title: roomTitle,
+                    target_ids: ids
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeNewChat();
+                await loadRooms();
+                openRoom(data.room_id);
+            } else {
+                alert(data.message || '대화방 생성 실패');
+            }
+        } catch(e) {
+            console.error('startChat error:', e);
+            alert('오류가 발생했습니다.');
+        }
+    }
+
+    // ============================================
+    // 방 메뉴
+    // ============================================
+    function openRoomMenu() { document.getElementById('roomMenuModal').classList.add('active'); }
+    function closeRoomMenu() { document.getElementById('roomMenuModal').classList.remove('active'); }
+
+    async function leaveRoom() {
+        if (!currentRoomId) return;
+        if (!confirm('이 대화방을 나가시겠습니까?')) return;
+        try {
+            const res = await fetch('/api/message/room/leave', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({room_id: currentRoomId})
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeRoomMenu();
+                currentRoomId = null;
+                currentRoom = null;
+                document.getElementById('chatPanel').classList.remove('mobile-show');
+                document.getElementById('chatEmpty').classList.remove('hidden');
+                document.getElementById('chatHeader').classList.add('hidden');
+                document.getElementById('chatMessages').classList.add('hidden');
+                document.getElementById('chatInput').classList.add('hidden');
+                loadRooms();
+            }
+        } catch(e) {
+            alert('오류가 발생했습니다.');
+        }
+    }
+
+    async function toggleAnnouncement() {
+        if (!currentRoomId || !currentRoom) return;
+        const newVal = !currentRoom.announcement_only;
+        try {
+            const res = await fetch('/api/message/room/setting', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({room_id: currentRoomId, announcement_only: newVal})
+            });
+            const data = await res.json();
+            if (data.success) {
+                currentRoom.announcement_only = newVal;
+                document.getElementById('announceLabel').textContent = newVal ? '공지모드 끄기' : '공지모드 켜기';
+                closeRoomMenu();
+            }
+        } catch(e) {}
+    }
+
+    function inviteToRoom() {
+        closeRoomMenu();
+        openNewChat();
+        // 대화시작 대신 초대 모드로 전환
+        document.getElementById('startChatBtn').textContent = '초대하기';
+        document.getElementById('startChatBtn').onclick = async function() {
+            const ids = Object.keys(selectedContacts);
+            if (!ids.length) return;
+            try {
+                const res = await fetch('/api/message/room/invite', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({room_id: currentRoomId, target_ids: ids})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeNewChat();
+                    loadMessages(currentRoomId);
+                    // 원래 버튼으로 복원
+                    document.getElementById('startChatBtn').textContent = '대화 시작';
+                    document.getElementById('startChatBtn').onclick = startChat;
+                } else {
+                    alert(data.message || '초대 실패');
+                }
+            } catch(e) { alert('오류가 발생했습니다.'); }
+        };
+    }
+
+    // ============================================
+    // 모바일 뒤로가기
+    // ============================================
+    function backToList() {
+        document.getElementById('chatPanel').classList.remove('mobile-show');
+        if (pollTimer) clearInterval(pollTimer);
+        currentRoomId = null;
+        loadRooms();
+    }
+
+    // ============================================
+    // 유틸리티
+    // ============================================
+    function scrollToBottom() {
+        const el = document.getElementById('chatMessages');
+        setTimeout(() => { el.scrollTop = el.scrollHeight; }, 50);
+    }
+
+    function formatTime(dt) {
+        if (!dt) return '';
+        const d = new Date(dt.replace(' ', 'T'));
+        const now = new Date();
+        const isToday = d.toDateString() === now.toDateString();
+        const h = d.getHours();
+        const m = String(d.getMinutes()).padStart(2, '0');
+        const ampm = h < 12 ? '오전' : '오후';
+        const h12 = h % 12 || 12;
+        if (isToday) return `${ampm} ${h12}:${m}`;
+        const yesterday = new Date(now); yesterday.setDate(now.getDate()-1);
+        if (d.toDateString() === yesterday.toDateString()) return '어제';
+        return `${d.getMonth()+1}/${d.getDate()}`;
+    }
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        const now = new Date();
+        if (d.toDateString() === now.toDateString()) return '오늘';
+        const yesterday = new Date(now); yesterday.setDate(now.getDate()-1);
+        if (d.toDateString() === yesterday.toDateString()) return '어제';
+        return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
+    }
+
+    function truncate(str, len) { return str.length > len ? str.substring(0, len) + '...' : str; }
+    function escHtml(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function escAttr(s) { return (s||'').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+    function roleLabel(r) {
+        const map = {teacher:'교사', student:'학생', parent:'학부모'};
+        return map[r] || r || '';
+    }
+
+    function handleLogout() {
+        if (confirm('로그아웃 하시겠습니까?')) {
+            localStorage.removeItem('schoolus_user');
+            window.location.href = '/';
+        }
+    }
+
+    function toggleMobileSidebar() {
+        document.getElementById('sidebar').classList.toggle('mobile-open');
+        document.getElementById('mobile-overlay').classList.toggle('active');
+    }
+    document.getElementById('mobile-overlay').onclick = function() {
+        document.getElementById('sidebar').classList.remove('mobile-open');
+        this.classList.remove('active');
+    };
+    </script>
+</body>
+</html>
