@@ -5,11 +5,29 @@ SchoolUs 메시지 기능 — 독립형 Blueprint
 """
 
 from flask import Blueprint, request, jsonify, session, make_response
-import json, os, io, time, tempfile
+import json, os, io, time, tempfile, re
+from datetime import datetime
+from urllib.parse import quote
 
 from utils.db import get_db_connection, sanitize_input, sanitize_html
 
 message_bp = Blueprint('message', __name__)
+
+# ============================================
+# 파일 첨부 설정
+# ============================================
+ALLOWED_IMAGE_EXT = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+ALLOWED_FILE_EXT = {'pdf', 'doc', 'docx', 'hwp', 'hwpx', 'xlsx', 'xls', 'ppt', 'pptx', 'txt', 'zip'}
+ALLOWED_ALL_EXT = ALLOWED_IMAGE_EXT | ALLOWED_FILE_EXT
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+
+def _secure_filename_korean(filename):
+    """한글 보존하면서 위험 문자만 제거"""
+    filename = filename.replace('/', '').replace('\\', '')
+    filename = re.sub(r'[<>:"|?*]', '', filename)
+    filename = filename.strip('. ')
+    return filename or 'unnamed'
 
 
 @message_bp.before_app_request
@@ -703,30 +721,34 @@ def send_message():
         message_type = 'text'
 
         if uploaded_file and uploaded_file.filename:
-            from routes.subject_utils import sftp_upload_file, allowed_file
-            fname = uploaded_file.filename
+            from routes.subject_utils import sftp_upload_file
+            safe_fname = _secure_filename_korean(uploaded_file.filename)
+            ext = safe_fname.rsplit('.', 1)[1].lower() if '.' in safe_fname else ''
 
             # 학생은 이미지만 허용
             if role == 'student':
-                ext = fname.rsplit('.', 1)[1].lower() if '.' in fname else ''
-                if ext not in ('jpg', 'jpeg', 'png', 'gif'):
+                if ext not in ALLOWED_IMAGE_EXT:
                     return jsonify({'success': False, 'message': '학생은 이미지 파일만 첨부할 수 있습니다.'})
-
-            if not allowed_file(fname):
-                return jsonify({'success': False, 'message': '허용되지 않는 파일 형식입니다.'})
-
-            ext = fname.rsplit('.', 1)[1].lower() if '.' in fname else ''
-            ts = int(time.time())
-            remote_path = f'/schools/{school_id}/messages/{room_id}/{ts}_{fname}'
+            else:
+                if ext not in ALLOWED_ALL_EXT:
+                    return jsonify({'success': False, 'message': '허용되지 않는 파일 형식입니다.'})
 
             file_data = uploaded_file.read()
+            if len(file_data) == 0:
+                return jsonify({'success': False, 'message': '빈 파일은 업로드할 수 없습니다.'})
+            if len(file_data) > MAX_FILE_SIZE:
+                return jsonify({'success': False, 'message': f'파일 크기가 {MAX_FILE_SIZE // (1024*1024)}MB를 초과합니다.'})
+
+            ts = int(time.time())
+            remote_path = f'/data/messages/{school_id}/{room_id}/{ts}_{safe_fname}'
+
             upload_ok = sftp_upload_file(io.BytesIO(file_data), remote_path)
             if not upload_ok:
                 return jsonify({'success': False, 'message': '파일 업로드에 실패했습니다.'})
 
             file_path = remote_path
-            file_name = fname
-            message_type = 'image' if ext in ('jpg', 'jpeg', 'png', 'gif') else 'file'
+            file_name = safe_fname
+            message_type = 'image' if ext in ALLOWED_IMAGE_EXT else 'file'
 
         # 메시지 INSERT
         cursor.execute("""
@@ -1134,12 +1156,151 @@ def download_file():
             return jsonify({'success': False, 'message': '파일을 찾을 수 없습니다.'}), 404
 
         response = make_response(file_data)
-        response.headers['Content-Type'] = 'application/octet-stream'
         fname = msg['file_name'] or 'download'
-        response.headers['Content-Disposition'] = f'attachment; filename="{fname}"'
+        ext = fname.rsplit('.', 1)[1].lower() if '.' in fname else ''
+        # MIME 타입 설정
+        mime_map = {
+            'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
+            'gif': 'image/gif', 'webp': 'image/webp', 'pdf': 'application/pdf',
+            'doc': 'application/msword', 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'hwp': 'application/x-hwp', 'hwpx': 'application/x-hwpx',
+            'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'ppt': 'application/vnd.ms-powerpoint', 'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'txt': 'text/plain', 'zip': 'application/zip',
+        }
+        response.headers['Content-Type'] = mime_map.get(ext, 'application/octet-stream')
+        # RFC 5987 한글 파일명 지원
+        encoded_fname = quote(fname)
+        response.headers['Content-Disposition'] = f"attachment; filename=\"{encoded_fname}\"; filename*=UTF-8''{encoded_fname}"
         return response
     except Exception as e:
         print(f"[Message] download_file error: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# ============================================
+# API 12-B: 독립 파일 업로드 (파일만 전송)
+# ============================================
+@message_bp.route('/api/message/file/upload', methods=['POST'])
+def upload_file():
+    """파일 첨부 전용 API — 파일을 업로드하고 메시지를 생성"""
+    info = _get_session_info()
+    if not info:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+    member_id, school_id, role = info
+
+    room_id = request.form.get('room_id')
+    uploaded_file = request.files.get('file')
+    content = request.form.get('content', '').strip()
+
+    if not room_id:
+        return jsonify({'success': False, 'message': 'room_id가 필요합니다.'})
+    if not uploaded_file or not uploaded_file.filename:
+        return jsonify({'success': False, 'message': '파일을 선택해주세요.'})
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+    try:
+        cursor = conn.cursor()
+
+        # 멤버/방 확인
+        mem = _is_room_member(cursor, room_id, member_id)
+        if not mem:
+            return jsonify({'success': False, 'message': '대화방 접근 권한이 없습니다.'}), 403
+
+        # 공지방 체크
+        cursor.execute("SELECT announcement_only FROM message_rooms WHERE id=%s", (room_id,))
+        room = cursor.fetchone()
+        if room and room['announcement_only'] and not mem['is_admin']:
+            return jsonify({'success': False, 'message': '공지 전용 대화방에서는 관리자만 파일을 보낼 수 있습니다.'})
+
+        safe_fname = _secure_filename_korean(uploaded_file.filename)
+        ext = safe_fname.rsplit('.', 1)[1].lower() if '.' in safe_fname else ''
+
+        # 확장자 검증 (학생은 이미지만)
+        if role == 'student':
+            if ext not in ALLOWED_IMAGE_EXT:
+                return jsonify({'success': False, 'message': '학생은 이미지 파일만 첨부할 수 있습니다.'})
+        else:
+            if ext not in ALLOWED_ALL_EXT:
+                return jsonify({'success': False, 'message': '허용되지 않는 파일 형식입니다.'})
+
+        # 파일 크기 검증
+        file_data = uploaded_file.read()
+        file_size = len(file_data)
+        if file_size == 0:
+            return jsonify({'success': False, 'message': '빈 파일은 업로드할 수 없습니다.'})
+        if file_size > MAX_FILE_SIZE:
+            return jsonify({'success': False, 'message': f'파일 크기가 {MAX_FILE_SIZE // (1024*1024)}MB를 초과합니다.'})
+
+        # SFTP 업로드
+        from routes.subject_utils import sftp_upload_file
+        ts = int(time.time())
+        remote_path = f'/data/messages/{school_id}/{room_id}/{ts}_{safe_fname}'
+
+        upload_ok = sftp_upload_file(io.BytesIO(file_data), remote_path)
+        if not upload_ok:
+            return jsonify({'success': False, 'message': '파일 업로드에 실패했습니다.'})
+
+        # 메시지 생성
+        my_name = _get_my_name(cursor, member_id, school_id)
+        my_role_enum = role if role in ('teacher', 'student', 'parent') else 'teacher'
+        message_type = 'image' if ext in ALLOWED_IMAGE_EXT else 'file'
+        content = sanitize_html(content, 5000) if content else f'[파일] {safe_fname}'
+
+        cursor.execute("""
+            INSERT INTO messages
+            (room_id, sender_id, sender_name, sender_role, content,
+             message_type, file_path, file_name)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+        """, (room_id, member_id, my_name, my_role_enum,
+              content, message_type, remote_path, safe_fname))
+        msg_id = cursor.lastrowid
+
+        # 내 last_read_at 갱신
+        cursor.execute("""
+            UPDATE message_room_members SET last_read_at = NOW()
+            WHERE room_id=%s AND member_id=%s
+        """, (room_id, member_id))
+
+        conn.commit()
+
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # 푸시 알림
+        try:
+            from utils.push_helper import send_push_to_user
+            cursor2 = conn.cursor()
+            cursor2.execute("""
+                SELECT member_id FROM message_room_members
+                WHERE room_id=%s AND member_id != %s AND is_active=1
+            """, (room_id, member_id))
+            recipients = cursor2.fetchall()
+            cursor2.close()
+
+            push_body = f'{safe_fname}'
+            for r in recipients:
+                try:
+                    send_push_to_user(r['member_id'], my_name, push_body, '/highschool/messenger.html')
+                except:
+                    pass
+        except:
+            pass
+
+        return jsonify({
+            'success': True,
+            'message_id': msg_id,
+            'file_name': safe_fname,
+            'file_size': file_size,
+            'message_type': message_type,
+            'created_at': now_str
+        })
+    except Exception as e:
+        print(f"[Message] upload_file error: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
         cursor.close()
