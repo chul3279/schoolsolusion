@@ -138,7 +138,11 @@ def get_users():
     try:
         cursor = conn.cursor()
         search = request.args.get('search', '').strip()
+        keyword = request.args.get('keyword', '').strip()  # search 별칭
+        search = search or keyword  # 둘 중 하나라도 있으면 사용
         role_filter = request.args.get('role', '')  # teacher / student / parent / ''
+        class_grade = request.args.get('class_grade', '').strip()
+        class_no = request.args.get('class_no', '').strip()
 
         sql = """
             SELECT member_id, member_name, member_role,
@@ -159,6 +163,14 @@ def get_users():
         if role_filter:
             sql += " AND member_role = %s"
             params.append(role_filter)
+
+        if class_grade:
+            sql += " AND class_grade = %s"
+            params.append(class_grade)
+
+        if class_no:
+            sql += " AND class_no = %s"
+            params.append(class_no)
 
         if search:
             sql += " AND member_name LIKE %s"
@@ -332,7 +344,7 @@ def get_rooms():
                    rm.is_admin, rm.last_read_at,
                    (SELECT COUNT(*) FROM messages m
                     WHERE m.room_id = r.id AND m.is_deleted = 0
-                      AND m.created_at > COALESCE(rm.last_read_at, '1970-01-01')
+                      AND m.created_at > COALESCE(rm.last_read_at, rm.joined_at, r.created_at)
                       AND m.sender_id != %s) AS unread_count,
                    (SELECT m2.content FROM messages m2
                     WHERE m2.room_id = r.id AND m2.is_deleted = 0
@@ -394,23 +406,65 @@ def create_room():
     room_title = sanitize_input(data.get('room_title', ''), 100)
     target_ids = data.get('target_ids', [])  # list of member_id
     announcement_only = 1 if data.get('announcement_only') else 0
+    class_grade = data.get('class_grade', '')
+    class_no = data.get('class_no', '')
+    target_roles = data.get('target_roles', [])  # class/grade/school 용
 
-    if not target_ids:
+    # class/grade/school 타입은 교사만 생성 가능
+    if room_type in ('class', 'grade', 'school') and role != 'teacher':
+        return jsonify({'success': False, 'message': '교사만 단체 대화방을 만들 수 있습니다.'})
+
+    # direct/group은 target_ids 필수
+    if room_type in ('direct', 'group') and not target_ids:
         return jsonify({'success': False, 'message': '대화 상대를 선택해주세요.'})
 
-    # 역할별 제한 검증
-    if role == 'parent':
-        # 학부모: 교사에게만 가능
-        pass  # message_users 에서 조회 시 teacher만 나옴
-    if role == 'student':
-        # 학생: 교사 + 학생만 (학부모 불가)
-        pass
+    # class/grade/school은 조건 검증
+    if room_type == 'class' and (not class_grade or not class_no):
+        return jsonify({'success': False, 'message': '학년과 반을 지정해주세요.'})
+    if room_type == 'grade' and not class_grade:
+        return jsonify({'success': False, 'message': '학년을 지정해주세요.'})
 
     conn = get_db_connection()
     if not conn:
         return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
     try:
         cursor = conn.cursor()
+
+        # class/grade/school 타입: 자동으로 대상 멤버 조회
+        if room_type in ('class', 'grade', 'school') and not target_ids:
+            auto_sql = """
+                SELECT member_id FROM message_users
+                WHERE school_id = %s AND member_id != %s
+            """
+            auto_params = [school_id, member_id]
+
+            if target_roles:
+                role_fmt = ','.join(['%s'] * len(target_roles))
+                auto_sql += f" AND member_role IN ({role_fmt})"
+                auto_params.extend(target_roles)
+
+            if room_type == 'class':
+                auto_sql += " AND class_grade = %s AND class_no = %s"
+                auto_params.extend([class_grade, class_no])
+            elif room_type == 'grade':
+                auto_sql += " AND class_grade = %s"
+                auto_params.append(class_grade)
+            # school: 학교 전체 (추가 필터 없음)
+
+            cursor.execute(auto_sql, auto_params)
+            target_ids = [r['member_id'] for r in cursor.fetchall()]
+
+            if not target_ids:
+                return jsonify({'success': False, 'message': '해당 조건에 맞는 사용자가 없습니다.'})
+
+            # 자동 타이틀 생성
+            if not room_title:
+                if room_type == 'class':
+                    room_title = f'{class_grade}학년 {class_no}반 단체방'
+                elif room_type == 'grade':
+                    room_title = f'{class_grade}학년 단체방'
+                elif room_type == 'school':
+                    room_title = '학교 전체 단체방'
 
         # 대화 상대가 같은 학교인지 확인
         fmt = ','.join(['%s'] * len(target_ids))
@@ -424,17 +478,18 @@ def create_room():
         if invalid:
             return jsonify({'success': False, 'message': '같은 학교 소속이 아닌 사용자가 포함되어 있습니다.'})
 
-        # 역할 제한 강화
-        if role == 'student':
-            for tid in target_ids:
-                t_role = valid_users[tid]['member_role']
-                if t_role == 'parent':
-                    return jsonify({'success': False, 'message': '학생은 학부모에게 메시지를 보낼 수 없습니다.'})
-        elif role == 'parent':
-            for tid in target_ids:
-                t_role = valid_users[tid]['member_role']
-                if t_role != 'teacher':
-                    return jsonify({'success': False, 'message': '학부모는 교사에게만 메시지를 보낼 수 있습니다.'})
+        # 역할 제한 강화 (direct/group만 적용, class/grade/school은 교사 전용이므로 스킵)
+        if room_type in ('direct', 'group'):
+            if role == 'student':
+                for tid in target_ids:
+                    t_role = valid_users[tid]['member_role']
+                    if t_role == 'parent':
+                        return jsonify({'success': False, 'message': '학생은 학부모에게 메시지를 보낼 수 없습니다.'})
+            elif role == 'parent':
+                for tid in target_ids:
+                    t_role = valid_users[tid]['member_role']
+                    if t_role != 'teacher':
+                        return jsonify({'success': False, 'message': '학부모는 교사에게만 메시지를 보낼 수 있습니다.'})
 
         # 1:1 대화 중복 방지
         if room_type == 'direct' and len(target_ids) == 1:
@@ -460,11 +515,15 @@ def create_room():
         my_info = cursor.fetchone() or {}
 
         # 방 생성
+        target_roles_str = ','.join(target_roles) if target_roles else None
         cursor.execute("""
             INSERT INTO message_rooms
-            (school_id, room_type, room_title, announcement_only, created_by)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (school_id, room_type, room_title or None, announcement_only, member_id))
+            (school_id, room_type, room_title, class_grade, class_no,
+             target_roles, announcement_only, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (school_id, room_type, room_title or None,
+              class_grade or None, class_no or None,
+              target_roles_str, announcement_only, member_id))
         room_id = cursor.lastrowid
 
         # 생성자 멤버 추가 (admin)
@@ -554,6 +613,7 @@ def get_messages():
 
         msgs = cursor.fetchall()
         for m in msgs:
+            m['is_mine'] = (m['sender_id'] == member_id)
             if m.get('created_at'):
                 m['created_at'] = str(m['created_at'])
             if m.get('is_deleted'):
@@ -824,7 +884,7 @@ def unread_count():
             JOIN message_room_members rm ON rm.room_id = msg.room_id
                 AND rm.member_id = %s AND rm.is_active = 1
             JOIN message_rooms r ON r.id = msg.room_id AND r.is_active = 1
-            WHERE msg.created_at > COALESCE(rm.last_read_at, '1970-01-01')
+            WHERE msg.created_at > COALESCE(rm.last_read_at, rm.joined_at, r.created_at)
               AND msg.sender_id != %s
               AND msg.is_deleted = 0
               AND msg.is_system = 0
@@ -1120,6 +1180,7 @@ def poll_messages():
         """, (room_id, after_id))
         msgs = cursor.fetchall()
         for m in msgs:
+            m['is_mine'] = (m['sender_id'] == member_id)
             if m.get('created_at'):
                 m['created_at'] = str(m['created_at'])
 
