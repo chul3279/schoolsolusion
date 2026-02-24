@@ -37,6 +37,7 @@
         .period-badge { background: #f1f5f9; color: #94a3b8; font-weight: bold; display: flex; align-items: center; justify-content: center; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
         .block-item { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 4px 6px; margin: 1px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; width: 95%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); text-align: center; }
         .block-item.elective { background: #faf5ff; border-color: #d8b4fe; color: #7c3aed; }
+        .block-item.fixed-subject { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
         .block-item.linked-top { border-bottom: none; border-radius: 6px 6px 0 0; margin-bottom: 0; }
         .block-item.linked-bottom { border-top: 1px dashed #bfdbfe; border-radius: 0 0 6px 6px; margin-top: 0; }
 
@@ -216,7 +217,8 @@
                 <button onclick="goStep(1)" id="btn-step-1" class="step-btn active py-4 text-sm">1. 기본 정보 (교사/과목)</button>
                 <button onclick="goStep(2)" id="btn-step-2" class="step-btn py-4 text-sm">2. 수업 묶음 (Block)</button>
                 <button onclick="goStep(3)" id="btn-step-3" class="step-btn py-4 text-sm">3. 특이사항</button>
-                <button onclick="goStep(4)" id="btn-step-4" class="step-btn py-4 text-sm">4. 시간표 만들기</button>
+                <button onclick="goStep(4)" id="btn-step-4" class="step-btn py-4 text-sm">4. 특정교과 편성</button>
+                <button onclick="goStep(5)" id="btn-step-5" class="step-btn py-4 text-sm">5. 시간표 만들기</button>
             </div>
         </div>
 
@@ -576,8 +578,94 @@
                     <p class="text-xs text-slate-400"><i class="fas fa-info-circle mr-1"></i>요일 체크 해제 = 해당 요일 전체 수업 불가. 제외 교시 = 특정 요일의 특정 교시만 제외.</p>
                 </div>
 
-                <!-- ========== STEP 4: 시간표 만들기 ========== -->
-                <div id="step-4" class="hidden fade-in space-y-4">
+                <!-- ========== STEP 4: 특정교과 편성 ========== -->
+                <div id="step-4" class="hidden fade-in space-y-6">
+                    <div class="border-b pb-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-800">특정교과 편성</h2>
+                                <p class="text-slate-500 text-sm mt-1">특정 교과를 특정 요일/교시에 고정 배치합니다. 해당 학년 전체 학급에 동일하게 적용됩니다.</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="loadFixedSubjectsFromDB()" class="text-xs bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg font-bold transition">
+                                    <i class="fas fa-cloud-download-alt mr-1"></i> DB 불러오기
+                                </button>
+                                <button onclick="saveFixedSubjectsToDB()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold transition">
+                                    <i class="fas fa-cloud-upload-alt mr-1"></i> DB 저장
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 추가 폼 -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <h4 class="font-bold text-slate-700 text-sm mb-3"><i class="fas fa-plus-circle mr-1 text-indigo-500"></i>고정 교과 추가</h4>
+                        <div class="flex flex-wrap gap-3 items-end">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">학년</label>
+                                <select id="fixedGrade" class="form-input h-9 w-28 text-sm">
+                                    <option value="1">1학년</option>
+                                    <option value="2">2학년</option>
+                                    <option value="3">3학년</option>
+                                    <option value="all">전체 학년</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">요일</label>
+                                <select id="fixedDay" class="form-input h-9 w-24 text-sm">
+                                    <option value="월">월</option>
+                                    <option value="화">화</option>
+                                    <option value="수">수</option>
+                                    <option value="목">목</option>
+                                    <option value="금">금</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">시작 교시</label>
+                                <select id="fixedPeriod" class="form-input h-9 w-24 text-sm">
+                                    <option value="1">1교시</option>
+                                    <option value="2">2교시</option>
+                                    <option value="3">3교시</option>
+                                    <option value="4">4교시</option>
+                                    <option value="5">5교시</option>
+                                    <option value="6">6교시</option>
+                                    <option value="7">7교시</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">연속 교시</label>
+                                <select id="fixedCount" class="form-input h-9 w-24 text-sm">
+                                    <option value="1">1교시</option>
+                                    <option value="2">2교시</option>
+                                    <option value="3">3교시</option>
+                                </select>
+                            </div>
+                            <div class="flex-1 min-w-[150px]">
+                                <label class="block text-xs font-bold text-slate-500 mb-1">교과명</label>
+                                <input type="text" id="fixedSubjectName" class="form-input h-9 text-sm" placeholder="예: 창체, 자율, 동아리">
+                            </div>
+                            <button onclick="addFixedSubject()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 h-9 rounded-lg text-sm font-bold transition">
+                                <i class="fas fa-plus mr-1"></i>추가
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 편성 목록 -->
+                    <div>
+                        <h4 class="font-bold text-slate-700 text-sm mb-3">
+                            <i class="fas fa-list mr-1 text-green-500"></i>편성 목록
+                            <span id="fixedSubjectCount" class="ml-2 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs">0건</span>
+                        </h4>
+                        <div id="fixedSubjectList" class="space-y-2">
+                            <p class="text-slate-400 text-sm text-center py-8">등록된 고정 교과가 없습니다.</p>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-slate-400"><i class="fas fa-info-circle mr-1"></i>고정 편성된 교과는 시간표 자동 생성 시 해당 학년 전체 학급에 먼저 배치되며, 다른 수업이 그 교시에 배치되지 않습니다.</p>
+                </div>
+
+                <!-- ========== STEP 5: 시간표 만들기 ========== -->
+                <div id="step-5" class="hidden fade-in space-y-4">
                     <div class="print-title hidden text-center mb-4">
                         <h2 class="text-2xl font-bold" id="printTitle"></h2>
                         <p class="text-sm text-slate-500" id="printDate"></p>
@@ -692,6 +780,7 @@
         let allSchedule = {};   // "grade_class" -> { "day_period" -> { blockId, subject, teacher } }
         let teacherBusy = {};   // "teacherName" -> Set of "day_period"
         let teacherConstraints = {};  // "memberId|name" -> [{day, period}]  (period=null이면 요일전체)
+        let fixedSubjects = [];      // [{id, grade, day, periodStart, periodCount, subject}]
         let currentGrade = '1';
         let currentClass = '1';
         let standardSubjects = [];
@@ -983,11 +1072,12 @@
             if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
             document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`btn-step-${n}`).classList.add('active');
-            for (let i = 1; i <= 4; i++) document.getElementById(`step-${i}`).classList.add('hidden');
+            for (let i = 1; i <= 5; i++) document.getElementById(`step-${i}`).classList.add('hidden');
             document.getElementById(`step-${n}`).classList.remove('hidden');
             if (n === 2) updateBlockTeacherSelect();
             if (n === 3) renderConstraintTable();
-            if (n === 4) { updateGradeClassUI(); renderClassGrid(); renderDraggablePalette(); updateStatInfo(); }
+            if (n === 4) renderFixedSubjectList();
+            if (n === 5) { updateGradeClassUI(); renderClassGrid(); renderDraggablePalette(); updateStatInfo(); }
         }
 
         // ==========================================
@@ -1781,8 +1871,18 @@
         }
 
         function clearAllSchedule() {
-            if (!confirm('전체 학년 시간표를 초기화하시겠습니까?')) return;
-            allSchedule = {};
+            if (!confirm('전체 학년 시간표를 초기화하시겠습니까?\n(고정 교과는 유지됩니다)')) return;
+            // 고정 교과만 보존
+            const preserved = {};
+            for (const ck in allSchedule) {
+                for (const cellKey in allSchedule[ck]) {
+                    if (allSchedule[ck][cellKey].isFixed) {
+                        if (!preserved[ck]) preserved[ck] = {};
+                        preserved[ck][cellKey] = allSchedule[ck][cellKey];
+                    }
+                }
+            }
+            allSchedule = preserved;
             teacherBusy = {};
             document.getElementById('genResultArea').innerHTML = '<div class="text-center py-4 text-green-500"><i class="fas fa-check-circle fa-2x mb-2"></i><p class="font-medium">시간표가 초기화되었습니다.</p></div>';
             renderBlockList();
@@ -1807,6 +1907,35 @@
                 if (targetGrades.includes(g)) delete allSchedule[ck];
             }
             rebuildTeacherBusy();
+
+            // ★ 특정교과 편성: 고정 교과를 먼저 배치
+            let fixedPlacedCount = 0;
+            for (const fs of fixedSubjects) {
+                const grades = fs.grade === 'all' ? ['1', '2', '3'] : [fs.grade];
+                const dayIdx = DAY_IDX[fs.day];
+                if (dayIdx === undefined) continue;
+                for (const g of grades) {
+                    if (!targetGrades.includes(g)) continue;
+                    const classCnt = getGradeCount(g);
+                    for (let c = 1; c <= classCnt; c++) {
+                        const ck = `${g}_${c}`;
+                        if (!allSchedule[ck]) allSchedule[ck] = {};
+                        for (let p = 0; p < fs.periodCount; p++) {
+                            const cellId = `${dayIdx}_${fs.periodStart + p}`;
+                            allSchedule[ck][cellId] = {
+                                blockId: null,
+                                subject: fs.subject,
+                                teacher: '(고정)',
+                                teacherId: '',
+                                isElective: false,
+                                isFixed: true,
+                                linkedPos: fs.periodCount > 1 ? (p === 0 ? 'top' : (p === fs.periodCount - 1 ? 'bottom' : 'middle')) : null
+                            };
+                        }
+                    }
+                    fixedPlacedCount++;
+                }
+            }
 
             // 블록 정렬: 선택과목 우선 → 시수 많은 순
             const targetBlocks = blocks.filter(b => targetGrades.includes(String(b.grade)));
@@ -1912,11 +2041,14 @@
             const constraintNote = constraintCount > 0
                 ? `<p class="mt-1 text-xs text-blue-600"><i class="fas fa-info-circle mr-1"></i>교사 제약조건 ${constraintCount}건 반영됨</p>`
                 : '';
+            const fixedNote = fixedPlacedCount > 0
+                ? `<p class="mt-1 text-xs text-purple-600"><i class="fas fa-thumbtack mr-1"></i>고정 교과 ${fixedPlacedCount}건 선배치됨</p>`
+                : '';
             const summaryColor = totalPlaced >= totalNeeded ? 'text-green-600 bg-green-50' : 'text-amber-600 bg-amber-50';
             document.getElementById('genResultArea').innerHTML = `
                 <div class="mb-3 p-3 rounded-lg ${summaryColor} font-bold text-sm">
                     전체: ${totalPlaced}/${totalNeeded}h 배치 (${Math.round(totalPlaced/totalNeeded*100)}%)
-                    ${constraintNote}
+                    ${constraintNote}${fixedNote}
                 </div>
                 <div class="max-h-[400px] overflow-y-auto">${resultHtml}</div>
                 <div class="mt-3 text-xs text-slate-400">
@@ -1930,7 +2062,126 @@
         }
 
         // ==========================================
-        // STEP 4: 시간표 만들기
+        // STEP 4: 특정교과 편성
+        // ==========================================
+        function addFixedSubject() {
+            const grade = document.getElementById('fixedGrade').value;
+            const day = document.getElementById('fixedDay').value;
+            const periodStart = parseInt(document.getElementById('fixedPeriod').value);
+            const periodCount = parseInt(document.getElementById('fixedCount').value);
+            const subject = document.getElementById('fixedSubjectName').value.trim();
+
+            if (!subject) { alert('교과명을 입력하세요.'); return; }
+            if (periodStart + periodCount - 1 > 7) { alert('7교시를 초과할 수 없습니다.'); return; }
+
+            // 중복 체크
+            const grades = grade === 'all' ? ['1', '2', '3'] : [grade];
+            for (const g of grades) {
+                for (let p = periodStart; p < periodStart + periodCount; p++) {
+                    const dup = fixedSubjects.find(f => {
+                        const fGrades = f.grade === 'all' ? ['1', '2', '3'] : [f.grade];
+                        if (!fGrades.includes(g)) return false;
+                        for (let fp = f.periodStart; fp < f.periodStart + f.periodCount; fp++) {
+                            if (f.day === day && fp === p) return true;
+                        }
+                        return false;
+                    });
+                    if (dup) {
+                        alert(`${g}학년 ${day}요일 ${p}교시에 이미 "${dup.subject}"이(가) 편성되어 있습니다.`);
+                        return;
+                    }
+                }
+            }
+
+            fixedSubjects.push({
+                id: Date.now() + Math.random(),
+                grade, day, periodStart, periodCount, subject
+            });
+            document.getElementById('fixedSubjectName').value = '';
+            renderFixedSubjectList();
+        }
+
+        function removeFixedSubject(id) {
+            fixedSubjects = fixedSubjects.filter(f => f.id !== id);
+            renderFixedSubjectList();
+        }
+
+        function renderFixedSubjectList() {
+            const container = document.getElementById('fixedSubjectList');
+            const countEl = document.getElementById('fixedSubjectCount');
+            countEl.textContent = `${fixedSubjects.length}건`;
+
+            if (fixedSubjects.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-sm text-center py-8">등록된 고정 교과가 없습니다.</p>';
+                return;
+            }
+
+            const gradeLabel = g => g === 'all' ? '전체 학년' : `${g}학년`;
+            const periodLabel = (start, count) => count === 1 ? `${start}교시` : `${start}~${start + count - 1}교시`;
+
+            container.innerHTML = fixedSubjects.map(f => `
+                <div class="flex items-center justify-between bg-white border border-slate-200 rounded-lg px-4 py-3 hover:shadow-sm transition">
+                    <div class="flex items-center gap-3">
+                        <span class="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-lg text-xs font-bold">${gradeLabel(f.grade)}</span>
+                        <span class="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-lg text-xs font-bold">${f.day}요일</span>
+                        <span class="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-lg text-xs font-bold">${periodLabel(f.periodStart, f.periodCount)}</span>
+                        <span class="font-bold text-slate-800">${f.subject}</span>
+                    </div>
+                    <button onclick="removeFixedSubject(${f.id})" class="text-red-400 hover:text-red-600 transition p-1">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function loadFixedSubjectsFromDB() {
+            try {
+                let url = '/api/timetable-fixed-subject/list?';
+                if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
+                else if (currentUser.member_school) url += `member_school=${encodeURIComponent(currentUser.member_school)}`;
+                const resp = await fetch(url);
+                const data = await resp.json();
+                if (data.success) {
+                    fixedSubjects = (data.data || []).map(r => ({
+                        id: r.id || Date.now() + Math.random(),
+                        grade: r.grade,
+                        day: r.day_of_week,
+                        periodStart: r.period_start,
+                        periodCount: r.period_count,
+                        subject: r.subject
+                    }));
+                    renderFixedSubjectList();
+                    alert(`${fixedSubjects.length}건의 고정 교과를 불러왔습니다.`);
+                } else { alert(data.message || '불러오기 실패'); }
+            } catch (e) { console.error(e); alert('불러오기 중 오류가 발생했습니다.'); }
+        }
+
+        async function saveFixedSubjectsToDB() {
+            if (!confirm(`${fixedSubjects.length}건의 고정 교과를 저장하시겠습니까?\n(기존 데이터는 교체됩니다)`)) return;
+            try {
+                const items = fixedSubjects.map(f => ({
+                    grade: f.grade,
+                    day_of_week: f.day,
+                    period_start: f.periodStart,
+                    period_count: f.periodCount,
+                    subject: f.subject
+                }));
+                const body = {
+                    school_id: currentUser.school_id || '',
+                    items
+                };
+                const resp = await fetch('/api/timetable-fixed-subject/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await resp.json();
+                if (data.success) { alert('저장 완료'); } else { alert(data.message || '저장 실패'); }
+            } catch (e) { console.error(e); alert('저장 중 오류가 발생했습니다.'); }
+        }
+
+        // ==========================================
+        // STEP 5: 시간표 만들기
         // ==========================================
         function selectGrade(grade) {
             currentGrade = String(grade);
@@ -1990,17 +2241,20 @@
                     if (entry) {
                         const block = blocks.find(b => b.id === entry.blockId);
                         const isElective = block?.isElective || entry.isElective;
+                        const isFixed = entry.isFixed || false;
                         const isLinkedTop = entry.linkedPos === 'top';
                         const isLinkedBottom = entry.linkedPos === 'bottom';
-                        extraClass = isElective ? 'bg-purple-50/50' : 'bg-blue-50/50';
+                        extraClass = isFixed ? 'bg-emerald-50' : (isElective ? 'bg-purple-50/50' : 'bg-blue-50/50');
                         let itemClass = 'block-item';
                         if (isElective) itemClass += ' elective';
+                        if (isFixed) itemClass += ' fixed-subject';
                         if (isLinkedTop) itemClass += ' linked-top';
                         if (isLinkedBottom) itemClass += ' linked-bottom';
 
+                        const fixedBadge = isFixed ? '<span class="text-[9px] text-emerald-600 font-bold">[고정]</span>' : '';
                         content = `<div class="${itemClass}" title="${entry.teacher} | ${entry.subject}">
                             <div class="text-xs font-bold leading-tight">${entry.subject}</div>
-                            <div class="text-[10px] opacity-60">${entry.teacher}</div>
+                            <div class="text-[10px] opacity-60">${isFixed ? fixedBadge : entry.teacher}</div>
                         </div>`;
                     }
 
@@ -2087,8 +2341,13 @@
             const classKey = `${currentGrade}_${currentClass}`;
             for (let p = 0; p < block.linkedPeriods; p++) {
                 const cellId = `${day}_${period + p}`;
-                if (allSchedule[classKey]?.[cellId]) {
-                    alert(`${period + p}교시에 이미 수업이 배치되어 있습니다. 먼저 제거하세요.`);
+                const existing = allSchedule[classKey]?.[cellId];
+                if (existing) {
+                    if (existing.isFixed) {
+                        alert(`${period + p}교시는 고정 교과 "${existing.subject}"이(가) 편성되어 있습니다.`);
+                    } else {
+                        alert(`${period + p}교시에 이미 수업이 배치되어 있습니다. 먼저 제거하세요.`);
+                    }
                     return;
                 }
             }
@@ -2240,6 +2499,7 @@
             const classKey = `${currentGrade}_${currentClass}`;
             const entry = allSchedule[classKey]?.[cellId];
             if (!entry) return;
+            if (entry.isFixed) { alert('고정 편성된 교과는 시간표에서 직접 제거할 수 없습니다.\n4단계 "특정교과 편성"에서 수정하세요.'); return; }
 
             if (confirm(`${entry.subject} (${entry.teacher})\n이 배치를 제거하시겠습니까?`)) {
                 removePlacement(entry.blockId, cellId);
@@ -2289,9 +2549,13 @@
         }
 
         function clearCurrentTimetable() {
-            if (!confirm(`${currentGrade}학년 시간표를 모두 초기화하시겠습니까?`)) return;
+            if (!confirm(`${currentGrade}학년 시간표를 모두 초기화하시겠습니까?\n(고정 교과는 유지됩니다)`)) return;
             for (const ck in allSchedule) {
-                if (ck.startsWith(currentGrade + '_')) delete allSchedule[ck];
+                if (ck.startsWith(currentGrade + '_')) {
+                    for (const cellKey in allSchedule[ck]) {
+                        if (!allSchedule[ck][cellKey].isFixed) delete allSchedule[ck][cellKey];
+                    }
+                }
             }
             rebuildTeacherBusy();
             renderClassGrid();
@@ -2323,8 +2587,9 @@
             for (const ck in allSchedule) {
                 const [grade, classNo] = ck.split('_');
                 for (const cellKey in allSchedule[ck]) {
-                    const [d, p] = cellKey.split('_');
                     const entry = allSchedule[ck][cellKey];
+                    if (entry.isFixed) continue; // 고정 교과는 별도 테이블에 저장
+                    const [d, p] = cellKey.split('_');
                     entries.push({
                         grade, class_no: classNo,
                         day_of_week: dayNames[parseInt(d)],

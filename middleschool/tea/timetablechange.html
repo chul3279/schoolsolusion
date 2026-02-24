@@ -37,6 +37,35 @@
         .period-card.selected-mine { border-color: #6366f1; background: #eef2ff; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
         .period-card.selected-target { border-color: #22c55e; background: #f0fdf4; box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
 
+        /* 연쇄 교환 계산기 스타일 */
+        .ex-cell { border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px 8px; text-align: center; transition: all 0.2s; min-height: 80px; display: flex; flex-direction: column; justify-content: center; }
+        .ex-cell.has-class { cursor: pointer; background: #f8fafc; }
+        .ex-cell.has-class:hover { border-color: #818cf8; background: #eef2ff; }
+        .ex-cell.is-free { background: #fafafa; border-style: dashed; color: #94a3b8; }
+        .ex-cell.source-selected { border-color: #6366f1; background: #eef2ff; box-shadow: 0 0 0 3px rgba(99,102,241,0.3); }
+        .ex-cell.free-active { border-color: #22c55e; background: #f0fdf4; cursor: pointer; animation: pulse-green 1.5s ease-in-out infinite; }
+        .ex-cell.free-active:hover { background: #dcfce7; box-shadow: 0 0 0 3px rgba(34,197,94,0.3); }
+        .ex-cell.free-hovered { border-color: #16a34a; background: #dcfce7; box-shadow: 0 0 0 3px rgba(34,197,94,0.4); }
+        .ex-cell.impossible { border-color: #fca5a5; background: #fef2f2; opacity: 0.7; }
+        @keyframes pulse-green { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); } 50% { box-shadow: 0 0 0 8px rgba(34,197,94,0); } }
+        .chain-badge-simple { background: #dcfce7; color: #15803d; padding: 4px 12px; border-radius: 20px; }
+        .chain-badge-complex { background: #fff7ed; color: #c2410c; padding: 4px 12px; border-radius: 20px; }
+        .chain-badge-impossible { background: #fee2e2; color: #dc2626; padding: 4px 12px; border-radius: 20px; }
+        .chain-step { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; }
+        .chain-step .swap-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.85rem; }
+        .chain-step .swap-arrow { color: #6366f1; font-weight: bold; }
+
+        /* 연쇄 교환 그룹 카드 */
+        .chain-group-card { background: linear-gradient(135deg, #faf5ff, #f5f3ff); border: 2px solid #c4b5fd; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+        .chain-group-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .chain-group-badge { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .chain-progress-bar { width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+        .chain-progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+        .chain-progress-fill.all-approved { background: linear-gradient(90deg, #22c55e, #16a34a); }
+        .chain-progress-fill.partial { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .chain-member-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: white; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 6px; font-size: 0.85rem; flex-wrap: wrap; }
+        .chain-member-row .member-status { margin-left: auto; }
+
         .status-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
         .status-pending { background: #fef9c3; color: #a16207; }
         .status-approved { background: #dcfce7; color: #15803d; }
@@ -206,7 +235,7 @@
                 <i class="fas fa-calendar-alt mr-2"></i>시간표 조회/변경
             </button>
             <button onclick="switchTab('exchange-request')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200 text-slate-600" id="tab-exchange-request">
-                <i class="fas fa-exchange-alt mr-2"></i>수업 교환 요청
+                <i class="fas fa-exchange-alt mr-2"></i>수업 교환 / 대강
             </button>
             <button onclick="switchTab('exchange-list')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200 text-slate-600" id="tab-exchange-list">
                 <i class="fas fa-list-alt mr-2"></i>교환 요청 목록
@@ -292,56 +321,68 @@
             </div>
         </div>
 
-        <!-- ============================== 탭2: 수업 교환 요청 ============================== -->
+        <!-- ============================== 탭2: 수업 교환 / 대강 ============================== -->
         <div id="panel-exchange-request" class="tab-panel hidden flex-1 overflow-y-auto p-8 bg-slate-50">
-            <div class="max-w-4xl mx-auto space-y-6">
-                <!-- 카드1: 내 교환 교시 선택 -->
+            <div class="max-w-6xl mx-auto space-y-6">
+                <!-- 카드1: 주 선택 + 모드 토글 + 주간 시간표 -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="font-bold text-lg mb-4"><i class="fas fa-hand-pointer mr-2 text-indigo-500"></i>1. 내 교환 교시 선택</h3>
-                    <p class="text-sm text-slate-500 mb-4">교환할 날짜를 선택한 후, 내 시간표에서 교환하고 싶은 교시를 클릭하세요.</p>
-                    <div class="flex items-center gap-4 mb-4 flex-wrap">
-                        <input type="date" id="exReqDate" class="border border-slate-300 rounded px-3 py-2 text-sm">
-                        <button onclick="loadMyScheduleForExchange()" class="bg-indigo-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-indigo-700 transition">
-                            <i class="fas fa-sync-alt mr-1"></i>내 시간표 불러오기
-                        </button>
-                    </div>
-                    <div id="myScheduleGrid" class="text-center py-8 text-slate-400">
-                        <i class="fas fa-calendar-day fa-2x mb-2"></i>
-                        <p>날짜를 선택하고 불러오기를 클릭하세요.</p>
-                    </div>
-                </div>
-
-                <!-- 카드2: 교환 대상 교사/교시 선택 -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="font-bold text-lg mb-4"><i class="fas fa-user-friends mr-2 text-green-500"></i>2. 교환 대상 교사 / 교시 선택</h3>
-                    <div class="flex items-center gap-4 mb-4 flex-wrap relative">
-                        <div class="relative">
-                            <input type="text" id="exTargetTeacher" class="border border-slate-300 rounded px-3 py-2 text-sm w-60" placeholder="교사명 검색" autocomplete="off">
-                            <div id="exTargetDropdown" class="search-dropdown hidden" style="width:240px;"></div>
+                    <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
+                        <h3 class="font-bold text-lg"><i class="fas fa-exchange-alt mr-2 text-indigo-500"></i>수업 교환 / 대강</h3>
+                        <div class="flex items-center gap-2">
+                            <button onclick="changeWeek(-1)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 w-9 h-9 rounded-lg text-sm font-bold transition"><i class="fas fa-chevron-left"></i></button>
+                            <span id="exWeekLabel" class="text-sm font-bold text-slate-700 min-w-[200px] text-center"></span>
+                            <button onclick="changeWeek(1)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 w-9 h-9 rounded-lg text-sm font-bold transition"><i class="fas fa-chevron-right"></i></button>
+                            <button onclick="loadExchangeWeek()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition ml-2">
+                                <i class="fas fa-sync-alt mr-1"></i>불러오기
+                            </button>
                         </div>
-                        <button onclick="loadTargetScheduleForExchange()" class="bg-green-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-green-700 transition">
-                            <i class="fas fa-search mr-1"></i>시간표 조회
+                    </div>
+                    <!-- 모드 토글 -->
+                    <div class="flex gap-2 mb-4">
+                        <button onclick="setExMode('exchange')" id="exModeExchange" class="px-4 py-2 rounded-lg text-sm font-bold transition border-2 border-indigo-500 bg-indigo-50 text-indigo-700">
+                            <i class="fas fa-exchange-alt mr-1"></i>수업 교환
+                        </button>
+                        <button onclick="setExMode('substitute')" id="exModeSubstitute" class="px-4 py-2 rounded-lg text-sm font-bold transition border-2 border-slate-200 bg-white text-slate-600">
+                            <i class="fas fa-user-plus mr-1"></i>대강
                         </button>
                     </div>
-                    <div id="targetScheduleGrid" class="text-center py-8 text-slate-400">
-                        <i class="fas fa-user-clock fa-2x mb-2"></i>
-                        <p>교환 대상 교사를 검색하세요.</p>
+                    <p class="text-sm text-slate-500 mb-4" id="exModeDesc">수업 셀을 클릭하여 이동할 수업을 선택한 후, 같은 날 공강 셀에 마우스를 올려 교환 경로를 확인하세요.</p>
+                    <!-- 주간 시간표 그리드 -->
+                    <div id="exWeekGridWrap" class="hidden">
+                        <div class="tt-grid" id="exWeekGrid">
+                            <div class="tt-head bg-slate-100"></div>
+                            <div class="tt-head">월</div><div class="tt-head">화</div><div class="tt-head">수</div><div class="tt-head">목</div><div class="tt-head">금</div>
+                            <div id="exWeekBody" style="display:contents;"></div>
+                        </div>
+                    </div>
+                    <div id="exWeekPlaceholder" class="text-center py-8 text-slate-400">
+                        <i class="fas fa-calendar-week fa-2x mb-2"></i>
+                        <p>불러오기를 클릭하여 주간 시간표를 조회하세요.</p>
                     </div>
                 </div>
-
-                <!-- 카드3: 교환 요약 + 요청 -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="font-bold text-lg mb-4"><i class="fas fa-paper-plane mr-2 text-blue-500"></i>3. 교환 요청</h3>
-                    <div id="exchangeSummary" class="p-4 bg-slate-50 rounded-lg border border-slate-200 mb-4 text-sm text-slate-500">
-                        위에서 교시를 선택하면 교환 요약이 표시됩니다.
+                <!-- 카드2: 연쇄 교환 경로 시각화 (교환 모드) -->
+                <div id="chainResultCard" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden">
+                    <div class="flex items-center gap-3 mb-4">
+                        <h3 class="font-bold text-lg"><i class="fas fa-project-diagram mr-2 text-purple-500"></i>교환 경로</h3>
+                        <span id="chainBadge" class="px-3 py-1 rounded-full text-xs font-bold"></span>
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-bold text-slate-600 mb-2">교환 사유</label>
-                        <input type="text" id="exReqReason" class="w-full border border-slate-300 rounded-lg p-2 text-sm" placeholder="교환 사유 입력">
+                    <div id="chainStepsArea"></div>
+                    <div id="chainActions" class="hidden mt-4 pt-4 border-t border-slate-200">
+                        <div class="flex items-center gap-4 flex-wrap">
+                            <input type="text" id="exReqReason" class="flex-1 min-w-[200px] border border-slate-300 rounded-lg p-2 text-sm" placeholder="교환 사유 입력 (선택)">
+                            <button onclick="submitChainExchange()" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 transition whitespace-nowrap">
+                                <i class="fas fa-paper-plane mr-2"></i>교환 요청 보내기
+                            </button>
+                        </div>
                     </div>
-                    <button onclick="submitExchangeRequest()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-indigo-700 transition disabled:opacity-50" id="btnSubmitExchange" disabled>
-                        <i class="fas fa-paper-plane mr-2"></i>교환 요청 보내기
-                    </button>
+                </div>
+                <!-- 카드3: 대강 - 공강 교사 목록 (대강 모드) -->
+                <div id="substituteCard" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden">
+                    <div class="flex items-center gap-3 mb-4">
+                        <h3 class="font-bold text-lg"><i class="fas fa-user-plus mr-2 text-amber-500"></i>대강 가능 교사</h3>
+                        <span id="subPeriodInfo" class="text-sm text-slate-500"></span>
+                    </div>
+                    <div id="subTeacherList"></div>
                 </div>
             </div>
         </div>
@@ -363,24 +404,14 @@
                         <i class="fas fa-sync-alt mr-1"></i>새로고침
                     </button>
                 </div>
-                <!-- 받은 요청 -->
+                <!-- 학교 전체 교환 요청 (담당자 승인) -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <h3 class="font-bold text-lg mb-4">
-                        <i class="fas fa-inbox mr-2 text-red-500"></i>받은 교환 요청
-                        <span id="receivedCount" class="text-sm font-normal text-slate-400 ml-2">0건</span>
+                        <i class="fas fa-school mr-2 text-indigo-500"></i>학교 교환 요청
+                        <span id="schoolExCount" class="text-sm font-normal text-slate-400 ml-2">0건</span>
                     </h3>
-                    <div id="receivedExchanges" class="space-y-3">
-                        <div class="text-center py-6 text-slate-400 text-sm">받은 교환 요청이 없습니다.</div>
-                    </div>
-                </div>
-                <!-- 보낸 요청 -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="font-bold text-lg mb-4">
-                        <i class="fas fa-paper-plane mr-2 text-blue-500"></i>보낸 교환 요청
-                        <span id="sentCount" class="text-sm font-normal text-slate-400 ml-2">0건</span>
-                    </h3>
-                    <div id="sentExchanges" class="space-y-3">
-                        <div class="text-center py-6 text-slate-400 text-sm">보낸 교환 요청이 없습니다.</div>
+                    <div id="schoolExchanges" class="space-y-3">
+                        <div class="text-center py-6 text-slate-400 text-sm">교환 요청이 없습니다.</div>
                     </div>
                 </div>
             </div>
@@ -401,13 +432,13 @@
         let currentTarget = {};
         let modalCell = null;
 
-        // 교환 요청 상태
-        let exMySchedule = [];       // 내 시간표
-        let exTargetSchedule = [];   // 대상 시간표
-        let exSelectedMine = null;   // { day, period, subject, grade, class_no }
-        let exSelectedTarget = null;
-        let exTargetInfo = null;     // { member_id, member_name }
-        let exReqDayName = '';       // 선택된 날짜의 요일명
+        // 교환/대강 계산기 상태
+        let schoolFullTimetable = null; // /api/timetable/school/all 전체 시간표 캐시
+        let dayIndices = {};            // { '월': buildDayIndex(), '화': ..., }  요일별 인덱스
+        let exWeekMonday = null;        // 현재 선택된 주의 월요일 Date
+        let exSelectedSource = null;    // { period, dayName, classes, teacherId }
+        let exCurrentChain = null;      // 현재 계산된 체인 결과
+        let exMode = 'exchange';        // 'exchange' | 'substitute'
 
         // 거절 모달 상태
         let rejectExchangeId = null;
@@ -434,8 +465,9 @@
 
             if (tabName === 'exchange-list') loadExchangeList();
             if (tabName === 'exchange-request') {
-                if (!document.getElementById('exReqDate').value) {
-                    document.getElementById('exReqDate').value = new Date().toISOString().split('T')[0];
+                if (!exWeekMonday) {
+                    exWeekMonday = getWeekMonday(new Date());
+                    updateWeekLabel();
                 }
             }
         }
@@ -812,195 +844,593 @@
         }
 
         // ==========================================
-        // 탭2: 수업 교환 요청
+        // 탭2: 수업 교환 / 대강 (주간 시간표 기반)
         // ==========================================
-        function getDayName(dateStr) {
-            const d = new Date(dateStr);
-            return DAYS[d.getDay() - 1] || null; // 0=일, 1=월...
+
+        function getWeekMonday(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.getFullYear(), d.getMonth(), diff);
         }
 
-        async function loadMyScheduleForExchange() {
-            const dateStr = document.getElementById('exReqDate').value;
-            if (!dateStr) { alert('날짜를 선택하세요.'); return; }
-            const dayName = getDayName(dateStr);
-            if (!dayName) { alert('주말은 선택할 수 없습니다.'); return; }
-            exReqDayName = dayName;
-            exSelectedMine = null;
-            exSelectedTarget = null;
-            updateExchangeSummary();
+        function formatDate(d) {
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${d.getFullYear()}-${mm}-${dd}`;
+        }
 
+        function getWeekDateForDay(monday, dayIdx) {
+            const d = new Date(monday);
+            d.setDate(d.getDate() + dayIdx);
+            return formatDate(d);
+        }
+
+        function updateWeekLabel() {
+            if (!exWeekMonday) exWeekMonday = getWeekMonday(new Date());
+            const fri = new Date(exWeekMonday);
+            fri.setDate(fri.getDate() + 4);
+            const ml = `${exWeekMonday.getMonth()+1}.${exWeekMonday.getDate()}`;
+            const fl = `${fri.getMonth()+1}.${fri.getDate()}`;
+            document.getElementById('exWeekLabel').textContent = `${exWeekMonday.getFullYear()}. ${ml} (월) ~ ${fl} (금)`;
+        }
+
+        function changeWeek(delta) {
+            if (!exWeekMonday) exWeekMonday = getWeekMonday(new Date());
+            exWeekMonday.setDate(exWeekMonday.getDate() + delta * 7);
+            updateWeekLabel();
+        }
+
+        function setExMode(mode) {
+            exMode = mode;
+            exSelectedSource = null;
+            exCurrentChain = null;
+            document.getElementById('chainResultCard').classList.add('hidden');
+            document.getElementById('substituteCard').classList.add('hidden');
+
+            const btnEx = document.getElementById('exModeExchange');
+            const btnSub = document.getElementById('exModeSubstitute');
+            const desc = document.getElementById('exModeDesc');
+
+            if (mode === 'exchange') {
+                btnEx.className = 'px-4 py-2 rounded-lg text-sm font-bold transition border-2 border-indigo-500 bg-indigo-50 text-indigo-700';
+                btnSub.className = 'px-4 py-2 rounded-lg text-sm font-bold transition border-2 border-slate-200 bg-white text-slate-600';
+                desc.textContent = '수업 셀을 클릭하여 이동할 수업을 선택한 후, 같은 날 공강 셀에 마우스를 올려 교환 경로를 확인하세요.';
+            } else {
+                btnSub.className = 'px-4 py-2 rounded-lg text-sm font-bold transition border-2 border-amber-500 bg-amber-50 text-amber-700';
+                btnEx.className = 'px-4 py-2 rounded-lg text-sm font-bold transition border-2 border-slate-200 bg-white text-slate-600';
+                desc.textContent = '수업 셀을 클릭하면 해당 교시에 공강인 교사 목록이 표시됩니다.';
+            }
+            // 이미 로드된 시간표가 있으면 다시 렌더
+            if (schoolFullTimetable && Object.keys(dayIndices).length > 0) renderWeekGrid();
+        }
+
+        // --- 전체 시간표 로드 ---
+        async function loadSchoolFullTimetable() {
+            if (schoolFullTimetable) return schoolFullTimetable;
             try {
-                let url = '/api/timetable/teacher/week?member_name=' + encodeURIComponent(currentUser.member_name);
-                if (currentUser.member_id) url += '&member_id=' + encodeURIComponent(currentUser.member_id);
-                if (currentUser.school_id) url += '&school_id=' + encodeURIComponent(currentUser.school_id);
-                else url += '&member_school=' + encodeURIComponent(currentUser.member_school);
-
+                const url = `/api/timetable/school/all?school_id=${encodeURIComponent(currentUser.school_id)}`;
                 const res = await fetch(url);
-                if (!res.ok) throw new Error('서버 오류');
                 const data = await res.json();
-                if (!data.success) { alert(data.message); return; }
+                if (!data.success) throw new Error(data.message);
+                schoolFullTimetable = data.timetable || [];
+                return schoolFullTimetable;
+            } catch (e) { alert('전체 시간표 로드 실패: ' + e.message); return []; }
+        }
 
-                exMySchedule = (data.timetable || []).filter(t => t.day_of_week === dayName);
-                const container = document.getElementById('myScheduleGrid');
+        function buildDayIndex(timetable, dayName) {
+            const classToPeriod = {};
+            const teacherToPeriod = {};
+            const teacherNames = {};
 
-                if (exMySchedule.length === 0) {
-                    container.innerHTML = `<div class="text-center py-6 text-slate-400"><i class="fas fa-info-circle mr-1"></i>${dayName}요일에 배정된 수업이 없습니다.</div>`;
-                    return;
+            timetable.filter(c => c.day_of_week === dayName).forEach(cell => {
+                const classKey = `${cell.grade}-${cell.class_no}`;
+                const p = parseInt(cell.period);
+                const tid = cell.member_id || cell.member_name;
+
+                if (!classToPeriod[classKey]) classToPeriod[classKey] = {};
+                classToPeriod[classKey][p] = { teacherId: tid, teacherName: cell.member_name, subject: cell.subject };
+
+                if (!teacherToPeriod[tid]) teacherToPeriod[tid] = {};
+                if (!teacherToPeriod[tid][p]) teacherToPeriod[tid][p] = [];
+                teacherToPeriod[tid][p].push({ grade: cell.grade, classNo: cell.class_no, subject: cell.subject });
+
+                teacherNames[tid] = cell.member_name;
+            });
+
+            return { classToPeriod, teacherToPeriod, teacherNames };
+        }
+
+        // --- 주간 시간표 로드 ---
+        async function loadExchangeWeek() {
+            if (!exWeekMonday) exWeekMonday = getWeekMonday(new Date());
+            updateWeekLabel();
+
+            const tt = await loadSchoolFullTimetable();
+            if (!tt.length) return;
+
+            dayIndices = {};
+            DAYS.forEach(d => { dayIndices[d] = buildDayIndex(tt, d); });
+
+            exSelectedSource = null;
+            exCurrentChain = null;
+            document.getElementById('chainResultCard').classList.add('hidden');
+            document.getElementById('substituteCard').classList.add('hidden');
+            document.getElementById('exWeekPlaceholder').classList.add('hidden');
+            document.getElementById('exWeekGridWrap').classList.remove('hidden');
+
+            renderWeekGrid();
+        }
+
+        // --- 주간 그리드 렌더링 ---
+        function renderWeekGrid() {
+            const myId = currentUser.member_id || currentUser.member_name;
+            const body = document.getElementById('exWeekBody');
+            let html = '';
+
+            for (let p = 1; p <= PERIODS; p++) {
+                // 교시 번호
+                html += `<div class="period-badge">${p}</div>`;
+                for (let di = 0; di < 5; di++) {
+                    const dayName = DAYS[di];
+                    const idx = dayIndices[dayName];
+                    if (!idx) { html += `<div class="tt-cell"></div>`; continue; }
+
+                    const myPeriods = idx.teacherToPeriod[myId] || {};
+                    const classes = myPeriods[p] || [];
+                    const hasClass = classes.length > 0;
+
+                    const isSource = exSelectedSource && exSelectedSource.period === p && exSelectedSource.dayName === dayName;
+                    const isFreeActive = exMode === 'exchange' && exSelectedSource && !hasClass && !isSource;
+
+                    let cellCls = 'tt-cell';
+                    let extraStyle = '';
+                    if (isSource) {
+                        cellCls += ' source-selected';
+                        extraStyle = 'border:2px solid #6366f1; background:#eef2ff; box-shadow:0 0 0 3px rgba(99,102,241,0.3);';
+                    } else if (isFreeActive) {
+                        cellCls += ' free-active';
+                        extraStyle = 'border:2px solid #22c55e; background:#f0fdf4; cursor:pointer; animation:pulse-green 1.5s ease-in-out infinite;';
+                    }
+
+                    const cellId = `ex-cell-${di}-${p}`;
+
+                    if (hasClass) {
+                        const c = classes[0];
+                        const multi = classes.length > 1;
+                        const classLabel = multi ? `${c.grade}-${c.classNo} 외 ${classes.length-1}` : `${c.grade}-${c.classNo}`;
+                        html += `<div class="${cellCls}" id="${cellId}" style="${extraStyle}" onclick="onExCellClick('${dayName}',${p},true)">
+                            <span class="subject-tag">${c.subject}</span>
+                            <span class="class-tag">${classLabel}</span>
+                        </div>`;
+                    } else {
+                        const freeLabel = isFreeActive ? '여기로 이동' : '공강';
+                        const freeEvents = isFreeActive
+                            ? `onclick="onExCellClick('${dayName}',${p},false)" onmouseenter="onFreeHover('${dayName}',${p})" onmouseleave="onFreeLeave('${dayName}',${p})"`
+                            : '';
+                        html += `<div class="${cellCls}" id="${cellId}" style="${extraStyle}; ${!isFreeActive && !isSource ? 'color:#cbd5e1;' : ''}" ${freeEvents}>
+                            <span class="text-xs" style="color:#94a3b8;">${freeLabel}</span>
+                        </div>`;
+                    }
+                }
+            }
+            body.innerHTML = html;
+        }
+
+        // --- 셀 클릭 핸들러 ---
+        function onExCellClick(dayName, period, hasClass) {
+            if (exMode === 'exchange') {
+                if (hasClass) {
+                    selectSourcePeriod(dayName, period);
+                } else if (exSelectedSource) {
+                    onFreeClick(dayName, period);
+                }
+            } else {
+                // 대강 모드: 수업 셀 클릭 → 공강 교사 표시
+                if (hasClass) {
+                    showSubstituteTeachers(dayName, period);
+                }
+            }
+        }
+
+        function selectSourcePeriod(dayName, period) {
+            const myId = currentUser.member_id || currentUser.member_name;
+            const idx = dayIndices[dayName];
+            if (!idx) return;
+            const myPeriods = idx.teacherToPeriod[myId] || {};
+            if (!myPeriods[period]) return;
+
+            exSelectedSource = { period, dayName, classes: myPeriods[period], teacherId: myId, teacherName: currentUser.member_name };
+            exCurrentChain = null;
+            document.getElementById('chainResultCard').classList.add('hidden');
+            document.getElementById('substituteCard').classList.add('hidden');
+            renderWeekGrid();
+        }
+
+        // --- 공강 호버/클릭 → 연쇄 교환 계산 ---
+        function onFreeHover(dayName, targetPeriod) {
+            if (!exSelectedSource) return;
+            const di = DAY_IDX[dayName];
+            const el = document.getElementById(`ex-cell-${di}-${targetPeriod}`);
+            if (el) { el.style.borderColor = '#16a34a'; el.style.background = '#dcfce7'; el.style.animation = 'none'; el.style.boxShadow = '0 0 0 3px rgba(34,197,94,0.4)'; }
+
+            const isSameDay = exSelectedSource.dayName === dayName;
+            const idx = dayIndices[dayName];
+            let chain;
+            if (isSameDay) {
+                chain = findExchangeChain(exSelectedSource.teacherId, exSelectedSource.period, targetPeriod, idx);
+            } else {
+                chain = findCrossDayChain(exSelectedSource, dayName, targetPeriod);
+            }
+            exCurrentChain = chain;
+            exCurrentChain.targetPeriod = targetPeriod;
+            exCurrentChain.dayName = dayName;
+            renderChainVisualization(chain, exSelectedSource.period, targetPeriod, idx);
+        }
+
+        function onFreeLeave(dayName, targetPeriod) {
+            const di = DAY_IDX[dayName];
+            const el = document.getElementById(`ex-cell-${di}-${targetPeriod}`);
+            if (el) { el.style.borderColor = '#22c55e'; el.style.background = '#f0fdf4'; el.style.animation = 'pulse-green 1.5s ease-in-out infinite'; el.style.boxShadow = ''; }
+        }
+
+        function onFreeClick(dayName, targetPeriod) {
+            if (!exSelectedSource) return;
+            const isSameDay = exSelectedSource.dayName === dayName;
+            const idx = dayIndices[dayName];
+            let chain;
+            if (isSameDay) {
+                chain = findExchangeChain(exSelectedSource.teacherId, exSelectedSource.period, targetPeriod, idx);
+            } else {
+                chain = findCrossDayChain(exSelectedSource, dayName, targetPeriod);
+            }
+            exCurrentChain = chain;
+            exCurrentChain.targetPeriod = targetPeriod;
+            exCurrentChain.dayName = dayName;
+            renderChainVisualization(chain, exSelectedSource.period, targetPeriod, idx);
+        }
+
+        // --- 교차 요일 교환 알고리즘 (대상 요일 내 연쇄 포함) ---
+        function findCrossDayChain(source, targetDayName, targetPeriod) {
+            const srcIdx = dayIndices[source.dayName];
+            const tgtIdx = dayIndices[targetDayName];
+            if (!srcIdx || !tgtIdx) return { valid: false, reason: '시간표 데이터가 없습니다.' };
+
+            const myId = source.teacherId;
+            const srcClasses = srcIdx.teacherToPeriod[myId]?.[source.period] || [];
+            if (srcClasses.length === 0) return { valid: false, reason: '소스 교시에 수업이 없습니다.' };
+
+            // 대상 요일에서 내가 targetPeriod에 공강인지 확인
+            const myTgtClasses = tgtIdx.teacherToPeriod[myId]?.[targetPeriod] || [];
+            if (myTgtClasses.length > 0) return { valid: false, reason: '대상 요일 해당 교시에 이미 수업이 있습니다.' };
+
+            const allSteps = [];
+            const involvedTeachers = new Set([myId]);
+
+            for (const srcClass of srcClasses) {
+                const classKey = `${srcClass.grade}-${srcClass.classNo}`;
+                const cellAtTarget = tgtIdx.classToPeriod[classKey]?.[targetPeriod];
+
+                if (!cellAtTarget) {
+                    allSteps.push({ type: 'direct_move', classKey, teacherId: myId, teacherName: source.teacherName, subject: srcClass.subject, fromPeriod: source.period, toPeriod: targetPeriod, fromDay: source.dayName, toDay: targetDayName });
+                } else {
+                    const displacedId = cellAtTarget.teacherId;
+                    const displacedName = cellAtTarget.teacherName;
+                    const displacedSubject = cellAtTarget.subject;
+                    involvedTeachers.add(displacedId);
+
+                    // 밀려나는 교사 → 대상 요일 내에서 빈 교시를 찾아 체인 연결
+                    const displacedOnSrcDay = srcIdx.teacherToPeriod[displacedId]?.[source.period];
+                    if (!displacedOnSrcDay || displacedOnSrcDay.length === 0) {
+                        allSteps.push({ type: 'swap', classKey, fromTeacherId: myId, fromTeacherName: source.teacherName, fromSubject: srcClass.subject, displacedTeacherId: displacedId, displacedTeacherName: displacedName, displacedSubject, period1: source.period, period2: targetPeriod, fromDay: source.dayName, toDay: targetDayName });
+                    } else {
+                        // 밀려나는 교사가 소스요일 소스교시에도 수업 있음 → 교차요일 교환 불가, 이유 표시
+                        allSteps.push({ type: 'swap', classKey, fromTeacherId: myId, fromTeacherName: source.teacherName, fromSubject: srcClass.subject, displacedTeacherId: displacedId, displacedTeacherName: displacedName, displacedSubject, period1: source.period, period2: targetPeriod, fromDay: source.dayName, toDay: targetDayName });
+                        return { valid: false, reason: `${displacedName} 선생님이 ${source.dayName}요일 ${source.period}교시에 수업(${displacedOnSrcDay.map(c=>c.subject+'('+c.grade+'-'+c.classNo+')').join(',')})이 있어 교차 요일 교환이 어렵습니다.`, steps: allSteps, teacherCount: involvedTeachers.size, teachers: involvedTeachers, crossDay: true };
+                    }
+                }
+            }
+
+            return { valid: true, steps: allSteps, teacherCount: involvedTeachers.size, teachers: involvedTeachers, crossDay: true };
+        }
+
+        // --- 핵심: 같은 날 연쇄 교환 알고리즘 (BFS 큐 기반) ---
+        // 밀려나는 교사의 모든 반(블록수업 포함)을 빠짐없이 추적
+        function findExchangeChain(teacherId, srcPeriod, tgtPeriod, idx) {
+            const myClasses = idx.teacherToPeriod[teacherId]?.[srcPeriod] || [];
+            if (myClasses.length === 0) return { valid: false, reason: '소스 교시에 수업이 없습니다.' };
+
+            const allSteps = [];
+            const visited = new Set([teacherId]);       // 방문한 교사 (체인에 포함됨)
+            const involvedTeachers = new Set([teacherId]);
+            const processedClasses = new Set();          // 처리한 classKey (중복 방지)
+
+            // BFS 큐: { classKey, subject, teacherId, teacherName }
+            const queue = [];
+            for (const c of myClasses) {
+                const ck = `${c.grade}-${c.classNo}`;
+                if (!processedClasses.has(ck)) {
+                    processedClasses.add(ck);
+                    queue.push({ classKey: ck, subject: c.subject, teacherId, teacherName: idx.teacherNames[teacherId] || teacherId });
+                }
+            }
+
+            let safety = 0;
+            while (queue.length > 0 && safety < 200) {
+                safety++;
+                const item = queue.shift();
+
+                // 대상 교시에 이 반을 누가 가르치는지
+                const cellAtTarget = idx.classToPeriod[item.classKey]?.[tgtPeriod];
+
+                if (!cellAtTarget) {
+                    // 대상 교시에 수업 없음 → 직접 이동
+                    allSteps.push({ type: 'direct_move', classKey: item.classKey, teacherId: item.teacherId, teacherName: item.teacherName, subject: item.subject, fromPeriod: srcPeriod, toPeriod: tgtPeriod });
+                    continue;
                 }
 
-                container.innerHTML = `<div class="text-sm font-bold text-slate-500 mb-3"><i class="fas fa-calendar-day mr-1"></i>${dateStr} (${dayName}요일) - 내 수업 목록</div>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    ${exMySchedule.map((t, i) => `
-                        <div class="period-card" onclick="selectMyPeriod(${i})" id="myPeriod-${i}">
-                            <div class="text-lg font-bold text-indigo-600">${t.period}교시</div>
-                            <div class="text-sm font-medium text-slate-700">${t.subject || ''}</div>
-                            <div class="text-xs text-slate-400">${t.grade || ''}-${t.class_no || ''}</div>
-                        </div>
-                    `).join('')}
-                    </div>`;
-            } catch (e) { alert('시간표 로드 실패: ' + e.message); }
-        }
+                const dId = cellAtTarget.teacherId;
+                const dName = cellAtTarget.teacherName;
+                const dSubject = cellAtTarget.subject;
 
-        function selectMyPeriod(idx) {
-            const t = exMySchedule[idx];
-            exSelectedMine = { day: t.day_of_week, period: parseInt(t.period), subject: t.subject, grade: t.grade, class_no: t.class_no };
-            document.querySelectorAll('#myScheduleGrid .period-card').forEach(el => el.classList.remove('selected-mine'));
-            document.getElementById('myPeriod-' + idx).classList.add('selected-mine');
-            updateExchangeSummary();
-        }
-
-        async function loadTargetScheduleForExchange() {
-            const input = document.getElementById('exTargetTeacher');
-            const name = input.value.trim();
-            if (!name) { alert('교사명을 입력하세요.'); return; }
-            const memberId = input.dataset.memberId || '';
-            if (!exReqDayName) { alert('먼저 날짜를 선택하고 내 시간표를 불러오세요.'); return; }
-
-            exTargetInfo = { member_id: memberId, member_name: name };
-            exSelectedTarget = null;
-            updateExchangeSummary();
-
-            try {
-                let url = '/api/timetable/teacher/week?member_name=' + encodeURIComponent(name);
-                if (memberId) url += '&member_id=' + encodeURIComponent(memberId);
-                if (currentUser.school_id) url += '&school_id=' + encodeURIComponent(currentUser.school_id);
-                else url += '&member_school=' + encodeURIComponent(currentUser.member_school);
-
-                const res = await fetch(url);
-                if (!res.ok) throw new Error('서버 오류');
-                const data = await res.json();
-                if (!data.success) { alert(data.message); return; }
-
-                exTargetSchedule = (data.timetable || []).filter(t => t.day_of_week === exReqDayName);
-                const container = document.getElementById('targetScheduleGrid');
-
-                if (exTargetSchedule.length === 0) {
-                    container.innerHTML = `<div class="text-center py-6 text-slate-400"><i class="fas fa-info-circle mr-1"></i>${name} 선생님은 ${exReqDayName}요일에 배정된 수업이 없습니다.</div>`;
-                    return;
+                // 이미 체인에 포함된 교사 → 이 교사는 이미 이동 중이므로 슬롯이 비워짐
+                if (visited.has(dId)) {
+                    allSteps.push({ type: 'direct_move', classKey: item.classKey, teacherId: item.teacherId, teacherName: item.teacherName, subject: item.subject, fromPeriod: srcPeriod, toPeriod: tgtPeriod });
+                    continue;
                 }
 
-                container.innerHTML = `<div class="text-sm font-bold text-slate-500 mb-3"><i class="fas fa-user-clock mr-1"></i>${name} 선생님 - ${exReqDayName}요일 수업 목록</div>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    ${exTargetSchedule.map((t, i) => `
-                        <div class="period-card" onclick="selectTargetPeriod(${i})" id="targetPeriod-${i}">
-                            <div class="text-lg font-bold text-green-600">${t.period}교시</div>
-                            <div class="text-sm font-medium text-slate-700">${t.subject || ''}</div>
-                            <div class="text-xs text-slate-400">${t.grade || ''}-${t.class_no || ''}</div>
-                        </div>
-                    `).join('')}
-                    </div>`;
-            } catch (e) { alert('시간표 로드 실패: ' + e.message); }
+                // 밀려나는 교사가 소스 교시에 공강인지 확인
+                const dAtSrc = idx.teacherToPeriod[dId]?.[srcPeriod] || [];
+
+                if (dAtSrc.length === 0) {
+                    // 공강 → 교환 (체인 종료 지점)
+                    allSteps.push({ type: 'swap', classKey: item.classKey, fromTeacherId: item.teacherId, fromTeacherName: item.teacherName, fromSubject: item.subject, displacedTeacherId: dId, displacedTeacherName: dName, displacedSubject: dSubject, period1: srcPeriod, period2: tgtPeriod });
+                    visited.add(dId);
+                    involvedTeachers.add(dId);
+                } else {
+                    // 소스 교시에도 수업 있음 → 체인 연결, 해당 교사의 모든 소스교시 반을 큐에 추가
+                    allSteps.push({ type: 'chain_link', classKey: item.classKey, fromTeacherId: item.teacherId, fromTeacherName: item.teacherName, fromSubject: item.subject, displacedTeacherId: dId, displacedTeacherName: dName, displacedSubject: dSubject, period1: srcPeriod, period2: tgtPeriod });
+                    visited.add(dId);
+                    involvedTeachers.add(dId);
+
+                    // 밀려나는 교사의 모든 소스교시 반을 큐에 추가 (블록수업 대응)
+                    for (const dc of dAtSrc) {
+                        const ck = `${dc.grade}-${dc.classNo}`;
+                        if (!processedClasses.has(ck)) {
+                            processedClasses.add(ck);
+                            queue.push({ classKey: ck, subject: dc.subject, teacherId: dId, teacherName: dName });
+                        }
+                    }
+                }
+            }
+
+            if (safety >= 200) return { valid: false, reason: '체인이 너무 깁니다 (200단계 초과)' };
+            return { valid: true, steps: allSteps, teacherCount: involvedTeachers.size, teachers: involvedTeachers };
         }
 
-        function selectTargetPeriod(idx) {
-            const t = exTargetSchedule[idx];
-            exSelectedTarget = { day: t.day_of_week, period: parseInt(t.period), subject: t.subject, grade: t.grade, class_no: t.class_no };
-            document.querySelectorAll('#targetScheduleGrid .period-card').forEach(el => el.classList.remove('selected-target'));
-            document.getElementById('targetPeriod-' + idx).classList.add('selected-target');
-            updateExchangeSummary();
-        }
+        // --- 체인 시각화 ---
+        function renderChainVisualization(chain, srcPeriod, tgtPeriod, idx) {
+            const card = document.getElementById('chainResultCard');
+            const badge = document.getElementById('chainBadge');
+            const area = document.getElementById('chainStepsArea');
+            const actions = document.getElementById('chainActions');
+            card.classList.remove('hidden');
+            document.getElementById('substituteCard').classList.add('hidden');
 
-        function updateExchangeSummary() {
-            const summary = document.getElementById('exchangeSummary');
-            const btn = document.getElementById('btnSubmitExchange');
-
-            if (!exSelectedMine || !exSelectedTarget || !exTargetInfo) {
-                summary.innerHTML = '<span class="text-slate-400">위에서 교시를 선택하면 교환 요약이 표시됩니다.</span>';
-                btn.disabled = true;
+            if (!chain.valid) {
+                badge.className = 'chain-badge-impossible text-xs font-bold';
+                badge.textContent = '교환 불가';
+                area.innerHTML = `<div class="text-center py-6 text-red-500"><i class="fas fa-times-circle fa-2x mb-2"></i><p class="font-bold">${chain.reason}</p></div>`;
+                actions.classList.add('hidden');
                 return;
             }
 
-            const m = exSelectedMine;
-            const t = exSelectedTarget;
-            summary.innerHTML = `
-                <div class="flex items-center justify-center gap-4 text-base">
-                    <div class="text-center">
-                        <div class="text-xs text-slate-500 mb-1">내 수업</div>
-                        <div class="font-bold text-indigo-600">${m.day} ${m.period}교시</div>
-                        <div class="text-sm">${m.subject} (${m.grade}-${m.class_no})</div>
-                    </div>
-                    <div class="text-2xl text-slate-400"><i class="fas fa-exchange-alt"></i></div>
-                    <div class="text-center">
-                        <div class="text-xs text-slate-500 mb-1">${exTargetInfo.member_name} 선생님</div>
-                        <div class="font-bold text-green-600">${t.day} ${t.period}교시</div>
-                        <div class="text-sm">${t.subject} (${t.grade}-${t.class_no})</div>
-                    </div>
-                </div>`;
-            btn.disabled = false;
+            const cnt = chain.teacherCount;
+            const crossLabel = chain.crossDay ? ' (교차 요일)' : '';
+            if (cnt <= 2) { badge.className = 'chain-badge-simple text-xs font-bold'; badge.textContent = `${cnt}명 직접 교환${crossLabel}`; }
+            else { badge.className = 'chain-badge-complex text-xs font-bold'; badge.textContent = `${cnt}명 연쇄 교환${crossLabel}`; }
+
+            let html = '';
+            if (chain.crossDay && exSelectedSource) {
+                html += `<div class="text-xs font-bold text-purple-600 mb-3"><i class="fas fa-calendar-week mr-1"></i>${exSelectedSource.dayName}요일 ${exSelectedSource.period}교시 → ${chain.dayName}요일 ${tgtPeriod}교시</div>`;
+            }
+
+            const byClass = {};
+            chain.steps.forEach(s => { if (!byClass[s.classKey]) byClass[s.classKey] = []; byClass[s.classKey].push(s); });
+
+            for (const [classKey, steps] of Object.entries(byClass)) {
+                const [g, c] = classKey.split('-');
+                html += `<div class="chain-step"><div class="text-xs font-bold text-slate-500 mb-2"><i class="fas fa-users mr-1"></i>${g}학년 ${c}반</div>`;
+                for (const s of steps) {
+                    const dayInfo = s.fromDay && s.toDay && s.fromDay !== s.toDay ? `<span class="text-purple-500 text-xs ml-1">${s.fromDay}→${s.toDay}</span>` : '';
+                    if (s.type === 'direct_move') {
+                        html += `<div class="swap-row"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold">${s.fromPeriod}교시</span><span class="font-bold">${s.teacherName}</span><span class="text-slate-400">(${s.subject})</span><span class="swap-arrow">→</span><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">${s.toPeriod}교시</span><span class="text-green-600 text-xs">이동</span>${dayInfo}</div>`;
+                    } else {
+                        html += `<div class="swap-row"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold">${s.period1}교시</span><span class="font-bold">${s.fromTeacherName}</span><span class="text-slate-400">(${s.fromSubject})</span><span class="swap-arrow">↔</span><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">${s.period2}교시</span><span class="font-bold">${s.displacedTeacherName}</span><span class="text-slate-400">(${s.displacedSubject})</span>${s.type === 'swap' ? '<span class="text-green-600 text-xs ml-1">공강</span>' : '<span class="text-amber-500 text-xs ml-1">→연쇄</span>'}${dayInfo}</div>`;
+                    }
+                }
+                html += '</div>';
+            }
+
+            const teacherList = [...chain.teachers].map(tid => (idx || dayIndices[exSelectedSource?.dayName])?.teacherNames?.[tid] || tid);
+            html += `<div class="text-xs text-slate-500 mt-3"><i class="fas fa-user-friends mr-1"></i>관련 교사: <strong>${teacherList.join(', ')}</strong></div>`;
+            area.innerHTML = html;
+            actions.classList.remove('hidden');
         }
 
-        async function submitExchangeRequest() {
-            if (!exSelectedMine || !exSelectedTarget || !exTargetInfo) return;
-            const dateStr = document.getElementById('exReqDate').value;
-            const reason = document.getElementById('exReqReason').value.trim();
+        // --- 연쇄 교환 요청 제출 ---
+        async function submitChainExchange() {
+            if (!exCurrentChain || !exCurrentChain.valid) { alert('유효한 교환 경로가 없습니다.'); return; }
+            if (!exWeekMonday) return;
 
-            if (!confirm(`${exTargetInfo.member_name} 선생님에게 교환 요청을 보내시겠습니까?`)) return;
+            const targetDayName = exCurrentChain.dayName || exSelectedSource?.dayName;
+            const srcDayName = exSelectedSource?.dayName || targetDayName;
+            const isCrossDay = srcDayName !== targetDayName;
+            const di = DAY_IDX[targetDayName];
+            const exDateStr = getWeekDateForDay(exWeekMonday, di);
+            const idx = dayIndices[targetDayName];
+            const srcIdx = dayIndices[srcDayName];
+
+            const allNames = {};
+            if (idx) Object.assign(allNames, idx.teacherNames);
+            if (srcIdx) Object.assign(allNames, srcIdx.teacherNames);
+            const teacherNames = [...exCurrentChain.teachers].map(tid => allNames[tid] || tid).filter(n => n !== currentUser.member_name);
+            const dayLabel = isCrossDay ? `${srcDayName}→${targetDayName}요일` : `${targetDayName}요일(${exDateStr})`;
+            if (!confirm(`${dayLabel} 교환 요청을 보내시겠습니까?\n관련 교사: ${teacherNames.join(', ')} (${exCurrentChain.teacherCount}명)`)) return;
+
+            const reason = document.getElementById('exReqReason').value.trim();
+            const chainSteps = [];
+            let seq = 0;
+            for (const s of exCurrentChain.steps) {
+                if (s.type === 'direct_move') continue;
+                chainSteps.push({
+                    requester_id: s.fromTeacherId || s.teacherId,
+                    requester_name: s.fromTeacherName || s.teacherName,
+                    requester_day: s.fromDay || srcDayName,
+                    requester_period: s.period1 || s.fromPeriod,
+                    requester_subject: s.fromSubject || s.subject,
+                    requester_grade: s.classKey.split('-')[0],
+                    requester_class_no: s.classKey.split('-')[1],
+                    target_id: s.displacedTeacherId,
+                    target_name: s.displacedTeacherName,
+                    target_day: s.toDay || targetDayName,
+                    target_period: s.period2 || s.toPeriod,
+                    target_subject: s.displacedSubject,
+                    target_grade: s.classKey.split('-')[0],
+                    target_class_no: s.classKey.split('-')[1],
+                    sequence: seq++
+                });
+            }
+
+            if (chainSteps.length === 0) { alert('교환 대상이 없습니다 (빈 교시로의 단순 이동).'); return; }
 
             try {
+                const body = chainSteps.length === 1 ? {
+                    school_id: currentUser.school_id,
+                    member_school: currentUser.member_school || '',
+                    exchange_date: exDateStr,
+                    ...chainSteps[0],
+                    reason
+                } : {
+                    school_id: currentUser.school_id,
+                    member_school: currentUser.member_school || '',
+                    exchange_date: exDateStr,
+                    chain_steps: chainSteps,
+                    reason
+                };
                 const res = await fetch('/api/timetable/exchange/create', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        school_id: currentUser.school_id,
-                        member_school: currentUser.member_school,
-                        exchange_date: dateStr,
-                        requester_id: currentUser.member_id,
-                        requester_name: currentUser.member_name,
-                        requester_day: exSelectedMine.day,
-                        requester_period: exSelectedMine.period,
-                        requester_subject: exSelectedMine.subject,
-                        requester_grade: exSelectedMine.grade,
-                        requester_class_no: exSelectedMine.class_no,
-                        target_id: exTargetInfo.member_id,
-                        target_name: exTargetInfo.member_name,
-                        target_day: exSelectedTarget.day,
-                        target_period: exSelectedTarget.period,
-                        target_subject: exSelectedTarget.subject,
-                        target_grade: exSelectedTarget.grade,
-                        target_class_no: exSelectedTarget.class_no,
-                        reason: reason
-                    })
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
                 });
-                if (!res.ok) throw new Error('서버 오류');
                 const data = await res.json();
                 if (data.success) {
-                    alert('교환 요청이 등록되었습니다!');
-                    // 초기화
-                    exSelectedMine = null; exSelectedTarget = null;
-                    document.getElementById('myScheduleGrid').innerHTML = '<div class="text-center py-8 text-slate-400"><i class="fas fa-check-circle fa-2x mb-2 text-green-400"></i><p>요청이 전송되었습니다.</p></div>';
-                    document.getElementById('targetScheduleGrid').innerHTML = '<div class="text-center py-8 text-slate-400"><i class="fas fa-user-clock fa-2x mb-2"></i><p>교환 대상 교사를 검색하세요.</p></div>';
+                    alert(data.message || '교환 요청이 등록되었습니다!');
+                    exSelectedSource = null;
+                    exCurrentChain = null;
+                    document.getElementById('chainResultCard').classList.add('hidden');
                     document.getElementById('exReqReason').value = '';
-                    updateExchangeSummary();
+                    renderWeekGrid();
                     loadPendingCount();
                 } else { alert(data.message); }
             } catch (e) { alert('요청 실패: ' + e.message); }
         }
 
+        // --- 대강: 공강 교사 표시 ---
+        function showSubstituteTeachers(dayName, period) {
+            exSelectedSource = { period, dayName, classes: null, teacherId: currentUser.member_id };
+            document.getElementById('chainResultCard').classList.add('hidden');
+            renderWeekGrid();
+
+            const idx = dayIndices[dayName];
+            if (!idx) return;
+
+            // 이 교시에 수업이 없는 교사 = 전체 교사 - 이 교시에 수업 있는 교사
+            const busyTeachers = new Set();
+            Object.entries(idx.teacherToPeriod).forEach(([tid, periods]) => {
+                if (periods[period] && periods[period].length > 0) busyTeachers.add(tid);
+            });
+
+            const freeTeachers = [];
+            Object.entries(idx.teacherNames).forEach(([tid, name]) => {
+                if (!busyTeachers.has(tid) && tid !== (currentUser.member_id || currentUser.member_name)) {
+                    freeTeachers.push({ id: tid, name });
+                }
+            });
+
+            freeTeachers.sort((a, b) => a.name.localeCompare(b.name));
+
+            const card = document.getElementById('substituteCard');
+            card.classList.remove('hidden');
+            document.getElementById('subPeriodInfo').textContent = `${dayName}요일 ${period}교시 공강 교사 (${freeTeachers.length}명)`;
+
+            if (freeTeachers.length === 0) {
+                document.getElementById('subTeacherList').innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">공강인 교사가 없습니다.</div>';
+                return;
+            }
+
+            let html = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">';
+            freeTeachers.forEach(t => {
+                html += `<div class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl cursor-pointer hover:bg-amber-100 transition" onclick="selectSubstitute('${dayName}',${period},'${t.id}','${t.name}')">
+                    <i class="fas fa-user-circle text-amber-400"></i>
+                    <span class="font-bold text-sm text-slate-700">${t.name}</span>
+                </div>`;
+            });
+            html += '</div>';
+            document.getElementById('subTeacherList').innerHTML = html;
+        }
+
+        function selectSubstitute(dayName, period, teacherId, teacherName) {
+            if (!exWeekMonday) return;
+            const di = DAY_IDX[dayName];
+            const dateStr = getWeekDateForDay(exWeekMonday, di);
+            const myName = currentUser.member_name;
+
+            if (!confirm(`${dayName}요일(${dateStr}) ${period}교시에 ${teacherName} 선생님을 대강으로 배정하시겠습니까?`)) return;
+
+            // 대강도 exchange로 저장 (requester=나, target=대강교사, 단 target_period와 requester_period 동일)
+            const myId = currentUser.member_id || currentUser.member_name;
+            const idx = dayIndices[dayName];
+            const myClasses = idx.teacherToPeriod[myId]?.[period] || [];
+            const cls = myClasses[0] || {};
+
+            const body = {
+                school_id: currentUser.school_id,
+                member_school: currentUser.member_school || '',
+                exchange_date: dateStr,
+                requester_id: myId,
+                requester_name: myName,
+                requester_day: dayName,
+                requester_period: period,
+                requester_subject: cls.subject || '',
+                requester_grade: cls.grade || '',
+                requester_class_no: cls.classNo || '',
+                target_id: teacherId,
+                target_name: teacherName,
+                target_day: dayName,
+                target_period: period,
+                target_subject: '',
+                target_grade: cls.grade || '',
+                target_class_no: cls.classNo || '',
+                reason: '대강'
+            };
+
+            fetch('/api/timetable/exchange/create', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+            }).then(r => r.json()).then(data => {
+                if (data.success) {
+                    alert('대강 요청이 등록되었습니다.');
+                    document.getElementById('substituteCard').classList.add('hidden');
+                    loadPendingCount();
+                } else { alert(data.message); }
+            }).catch(e => alert('요청 실패: ' + e.message));
+        }
+
         // ==========================================
-        // 탭3: 교환 요청 목록
+        // 탭3: 교환 요청 목록 (학교 전체, 담당자 승인)
         // ==========================================
         async function loadExchangeList() {
             try {
-                let url = `/api/timetable/exchange/list?school_id=${encodeURIComponent(currentUser.school_id)}&member_id=${encodeURIComponent(currentUser.member_id)}`;
+                // 학교 전체 요청 조회 (member_id 없이)
+                let url = `/api/timetable/exchange/list?school_id=${encodeURIComponent(currentUser.school_id)}`;
                 const status = document.getElementById('exListStatus').value;
                 if (status !== 'all') url += '&status=' + encodeURIComponent(status);
                 const dateVal = document.getElementById('exListDate').value;
@@ -1012,29 +1442,98 @@
                 if (!data.success) { alert(data.message); return; }
 
                 const items = data.data || [];
-                const received = items.filter(i => i.target_id === currentUser.member_id);
-                const sent = items.filter(i => i.requester_id === currentUser.member_id);
 
-                document.getElementById('receivedCount').textContent = received.length + '건';
-                document.getElementById('sentCount').textContent = sent.length + '건';
+                // chain_id로 그룹핑
+                const chainGroups = {};
+                const singles = [];
+                items.forEach(item => {
+                    if (item.chain_id) {
+                        if (!chainGroups[item.chain_id]) chainGroups[item.chain_id] = [];
+                        chainGroups[item.chain_id].push(item);
+                    } else {
+                        singles.push(item);
+                    }
+                });
 
-                const recDiv = document.getElementById('receivedExchanges');
-                if (received.length === 0) {
-                    recDiv.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">받은 교환 요청이 없습니다.</div>';
-                } else {
-                    recDiv.innerHTML = received.map(r => renderExchangeCard(r, 'received')).join('');
+                // chain 그룹 내 정렬
+                Object.values(chainGroups).forEach(group => {
+                    group.sort((a, b) => (a.chain_sequence || 0) - (b.chain_sequence || 0));
+                });
+
+                const totalCount = Object.keys(chainGroups).length + singles.length;
+                document.getElementById('schoolExCount').textContent = totalCount + '건';
+
+                const container = document.getElementById('schoolExchanges');
+                if (totalCount === 0) {
+                    container.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">교환 요청이 없습니다.</div>';
+                    return;
                 }
 
-                const sentDiv = document.getElementById('sentExchanges');
-                if (sent.length === 0) {
-                    sentDiv.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">보낸 교환 요청이 없습니다.</div>';
-                } else {
-                    sentDiv.innerHTML = sent.map(r => renderExchangeCard(r, 'sent')).join('');
-                }
+                let html = '';
+                // 연쇄 교환 그룹 먼저
+                Object.values(chainGroups).forEach(group => { html += renderChainGroupCard(group); });
+                // 단일 교환
+                singles.forEach(r => { html += renderExchangeCard(r); });
+                container.innerHTML = html;
             } catch (e) { console.error('교환 목록 로드 실패:', e); }
         }
 
-        function renderExchangeCard(r, type) {
+        function renderChainGroupCard(group) {
+            if (!group || group.length === 0) return '';
+            const first = group[0];
+            const chainId = first.chain_id;
+            const total = group.length;
+            const approvedCount = group.filter(g => g.status === 'approved').length;
+            const hasFailed = group.some(g => g.status === 'rejected' || g.status === 'cancelled');
+            const allApproved = approvedCount === total && !hasFailed;
+            const isPending = group.some(g => g.status === 'pending');
+
+            let overallLabel, overallCls;
+            if (hasFailed) { overallLabel = '취소됨'; overallCls = 'status-cancelled'; }
+            else if (allApproved) { overallLabel = '승인 완료'; overallCls = 'status-approved'; }
+            else { overallLabel = '승인 대기'; overallCls = 'status-pending'; }
+
+            // 관련 교사
+            const teacherSet = new Set();
+            group.forEach(g => { teacherSet.add(g.requester_name); teacherSet.add(g.target_name); });
+
+            let actions = '';
+            if (isPending && !hasFailed) {
+                actions = `
+                    <button onclick="approveExchange(${first.id})" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition"><i class="fas fa-check mr-1"></i>승인</button>
+                    <button onclick="openRejectModal(${first.id})" class="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition"><i class="fas fa-times mr-1"></i>거절</button>`;
+            } else if (allApproved) {
+                actions = `<button onclick="cancelExchange(${first.id})" class="bg-red-400 hover:bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold transition">교환 취소</button>`;
+            }
+
+            let stepsHtml = group.map((g, idx) => {
+                const isSubstitute = g.reason === '대강';
+                const icon = isSubstitute ? '<i class="fas fa-user-plus text-amber-400 mr-1"></i>' : '<i class="fas fa-exchange-alt text-indigo-400 mr-1"></i>';
+                return `<div class="chain-member-row">
+                    <span class="text-xs text-slate-400">${idx + 1}</span>
+                    ${icon}
+                    <span class="font-medium text-indigo-600">${g.requester_name}</span>
+                    <span class="text-xs">${g.requester_period}교시 ${g.requester_subject || ''}(${g.requester_grade || ''}-${g.requester_class_no || ''})</span>
+                    <i class="fas fa-arrow-right text-slate-400 text-xs"></i>
+                    <span class="font-medium text-green-600">${g.target_name}</span>
+                    <span class="text-xs">${g.target_period}교시 ${g.target_subject || ''}(${g.target_grade || ''}-${g.target_class_no || ''})</span>
+                </div>`;
+            }).join('');
+
+            return `<div class="chain-group-card">
+                <div class="chain-group-header">
+                    <span class="chain-group-badge"><i class="fas fa-link mr-1"></i>연쇄 교환 (${teacherSet.size}명)</span>
+                    <span class="status-badge ${overallCls}">${overallLabel}</span>
+                    <span class="text-sm font-bold text-slate-700">${first.exchange_date} (${first.requester_day || ''})</span>
+                    <span class="text-xs text-slate-400 ml-auto">요청자: ${first.requester_name}</span>
+                </div>
+                ${stepsHtml}
+                <div class="text-xs text-slate-400 mt-2">사유: ${first.reason || '-'} | 요청일: ${(first.created_at || '').slice(0, 10)}</div>
+                <div class="flex gap-2 mt-3 justify-end">${actions}</div>
+            </div>`;
+        }
+
+        function renderExchangeCard(r) {
             const statusMap = {
                 'pending': { label: '대기중', cls: 'status-pending' },
                 'approved': { label: '승인됨', cls: 'status-approved' },
@@ -1042,32 +1541,35 @@
                 'cancelled': { label: '취소됨', cls: 'status-cancelled' }
             };
             const st = statusMap[r.status] || { label: r.status, cls: '' };
+            const isSubstitute = r.reason === '대강';
 
             let actions = '';
-            if (r.status === 'pending' && type === 'received') {
+            if (r.status === 'pending') {
                 actions = `
-                    <button onclick="respondExchange(${r.id}, 'approve')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold transition">승인</button>
+                    <button onclick="approveExchange(${r.id})" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold transition">승인</button>
                     <button onclick="openRejectModal(${r.id})" class="bg-red-400 hover:bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold transition">거절</button>`;
-            } else if (r.status === 'pending' && type === 'sent') {
-                actions = `<button onclick="cancelExchange(${r.id})" class="bg-slate-400 hover:bg-slate-500 text-white px-3 py-1.5 rounded text-xs font-bold transition">취소</button>`;
             } else if (r.status === 'approved') {
                 actions = `<button onclick="cancelExchange(${r.id})" class="bg-red-400 hover:bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold transition">교환 취소</button>`;
             }
 
             const rejectInfo = r.status === 'rejected' && r.reject_reason ? ` | 거절사유: ${r.reject_reason}` : '';
+            const typeLabel = isSubstitute
+                ? '<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-bold mr-2">대강</span>'
+                : '<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold mr-2">교환</span>';
 
             return `<div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 gap-4 flex-wrap">
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
+                        ${typeLabel}
                         <span class="status-badge ${st.cls}">${st.label}</span>
                         <span class="text-sm font-bold text-slate-700">${r.exchange_date} (${r.requester_day})</span>
                     </div>
                     <div class="text-sm text-slate-600">
                         <span class="font-medium text-indigo-600">${r.requester_name}</span>
                         ${r.requester_period}교시 ${r.requester_subject || ''}(${r.requester_grade || ''}-${r.requester_class_no || ''})
-                        <i class="fas fa-exchange-alt mx-2 text-slate-400"></i>
+                        <i class="fas fa-${isSubstitute ? 'arrow-right' : 'exchange-alt'} mx-2 text-slate-400"></i>
                         <span class="font-medium text-green-600">${r.target_name}</span>
-                        ${r.target_period}교시 ${r.target_subject || ''}(${r.target_grade || ''}-${r.target_class_no || ''})
+                        ${isSubstitute ? '' : `${r.target_period}교시 ${r.target_subject || ''}(${r.target_grade || ''}-${r.target_class_no || ''})`}
                     </div>
                     <div class="text-xs text-slate-400 mt-1">사유: ${r.reason || '-'}${rejectInfo} | 요청일: ${(r.created_at || '').slice(0, 10)}</div>
                 </div>
@@ -1075,15 +1577,12 @@
             </div>`;
         }
 
-        async function respondExchange(id, action) {
-            if (action === 'approve' && !confirm('이 교환 요청을 승인하시겠습니까?')) return;
+        async function approveExchange(id) {
+            if (!confirm('이 교환 요청을 승인하시겠습니까? (연쇄 교환인 경우 전체가 한 번에 승인됩니다)')) return;
             try {
                 const res = await fetch('/api/timetable/exchange/respond', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        exchange_id: id, school_id: currentUser.school_id,
-                        action: action, reject_reason: ''
-                    })
+                    body: JSON.stringify({ exchange_id: id, school_id: currentUser.school_id, action: 'approve', reject_reason: '' })
                 });
                 if (!res.ok) throw new Error('서버 오류');
                 const data = await res.json();
@@ -1111,10 +1610,7 @@
             try {
                 const res = await fetch('/api/timetable/exchange/respond', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        exchange_id: rejectExchangeId, school_id: currentUser.school_id,
-                        action: 'reject', reject_reason: reason
-                    })
+                    body: JSON.stringify({ exchange_id: rejectExchangeId, school_id: currentUser.school_id, action: 'reject', reject_reason: reason })
                 });
                 if (!res.ok) throw new Error('서버 오류');
                 const data = await res.json();
@@ -1139,11 +1635,11 @@
 
         async function loadPendingCount() {
             try {
-                const res = await fetch(`/api/timetable/exchange/list?school_id=${encodeURIComponent(currentUser.school_id)}&member_id=${encodeURIComponent(currentUser.member_id)}&status=pending`);
+                const res = await fetch(`/api/timetable/exchange/list?school_id=${encodeURIComponent(currentUser.school_id)}&status=pending`);
                 if (!res.ok) return;
                 const data = await res.json();
                 if (!data.success) return;
-                const count = (data.data || []).filter(i => i.target_id === currentUser.member_id).length;
+                const count = (data.data || []).length;
                 const badge = document.getElementById('pendingBadge');
                 if (count > 0) {
                     badge.textContent = count;

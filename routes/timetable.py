@@ -1582,7 +1582,66 @@ def create_timetable_exchange():
         school_id = sanitize_input(data.get('school_id'), 50)
         member_school = sanitize_input(data.get('member_school'), 200)
         exchange_date = sanitize_input(data.get('exchange_date'), 20)
+        reason = sanitize_input(data.get('reason', ''), 200)
+        chain_steps = data.get('chain_steps')
 
+        if not school_id or not exchange_date:
+            return jsonify({'success': False, 'message': '필수 항목이 누락되었습니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        # ===== 연쇄 교환(chain) 모드 =====
+        if chain_steps and len(chain_steps) > 0:
+            import uuid as _uuid, time as _time
+            chain_id = f"chain-{int(_time.time())}-{_uuid.uuid4().hex[:6]}"
+            chain_total = len(chain_steps)
+            created_ids = []
+
+            for step in chain_steps:
+                s_req_id = sanitize_input(step.get('requester_id'), 100)
+                s_tgt_id = sanitize_input(step.get('target_id'), 100)
+                s_req_day = sanitize_input(step.get('requester_day'), 10)
+                s_tgt_day = sanitize_input(step.get('target_day'), 10)
+                s_req_period = step.get('requester_period')
+                s_tgt_period = step.get('target_period')
+
+                if not s_req_id or not s_tgt_id:
+                    continue
+
+                cursor.execute("""
+                    INSERT INTO timetable_exchange
+                    (school_id, member_school, exchange_date,
+                     requester_id, requester_name, requester_day, requester_period,
+                     requester_subject, requester_grade, requester_class_no,
+                     target_id, target_name, target_day, target_period,
+                     target_subject, target_grade, target_class_no,
+                     reason, status, chain_id, chain_sequence, chain_total)
+                    VALUES (%s,%s,%s, %s,%s,%s,%s, %s,%s,%s, %s,%s,%s,%s, %s,%s,%s, %s,'pending', %s,%s,%s)
+                """, (school_id, member_school, exchange_date,
+                      s_req_id,
+                      sanitize_input(step.get('requester_name'), 100),
+                      s_req_day, s_req_period,
+                      sanitize_input(step.get('requester_subject'), 100),
+                      sanitize_input(step.get('requester_grade'), 10),
+                      sanitize_input(step.get('requester_class_no'), 10),
+                      s_tgt_id,
+                      sanitize_input(step.get('target_name'), 100),
+                      s_tgt_day, s_tgt_period,
+                      sanitize_input(step.get('target_subject'), 100),
+                      sanitize_input(step.get('target_grade'), 10),
+                      sanitize_input(step.get('target_class_no'), 10),
+                      reason, chain_id, step.get('sequence', 0), chain_total))
+                created_ids.append(cursor.lastrowid)
+
+            conn.commit()
+            return jsonify({'success': True,
+                            'message': f'연쇄 교환 요청 등록 ({chain_total}건)',
+                            'chain_id': chain_id, 'ids': created_ids})
+
+        # ===== 기존 2인 교환 모드 (하위호환) =====
         requester_id = sanitize_input(data.get('requester_id'), 100)
         requester_name = sanitize_input(data.get('requester_name'), 100)
         requester_day = sanitize_input(data.get('requester_day'), 10)
@@ -1599,19 +1658,12 @@ def create_timetable_exchange():
         target_grade = sanitize_input(data.get('target_grade'), 10)
         target_class_no = sanitize_input(data.get('target_class_no'), 10)
 
-        reason = sanitize_input(data.get('reason', ''), 200)
-
-        if not school_id or not exchange_date or not requester_id or not target_id:
+        if not requester_id or not target_id:
             return jsonify({'success': False, 'message': '필수 항목이 누락되었습니다.'})
         if not requester_day or requester_period is None or not target_day or target_period is None:
             return jsonify({'success': False, 'message': '교환 교시 정보가 필요합니다.'})
 
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
-        cursor = conn.cursor()
-
-        # 중복 검사: 같은 날짜+교시에 이미 pending 요청 있는지
+        # 중복 검사
         cursor.execute("""
             SELECT id FROM timetable_exchange
             WHERE school_id = %s AND exchange_date = %s AND status = 'pending'
@@ -1742,13 +1794,63 @@ def respond_timetable_exchange():
             return jsonify({'success': False, 'message': '이미 처리된 요청입니다.'})
 
         if action == 'reject':
+            # 연쇄 교환이면 같은 chain 전체 취소
+            if ex.get('chain_id'):
+                cursor.execute("""UPDATE timetable_exchange
+                    SET status='cancelled', reject_reason=%s
+                    WHERE chain_id=%s AND status='pending' AND id!=%s""",
+                    (f"{ex['target_name']}님 거절: {reject_reason}", ex['chain_id'], exchange_id))
             cursor.execute("""UPDATE timetable_exchange SET status='rejected', reject_reason=%s
                             WHERE id=%s""", (reject_reason, exchange_id))
             conn.commit()
             return jsonify({'success': True, 'message': '교환 요청이 거절되었습니다.'})
 
-        # approve: timetable_changes에 2개 레코드 생성
-        # 레코드1: 요청자 슬롯 → 대상자가 가르침
+        # approve 처리 — 담당자(같은 학교 교사) 한 번 승인으로 전체 적용
+        if ex.get('chain_id'):
+            # 연쇄 교환: 같은 chain 전체를 한 번에 승인
+            cursor.execute("""UPDATE timetable_exchange SET status='approved'
+                WHERE chain_id=%s AND status='pending'""", (ex['chain_id'],))
+
+            # timetable_changes 일괄 생성
+            cursor.execute("""SELECT * FROM timetable_exchange
+                WHERE chain_id=%s ORDER BY chain_sequence""", (ex['chain_id'],))
+            chain_records = cursor.fetchall()
+            for rec in chain_records:
+                # 레코드1: 요청자 슬롯 → 대상자가 가르침
+                cursor.execute("""
+                    INSERT INTO timetable_changes
+                    (school_id, member_school, change_date, day_of_week, period,
+                     original_teacher, original_subject, original_grade, original_class_no,
+                     new_teacher, new_subject, change_reason, changed_by)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """, (school_id, rec['member_school'], rec['exchange_date'],
+                      rec['requester_day'], rec['requester_period'],
+                      rec['requester_name'], rec['requester_subject'],
+                      rec['requester_grade'], rec['requester_class_no'],
+                      rec['target_name'], rec['requester_subject'],
+                      '교환수업', rec['target_name']))
+                cid1 = cursor.lastrowid
+                # 레코드2: 대상자 슬롯 → 요청자가 가르침
+                cursor.execute("""
+                    INSERT INTO timetable_changes
+                    (school_id, member_school, change_date, day_of_week, period,
+                     original_teacher, original_subject, original_grade, original_class_no,
+                     new_teacher, new_subject, change_reason, changed_by)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """, (school_id, rec['member_school'], rec['exchange_date'],
+                      rec['target_day'], rec['target_period'],
+                      rec['target_name'], rec['target_subject'],
+                      rec['target_grade'], rec['target_class_no'],
+                      rec['requester_name'], rec['target_subject'],
+                      '교환수업', rec['target_name']))
+                cid2 = cursor.lastrowid
+                cursor.execute("""UPDATE timetable_exchange SET change_id_1=%s, change_id_2=%s
+                    WHERE id=%s""", (cid1, cid2, rec['id']))
+            conn.commit()
+            return jsonify({'success': True,
+                'message': f'연쇄 교환 승인! {len(chain_records)}건의 교환이 적용되었습니다.'})
+
+        # 기존 2인 교환: timetable_changes 2개 레코드 생성
         cursor.execute("""
             INSERT INTO timetable_changes
             (school_id, member_school, change_date, day_of_week, period,
@@ -1763,7 +1865,6 @@ def respond_timetable_exchange():
               '교환수업', ex['target_name']))
         change_id_1 = cursor.lastrowid
 
-        # 레코드2: 대상자 슬롯 → 요청자가 가르침
         cursor.execute("""
             INSERT INTO timetable_changes
             (school_id, member_school, change_date, day_of_week, period,
@@ -1779,7 +1880,7 @@ def respond_timetable_exchange():
         change_id_2 = cursor.lastrowid
 
         cursor.execute("""UPDATE timetable_exchange
-            SET status='approved', change_id_1=%s, change_id_2=%s
+            SET change_id_1=%s, change_id_2=%s
             WHERE id=%s""", (change_id_1, change_id_2, exchange_id))
 
         conn.commit()
@@ -1822,7 +1923,24 @@ def cancel_timetable_exchange():
         if ex['status'] not in ('pending', 'approved'):
             return jsonify({'success': False, 'message': '취소할 수 없는 상태입니다.'})
 
-        # approved 상태면 timetable_changes 레코드도 삭제
+        # 연쇄 교환인 경우: 같은 chain 전체 취소
+        if ex.get('chain_id'):
+            cursor.execute("""SELECT * FROM timetable_exchange
+                WHERE chain_id=%s AND status='approved'""", (ex['chain_id'],))
+            approved_recs = cursor.fetchall()
+            for rec in approved_recs:
+                if rec.get('change_id_1'):
+                    cursor.execute("DELETE FROM timetable_changes WHERE id=%s AND school_id=%s",
+                                    (rec['change_id_1'], school_id))
+                if rec.get('change_id_2'):
+                    cursor.execute("DELETE FROM timetable_changes WHERE id=%s AND school_id=%s",
+                                    (rec['change_id_2'], school_id))
+            cursor.execute("""UPDATE timetable_exchange SET status='cancelled'
+                WHERE chain_id=%s AND status IN ('pending','approved')""", (ex['chain_id'],))
+            conn.commit()
+            return jsonify({'success': True, 'message': '연쇄 교환 요청이 전체 취소되었습니다.'})
+
+        # 기존 2인 교환: 단건 취소
         if ex['status'] == 'approved':
             if ex.get('change_id_1'):
                 cursor.execute("DELETE FROM timetable_changes WHERE id = %s AND school_id = %s",
