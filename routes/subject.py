@@ -756,12 +756,23 @@ def get_subject_options():
                 for row in cursor.fetchall():
                     subjects.add(row['subj'])
 
-        # 3순위: 둘 다 없으면 cours_subject 고등 교육과정에서 가져오기
+        # 3순위: 둘 다 없으면 cours_subject 교육과정에서 가져오기 (학교급 자동 판별)
         if not subjects:
+            # schoolinfo에서 학교급 조회
+            sl = '고등'
+            cursor.execute("SELECT school_level FROM schoolinfo WHERE school_id = %s", (school_id,))
+            si_row = cursor.fetchone()
+            if si_row and si_row.get('school_level'):
+                level_val = si_row['school_level']
+                if level_val in ('middle', '중', '중학교'):
+                    sl = '중학교'
+                elif level_val in ('elementary', '초', '초등', '초등학교'):
+                    sl = '초등'
             cursor.execute(
                 "SELECT DISTINCT subject FROM cours_subject "
-                "WHERE school_level = '고등' AND subject IS NOT NULL AND subject != '' "
-                "ORDER BY subject"
+                "WHERE school_level = %s AND subject IS NOT NULL AND subject != '' "
+                "ORDER BY subject",
+                (sl,)
             )
             for row in cursor.fetchall():
                 subjects.add(row['subject'])

@@ -299,6 +299,18 @@
             </header>
 
             <main class="flex-1 overflow-y-auto p-6">
+                <!-- 온보딩 배너: class_no 미설정 시 표시 -->
+                <div id="onboarding-banner" class="hidden mb-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl flex items-center gap-4">
+                    <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-amber-500"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-bold text-amber-800">학급 설정이 필요합니다</p>
+                        <p class="text-sm text-amber-600">담임 학급을 설정해야 학급 시간표, 출결 관리 등을 사용할 수 있습니다.</p>
+                    </div>
+                    <button onclick="openSettingsPopup()" class="px-4 py-2 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 transition whitespace-nowrap">설정하기</button>
+                </div>
+
                 <div class="mb-6">
                     <h1 class="text-2xl font-black text-slate-800" id="welcome-message">환영합니다!</h1>
                     <p class="text-slate-500 text-sm mt-1">오늘도 좋은 하루 되세요 ✨</p>
@@ -333,7 +345,18 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" style="height: calc(100vh - 320px);">
+                <!-- 오늘의 할 일 위젯 -->
+                <div class="glass-card rounded-2xl shadow-lg shadow-slate-200/50 mb-4 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-slate-800 flex items-center"><i class="fas fa-tasks mr-2 text-indigo-500"></i>오늘의 할 일</h3>
+                        <span id="todo-count" class="text-xs bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold">0건</span>
+                    </div>
+                    <div id="todo-widget" class="flex flex-wrap gap-2">
+                        <p class="text-sm text-slate-400 text-center py-2 w-full">확인 중...</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" style="height: calc(100vh - 380px);">
                     <div class="glass-card rounded-2xl shadow-lg shadow-slate-200/50 flex flex-col overflow-hidden">
                         <div class="flex border-b border-slate-100 px-2 pt-2 gap-1 bg-slate-50/50">
                             <button onclick="loadTodayTimetable('my')" id="btn-tt-my" class="tab-btn active rounded-t-xl"><i class="fas fa-user-clock mr-2"></i>나의 시간표</button>
@@ -635,6 +658,7 @@
             loadTodayTimetable('my');
             loadNoticeList();
             loadSchedules();
+            loadTodoWidget();
             updateNotificationBadge();
             initPushNotifications();
             
@@ -713,6 +737,12 @@
                     currentUser.school_id = teacherInfo.school_id;
                     localStorage.setItem('schoolus_user', JSON.stringify(currentUser));
                 }
+
+                // 온보딩 배너: class_no 미설정 시 표시
+                if (!teacherInfo.class_no) {
+                    const banner = document.getElementById('onboarding-banner');
+                    if (banner) banner.classList.remove('hidden');
+                }
             } catch (error) { console.error('교사 정보 로드 오류:', error); }
         }
 
@@ -753,11 +783,12 @@
                 let params = getSchoolParams();
                 let url;
                 if (type === 'my') {
+                    if (currentUser.member_id) params.append('member_id', currentUser.member_id);
                     params.append('member_name', currentUser.member_name);
                     url = `/api/timetable/teacher?${params.toString()}`;
                 } else {
                     if (!teacherInfo?.class_grade || !teacherInfo?.class_no) {
-                        container.innerHTML = '<div class="text-center py-8 text-slate-400"><i class="fas fa-info-circle text-2xl mb-2"></i><p class="text-xs">담당 학급 정보가 없습니다.</p></div>';
+                        container.innerHTML = '<div class="text-center py-8 text-slate-400"><i class="fas fa-info-circle text-2xl mb-2"></i><p class="text-xs">학급 설정이 필요합니다.</p><a href="javascript:void(0)" onclick="openSettingsPopup()" class="text-xs text-blue-500 hover:underline mt-1 inline-block">설정 바로가기 →</a></div>';
                         return;
                     }
                     params.append('grade', teacherInfo.class_grade);
@@ -855,6 +886,68 @@
                     loadNoticeList();
                 } else alert(data.message);
             } catch (error) { alert('공지사항 등록 중 오류가 발생했습니다.'); }
+        }
+
+        // ============================================
+        // 오늘의 할 일 위젯
+        // ============================================
+        async function loadTodoWidget() {
+            const container = document.getElementById('todo-widget');
+            const countEl = document.getElementById('todo-count');
+            if (!container) return;
+            const todos = [];
+
+            try {
+                // 미읽은 메시지
+                const msgRes = await fetch('/api/message/rooms');
+                const msgData = await msgRes.json();
+                if (msgData.success) {
+                    const unread = (msgData.rooms || []).reduce((sum, r) => sum + (r.unread_count || 0), 0);
+                    if (unread > 0) todos.push({icon: 'fa-envelope', color: 'cyan', text: `미읽은 메시지 ${unread}건`, action: "openMsgPopup()"});
+                }
+            } catch(e) {}
+
+            try {
+                // 미처리 상담 요청
+                if (teacherInfo?.class_grade && teacherInfo?.class_no) {
+                    const params = getSchoolParams();
+                    params.append('class_grade', teacherInfo.class_grade);
+                    params.append('class_no', teacherInfo.class_no);
+                    const cRes = await fetch(`/api/homeroom/counsel-schedule/list?${params.toString()}`);
+                    const cData = await cRes.json();
+                    if (cData.success) {
+                        const pending = (cData.schedules || []).filter(s => s.status === 'pending').length;
+                        if (pending > 0) todos.push({icon: 'fa-user-clock', color: 'amber', text: `대기중 상담 ${pending}건`, action: "location.href='tea/homeroom.html'"});
+                    }
+                }
+            } catch(e) {}
+
+            try {
+                // 오늘 공지사항
+                const params = getSchoolParams();
+                const nRes = await fetch(`/api/notice/list?${params.toString()}`);
+                const nData = await nRes.json();
+                if (nData.success) {
+                    const today = new Date().toISOString().slice(0, 10);
+                    const todayNotices = (nData.notices || []).filter(n => n.created_at?.startsWith(today)).length;
+                    if (todayNotices > 0) todos.push({icon: 'fa-bullhorn', color: 'orange', text: `오늘 공지 ${todayNotices}건`, action: "location.href='notice.html'"});
+                }
+            } catch(e) {}
+
+            if (countEl) countEl.textContent = `${todos.length}건`;
+
+            if (todos.length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-400 text-center py-2 w-full">처리할 항목이 없습니다</p>';
+            } else {
+                const colorMap = {cyan: 'bg-cyan-100 text-cyan-600', amber: 'bg-amber-100 text-amber-600', orange: 'bg-orange-100 text-orange-600', indigo: 'bg-indigo-100 text-indigo-600'};
+                container.innerHTML = todos.map(t =>
+                    `<button onclick="${t.action}" class="flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-slate-50 border border-slate-100 transition">
+                        <span class="w-7 h-7 ${colorMap[t.color] || colorMap.indigo} rounded-lg flex items-center justify-center text-xs"><i class="fas ${t.icon}"></i></span>
+                        <span class="text-sm font-medium text-slate-700">${t.text}</span>
+                        <i class="fas fa-chevron-right text-xs text-slate-300"></i>
+                    </button>`
+                ).join('');
+            }
         }
 
         function openChargeModal() { window.location.href = '/templates/charge.html'; }

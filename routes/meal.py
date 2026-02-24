@@ -15,13 +15,26 @@ def get_today_meal():
         member_school = sanitize_input(request.args.get('member_school'), 100)
         month = sanitize_input(request.args.get('month'), 2)
         day = sanitize_input(request.args.get('day'), 2)
-        
+
+        # date 파라미터 지원 (예: date=2026-02-24 → month=02, day=24)
+        date_param = sanitize_input(request.args.get('date'), 10)
+        if date_param and not month and not day:
+            try:
+                month = date_param[5:7]
+                day = date_param[8:10]
+            except (IndexError, TypeError):
+                pass
+
         if not school_id and not member_school:
             return jsonify({'success': False, 'message': '학교 정보가 필요합니다.'})
-        
+
         if not month or not day:
-            return jsonify({'success': False, 'message': '날짜 정보가 필요합니다.'})
-        
+            return jsonify({'success': False, 'message': '날짜를 선택해주세요.'})
+
+        # month는 zero-padding (2 → '02'), day는 정수형 문자열 (03 → '3')
+        month = str(month).zfill(2)
+        day = str(int(day))
+
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
@@ -74,18 +87,21 @@ def get_month_meals():
         
         if not year or not month:
             return jsonify({'success': False, 'message': '년월 정보가 필요합니다.'})
-        
+
+        # zero-padding 처리 (2 → '02')
+        month = str(month).zfill(2)
+
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
-        
+
         cursor = conn.cursor()
-        
+
         if school_id:
-            query = "SELECT id, day, menu FROM school_meal WHERE school_id = %s AND month = %s ORDER BY day"
+            query = "SELECT id, day, menu FROM school_meal WHERE school_id = %s AND month = %s ORDER BY CAST(day AS UNSIGNED)"
             cursor.execute(query, (school_id, month))
         else:
-            query = "SELECT id, day, menu FROM school_meal WHERE member_school = %s AND month = %s ORDER BY day"
+            query = "SELECT id, day, menu FROM school_meal WHERE member_school = %s AND month = %s ORDER BY CAST(day AS UNSIGNED)"
             cursor.execute(query, (member_school, month))
         
         meals = cursor.fetchall()
@@ -126,13 +142,16 @@ def save_month_meals():
         
         if not year or not month:
             return jsonify({'success': False, 'message': '년월 정보가 필요합니다.'})
-        
+
+        # zero-padding 처리 (2 → '02')
+        month = str(month).zfill(2)
+
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
-        
+
         cursor = conn.cursor()
-        
+
         if school_id:
             cursor.execute("DELETE FROM school_meal WHERE school_id = %s AND month = %s", (school_id, month))
         else:
@@ -145,7 +164,7 @@ def save_month_meals():
                     INSERT INTO school_meal (school_id, member_school, month, day, menu)
                     VALUES (%s, %s, %s, %s, %s)
                 """
-                cursor.execute(query, (school_id, member_school, month, int(day), menu.strip()))
+                cursor.execute(query, (school_id, member_school, month, str(int(day)), menu.strip()))
                 insert_count += 1
         
         conn.commit()

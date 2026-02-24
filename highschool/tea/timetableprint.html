@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 시간표 출력</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+
+        /* 시간표 그리드 */
+        .tt-grid {
+            display: grid; grid-template-columns: 42px repeat(5, 1fr);
+            border: 2px solid #94a3b8; background: #fff; border-radius: 6px; overflow: hidden;
+        }
+        .tt-head {
+            background: linear-gradient(135deg, #475569, #334155); color: #fff;
+            font-weight: 700; text-align: center; padding: 8px 4px;
+            border-bottom: 2px solid #94a3b8; border-right: 1px solid #64748b; font-size: 0.8rem;
+        }
+        .tt-head:first-child { background: #334155; }
+        .tt-cell {
+            border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;
+            min-height: 52px; position: relative; padding: 4px 3px;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            font-size: 0.73rem; transition: background 0.1s;
+        }
+        .tt-cell:hover { background: #f8fafc; }
+        .tt-cell:nth-child(6n) { border-right: none; }
+        .tt-cell.empty-cell { background: #fafafa; }
+        .period-badge {
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0); color: #64748b;
+            font-weight: 800; display: flex; align-items: center; justify-content: center;
+            border-right: 2px solid #94a3b8; border-bottom: 1px solid #e2e8f0; font-size: 0.8rem;
+        }
+        .subject-name { font-weight: 700; font-size: 0.73rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; line-height: 1.3; }
+        .sub-info { font-size: 0.6rem; color: #64748b; margin-top: 1px; }
+
+        /* 과목 색상 */
+        .subj-lang { color: #b91c1c; }
+        .subj-math { color: #1d4ed8; }
+        .subj-eng { color: #7c3aed; }
+        .subj-sci { color: #047857; }
+        .subj-soc { color: #b45309; }
+        .subj-art { color: #be185d; }
+        .subj-pe { color: #0369a1; }
+        .subj-etc { color: #374151; }
+
+        /* 카드 */
+        .print-card { break-inside: avoid; page-break-inside: avoid; margin-bottom: 20px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+        .print-card-header {
+            padding: 10px 14px; background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;
+        }
+        .print-card-name { font-size: 0.95rem; font-weight: 800; color: #1e293b; }
+        .print-card-badge { font-size: 0.7rem; color: #64748b; background: #e2e8f0; padding: 2px 10px; border-radius: 20px; font-weight: 600; }
+        .print-card-footer { padding: 6px 14px; background: #fafafa; border-top: 1px solid #f1f5f9; font-size: 0.65rem; color: #94a3b8; }
+
+        /* 탭 */
+        .tab-btn { cursor: pointer; padding: 8px 20px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; border: 1px solid transparent; }
+        .tab-btn.active { background: #3b82f6; color: white; box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
+        .tab-btn:not(.active) { background: #f1f5f9; color: #64748b; border-color: #e2e8f0; }
+        .tab-btn:not(.active):hover { background: #e2e8f0; color: #475569; }
+
+        /* 레이아웃 */
+        .print-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .print-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+        /* 통계 바 */
+        .stat-bar { display: flex; gap: 16px; padding: 12px 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 16px; flex-wrap: wrap; }
+        .stat-item { text-align: center; }
+        .stat-value { font-size: 1.5rem; font-weight: 800; color: #1e293b; line-height: 1; }
+        .stat-label { font-size: 0.65rem; color: #94a3b8; margin-top: 2px; }
+
+        @media print {
+            aside, header, .no-print { display: none !important; }
+            @page { margin: 8mm; }
+            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            main { overflow: visible !important; height: auto !important; }
+            #printArea { overflow: visible !important; padding: 0 !important; }
+            .tt-grid { border: 2px solid #333; }
+            .tt-head { background: #4a5568 !important; color: #fff !important; }
+            .period-badge { background: #edf2f7 !important; }
+            .print-card { box-shadow: none; border: 1.5px solid #999; break-inside: avoid; page-break-inside: avoid; }
+            .print-card-header { background: #f0f0f0 !important; }
+            .print-2col { grid-template-columns: 1fr 1fr; gap: 14px; }
+            .print-3col { grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+            .print-title-bar { display: block !important; text-align: center; margin-bottom: 10px; font-size: 1.2rem; font-weight: 800; }
+            .stat-bar { background: #f5f5f5 !important; border-color: #ccc !important; }
+        }
+        @media print and (orientation: portrait) { @page { size: A4 portrait; } }
+
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        #mobile-overlay.active { display: block; }
+        #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
+        @media (max-width: 767px) {
+            #sidebar.mobile-open { overflow-y: auto !important; }
+            .nav-item { min-height: 52px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 15px !important; }
+            .print-2col, .print-3col { grid-template-columns: 1fr; }
+        }
+    </style>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date()); gtag('config', 'G-7LJ1TCE277');
+    </script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen flex overflow-hidden">
+
+    <div id="mobile-overlay" onclick="closeMobileSidebar()"></div>
+
+    <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 flex-col flex-shrink-0 hidden md:flex no-print shadow-2xl">
+        <div class="p-6 border-b border-slate-700/50">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                    <i class="fas fa-school text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-black text-2xl text-white tracking-tight">SchoolUs</span>
+                    <p class="text-xs text-slate-400 font-medium">스마트 교육 플랫폼</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li><a href="../tea.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-desktop w-6 mr-3"></i> 나의 대시보드</a></li>
+                <li class="px-6 pt-6 pb-2 text-xs font-bold uppercase text-slate-500">반편성 · 시간표</li>
+                <li><a href="classtime_maker_base.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-database w-6 mr-3"></i> 기초데이터 관리</a></li>
+                <li><a href="class_maker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-layer-group w-6 mr-3"></i> 반편성</a></li>
+                <li><a href="timetablemaker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-edit w-6 mr-3"></i> 시간표 작성</a></li>
+                <li><a href="timetablechange.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-calendar-alt w-6 mr-3"></i> 시간표 조회/변경</a></li>
+                <li><a href="#" class="flex items-center px-6 py-3 bg-slate-800 text-white border-l-4 border-blue-500"><i class="fas fa-print w-6 mr-3 text-green-400"></i> <span class="font-medium">시간표 출력</span></a></li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-slate-700">
+            <a href="../tea.html" class="flex items-center justify-center w-full py-2 bg-slate-800 hover:bg-slate-700 rounded text-sm transition"><i class="fas fa-arrow-left mr-2"></i> 메인으로 돌아가기</a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header class="bg-white h-14 border-b flex items-center justify-between px-6 shadow-sm z-30 flex-shrink-0 no-print">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars text-xl"></i></button>
+                <h2 class="text-lg font-bold text-slate-800"><i class="fas fa-print mr-2 text-blue-500"></i>시간표 출력</h2>
+                <span id="schoolBadge" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold"></span>
+            </div>
+            <div class="flex items-center gap-2">
+                <select id="printLayout" class="no-print border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium">
+                    <option value="portrait">세로(A4)</option>
+                    <option value="landscape">가로(A4)</option>
+                </select>
+                <button onclick="doPrint()" class="bg-blue-600 text-white hover:bg-blue-700 px-5 py-1.5 rounded-lg text-sm font-bold transition shadow-sm">
+                    <i class="fas fa-print mr-1"></i> 인쇄
+                </button>
+            </div>
+        </header>
+
+        <!-- 탭 + 필터 -->
+        <div class="no-print bg-white border-b px-6 py-3 flex flex-wrap items-center gap-3">
+            <div class="flex gap-2">
+                <button onclick="switchTab('teacher')" id="tab-teacher" class="tab-btn active"><i class="fas fa-user mr-1"></i>교사 개인</button>
+                <button onclick="switchTab('teacherAll')" id="tab-teacherAll" class="tab-btn"><i class="fas fa-users mr-1"></i>교사 전체</button>
+                <button onclick="switchTab('class')" id="tab-class" class="tab-btn"><i class="fas fa-chalkboard mr-1"></i>학급별</button>
+                <button onclick="switchTab('grade')" id="tab-grade" class="tab-btn"><i class="fas fa-layer-group mr-1"></i>학년별</button>
+            </div>
+            <div class="flex-1"></div>
+            <div id="filter-teacher" class="flex items-center gap-2">
+                <select id="selTeacher" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium" onchange="reRender()">
+                    <option value="">교사 선택...</option>
+                </select>
+            </div>
+            <div id="filter-class" class="hidden flex items-center gap-2">
+                <select id="selGradeClass" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium" onchange="reRender()">
+                    <option value="">학년-반 선택...</option>
+                </select>
+            </div>
+            <div id="filter-grade" class="hidden flex items-center gap-2">
+                <select id="selGrade" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium" onchange="reRender()">
+                    <option value="">학년 선택...</option>
+                    <option value="1">1학년</option>
+                    <option value="2">2학년</option>
+                    <option value="3">3학년</option>
+                    <option value="all">전체 학년</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 출력 영역 -->
+        <div id="printArea" class="flex-1 overflow-auto p-6">
+            <div class="print-title-bar hidden" id="printTitle"></div>
+            <div id="printContent" class="text-center text-slate-400 py-20">
+                <i class="fas fa-spinner fa-spin text-4xl mb-4 block text-blue-400"></i>
+                <p class="text-base font-bold">시간표 데이터를 불러오는 중...</p>
+            </div>
+        </div>
+    </main>
+
+<script>
+const DAYS = ['월', '화', '수', '목', '금'];
+const DAY_MAP = {'월': 0, '화': 1, '수': 2, '목': 3, '금': 4};
+const MAX_PERIOD = 7;
+
+// 과목 색상 분류
+const SUBJ_COLORS = {
+    '국어': 'subj-lang', '공통국어': 'subj-lang', '공통국어1': 'subj-lang', '문학': 'subj-lang', '독서': 'subj-lang',
+    '수학': 'subj-math', '공통수학': 'subj-math', '공통수학1': 'subj-math', '확률과통계': 'subj-math', '미적분': 'subj-math',
+    '영어': 'subj-eng', '공통영어': 'subj-eng', '공통영어1': 'subj-eng', '영어회화': 'subj-eng',
+    '물리학': 'subj-sci', '화학': 'subj-sci', '생명과학': 'subj-sci', '지구과학': 'subj-sci',
+    '통합과학': 'subj-sci', '통합과학1': 'subj-sci', '과학탐구실험': 'subj-sci', '과학탐구실험1': 'subj-sci',
+    '통합사회': 'subj-soc', '통합사회1': 'subj-soc', '한국사': 'subj-soc', '한국사1': 'subj-soc',
+    '세계사': 'subj-soc', '세계시민과 지리': 'subj-soc', '현대사회와 윤리': 'subj-soc', '사회와 문화': 'subj-soc',
+    '음악': 'subj-art', '미술': 'subj-art',
+    '체육': 'subj-pe', '체육1': 'subj-pe',
+};
+function getSubjColor(s) {
+    if (SUBJ_COLORS[s]) return SUBJ_COLORS[s];
+    for (const [k, v] of Object.entries(SUBJ_COLORS)) { if (s.includes(k)) return v; }
+    return 'subj-etc';
+}
+
+let allData = [];
+let teacherInfo = {};
+let currentTab = 'teacher';
+let schoolId = '';
+let memberSchool = '';
+
+// ========== 초기화 ==========
+async function init() {
+    try {
+        const userStr = localStorage.getItem('schoolus_user');
+        if (!userStr) { alert('로그인이 필요합니다.'); location.href = '/'; return; }
+        const currentUser = JSON.parse(userStr);
+        schoolId = currentUser.school_id || '';
+        memberSchool = currentUser.member_school || '';
+        document.getElementById('schoolBadge').textContent = memberSchool;
+
+        const url = `/api/timetable/school/all?school_id=${encodeURIComponent(schoolId)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.success) {
+            document.getElementById('printContent').innerHTML = `
+                <div class="py-20 text-center">
+                    <i class="fas fa-exclamation-triangle text-4xl text-amber-400 mb-4 block"></i>
+                    <p class="text-slate-600 font-bold">${data.message}</p>
+                </div>`;
+            return;
+        }
+
+        allData = data.timetable || [];
+        (data.teachers || []).forEach(t => {
+            teacherInfo[t.member_id] = { name: t.member_name, dept: t.department || '' };
+        });
+
+        if (allData.length === 0) {
+            document.getElementById('printContent').innerHTML = `
+                <div class="py-20 text-center">
+                    <i class="fas fa-calendar-times text-5xl text-slate-300 mb-4 block"></i>
+                    <p class="text-lg font-bold text-slate-500">시간표 데이터가 없습니다.</p>
+                    <p class="text-sm text-slate-400 mt-2">시간표 작성에서 먼저 시간표를 생성하세요.</p>
+                </div>`;
+            return;
+        }
+
+        buildFilters();
+        reRender();
+    } catch (e) {
+        console.error(e);
+        document.getElementById('printContent').innerHTML = `
+            <div class="py-20 text-center">
+                <i class="fas fa-exclamation-circle text-4xl text-red-400 mb-4 block"></i>
+                <p class="text-red-600 font-bold">데이터 로드 실패: ${e.message}</p>
+            </div>`;
+    }
+}
+
+// ========== 필터 ==========
+function buildFilters() {
+    const teacherMap = {};
+    allData.forEach(r => {
+        const mid = r.member_id || r.member_name;
+        if (!mid || mid === '-') return;
+        if (!teacherMap[mid]) teacherMap[mid] = { name: r.member_name, dept: (teacherInfo[mid] || {}).dept || '' };
+    });
+    const sortedTeachers = Object.entries(teacherMap).sort((a, b) => a[1].name.localeCompare(b[1].name, 'ko'));
+    const sel = document.getElementById('selTeacher');
+    sortedTeachers.forEach(([mid, info]) => {
+        const opt = document.createElement('option');
+        opt.value = mid;
+        opt.textContent = info.dept ? `${info.name} (${info.dept})` : info.name;
+        sel.appendChild(opt);
+    });
+    if (sortedTeachers.length > 0) sel.value = sortedTeachers[0][0];
+
+    const classSet = new Set();
+    allData.forEach(r => classSet.add(`${r.grade}_${r.class_no}`));
+    const sorted = [...classSet].sort((a, b) => {
+        const [ag, ac] = a.split('_').map(Number);
+        const [bg, bc] = b.split('_').map(Number);
+        return ag - bg || ac - bc;
+    });
+    const selC = document.getElementById('selGradeClass');
+    sorted.forEach(ck => {
+        const [g, c] = ck.split('_');
+        const opt = document.createElement('option');
+        opt.value = ck;
+        opt.textContent = `${g}학년 ${c}반`;
+        selC.appendChild(opt);
+    });
+}
+
+// ========== 탭 ==========
+function switchTab(tab) {
+    currentTab = tab;
+    ['teacher', 'teacherAll', 'class', 'grade'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+    });
+    document.getElementById('filter-teacher').classList.toggle('hidden', tab !== 'teacher');
+    document.getElementById('filter-class').classList.toggle('hidden', tab !== 'class');
+    document.getElementById('filter-grade').classList.toggle('hidden', tab !== 'grade');
+    reRender();
+}
+
+function reRender() {
+    const area = document.getElementById('printContent');
+    const titleEl = document.getElementById('printTitle');
+    switch (currentTab) {
+        case 'teacher': renderTeacherSingle(area, titleEl); break;
+        case 'teacherAll': renderTeacherAll(area, titleEl); break;
+        case 'class': renderClassSingle(area, titleEl); break;
+        case 'grade': renderGradeAll(area, titleEl); break;
+    }
+}
+
+// ========== 교사 개인 ==========
+function renderTeacherSingle(area, titleEl) {
+    const mid = document.getElementById('selTeacher').value;
+    if (!mid) { area.innerHTML = '<p class="text-slate-400 py-20 text-center"><i class="fas fa-hand-pointer text-3xl mb-3 block"></i>교사를 선택하세요.</p>'; return; }
+
+    const rows = allData.filter(r => (r.member_id || r.member_name) === mid);
+    const name = rows.length > 0 ? rows[0].member_name : mid;
+    const dept = (teacherInfo[mid] || {}).dept || '';
+    const deptStr = dept ? ` (${dept})` : '';
+
+    const slots = new Set();
+    rows.forEach(r => slots.add(`${DAY_MAP[r.day_of_week]}_${r.period}`));
+
+    // 요일별 시수
+    const dayHours = [0,0,0,0,0];
+    rows.forEach(r => { const di = DAY_MAP[r.day_of_week]; if (di !== undefined) dayHours[di]++; });
+
+    titleEl.textContent = `${memberSchool} — ${name}${deptStr} 선생님 시간표`;
+
+    area.innerHTML = `
+        <div class="max-w-3xl mx-auto">
+            <div class="print-card">
+                <div class="print-card-header">
+                    <div>
+                        <span class="print-card-name"><i class="fas fa-chalkboard-teacher mr-2 text-indigo-500"></i>${name}${deptStr} 선생님</span>
+                    </div>
+                    <span class="print-card-badge">주 ${slots.size}시간</span>
+                </div>
+                ${buildGrid(rows, 'teacher')}
+                <div class="print-card-footer">
+                    ${buildTeacherSummary(rows)}
+                    <span class="ml-3">| 요일별: ${DAYS.map((d,i) => `${d}(${dayHours[i]})`).join(' ')}</span>
+                </div>
+            </div>
+        </div>`;
+}
+
+// ========== 교사 전체 ==========
+function renderTeacherAll(area, titleEl) {
+    titleEl.textContent = `${memberSchool} — 교사별 시간표`;
+
+    const teacherRows = {};
+    allData.forEach(r => {
+        const mid = r.member_id || r.member_name;
+        if (!mid || mid === '-') return;
+        if (!teacherRows[mid]) teacherRows[mid] = [];
+        teacherRows[mid].push(r);
+    });
+
+    const sorted = Object.entries(teacherRows).sort((a, b) => {
+        const na = a[1][0].member_name;
+        const nb = b[1][0].member_name;
+        return na.localeCompare(nb, 'ko');
+    });
+
+    // 통계
+    const totalTeachers = sorted.length;
+    const totalHours = new Set();
+    allData.forEach(r => { if (r.member_id && r.member_id !== '-') totalHours.add(`${r.member_id}_${DAY_MAP[r.day_of_week]}_${r.period}`); });
+
+    let html = `
+        <div class="stat-bar no-print">
+            <div class="stat-item"><div class="stat-value">${totalTeachers}</div><div class="stat-label">교사 수</div></div>
+            <div class="stat-item"><div class="stat-value">${allData.length}</div><div class="stat-label">총 수업 수</div></div>
+        </div>
+        <div class="print-2col">`;
+
+    sorted.forEach(([mid, rows]) => {
+        const name = rows[0].member_name;
+        const dept = (teacherInfo[mid] || {}).dept || '';
+        const deptStr = dept ? ` (${dept})` : '';
+        const slots = new Set();
+        rows.forEach(r => slots.add(`${DAY_MAP[r.day_of_week]}_${r.period}`));
+
+        html += `
+            <div class="print-card">
+                <div class="print-card-header">
+                    <span class="print-card-name" style="font-size:0.85rem">${name}${deptStr}</span>
+                    <span class="print-card-badge">주 ${slots.size}h</span>
+                </div>
+                ${buildGrid(rows, 'teacher')}
+            </div>`;
+    });
+    html += '</div>';
+    area.innerHTML = html;
+}
+
+// ========== 학급별 ==========
+function renderClassSingle(area, titleEl) {
+    const sel = document.getElementById('selGradeClass').value;
+    if (!sel) { area.innerHTML = '<p class="text-slate-400 py-20 text-center"><i class="fas fa-hand-pointer text-3xl mb-3 block"></i>학급을 선택하세요.</p>'; return; }
+
+    const [grade, classNo] = sel.split('_');
+    const rows = allData.filter(r => String(r.grade) === grade && String(r.class_no) === classNo);
+
+    titleEl.textContent = `${memberSchool} — ${grade}학년 ${classNo}반 시간표`;
+
+    area.innerHTML = `
+        <div class="max-w-3xl mx-auto">
+            <div class="print-card">
+                <div class="print-card-header">
+                    <span class="print-card-name"><i class="fas fa-users mr-2 text-green-500"></i>${grade}학년 ${classNo}반</span>
+                    <span class="print-card-badge">주 ${rows.length}시간</span>
+                </div>
+                ${buildGrid(rows, 'class')}
+                <div class="print-card-footer">${buildClassSummary(rows)}</div>
+            </div>
+        </div>`;
+}
+
+// ========== 학년별 ==========
+function renderGradeAll(area, titleEl) {
+    const grade = document.getElementById('selGrade').value;
+    if (!grade) { area.innerHTML = '<p class="text-slate-400 py-20 text-center"><i class="fas fa-hand-pointer text-3xl mb-3 block"></i>학년을 선택하세요.</p>'; return; }
+
+    if (grade === 'all') {
+        titleEl.textContent = `${memberSchool} — 전체 학급 시간표`;
+        let html = '';
+        ['1','2','3'].forEach(g => {
+            const gradeRows = allData.filter(r => String(r.grade) === g);
+            if (gradeRows.length === 0) return;
+            const classNos = [...new Set(gradeRows.map(r => String(r.class_no)))].sort((a, b) => Number(a) - Number(b));
+            html += `<h3 class="text-lg font-bold text-slate-700 mt-6 mb-3 border-b pb-2"><i class="fas fa-layer-group mr-2 text-indigo-400"></i>${g}학년 (${classNos.length}학급)</h3><div class="print-2col">`;
+            classNos.forEach(cn => {
+                const rows = gradeRows.filter(r => String(r.class_no) === cn);
+                html += `<div class="print-card">
+                    <div class="print-card-header">
+                        <span class="print-card-name" style="font-size:0.85rem">${g}학년 ${cn}반</span>
+                        <span class="print-card-badge">${rows.length}h</span>
+                    </div>
+                    ${buildGrid(rows, 'class')}
+                </div>`;
+            });
+            html += '</div>';
+        });
+        area.innerHTML = html;
+        return;
+    }
+
+    titleEl.textContent = `${memberSchool} — ${grade}학년 학급별 시간표`;
+    const gradeRows = allData.filter(r => String(r.grade) === grade);
+    const classNos = [...new Set(gradeRows.map(r => String(r.class_no)))].sort((a, b) => Number(a) - Number(b));
+
+    let html = `<div class="print-2col">`;
+    classNos.forEach(cn => {
+        const rows = gradeRows.filter(r => String(r.class_no) === cn);
+        html += `<div class="print-card">
+            <div class="print-card-header">
+                <span class="print-card-name" style="font-size:0.85rem">${grade}학년 ${cn}반</span>
+                <span class="print-card-badge">${rows.length}h</span>
+            </div>
+            ${buildGrid(rows, 'class')}
+        </div>`;
+    });
+    html += '</div>';
+    area.innerHTML = html;
+}
+
+// ========== 그리드 ==========
+function buildGrid(rows, mode) {
+    const map = {};
+    rows.forEach(r => {
+        const di = DAY_MAP[r.day_of_week];
+        if (di === undefined) return;
+        const key = `${di}_${r.period}`;
+        if (!map[key]) map[key] = [];
+        map[key].push(r);
+    });
+
+    let html = '<div class="tt-grid">';
+    html += '<div class="tt-head"></div>';
+    DAYS.forEach(d => { html += `<div class="tt-head">${d}</div>`; });
+
+    for (let p = 1; p <= MAX_PERIOD; p++) {
+        html += `<div class="period-badge">${p}</div>`;
+        for (let d = 0; d < 5; d++) {
+            const entries = map[`${d}_${p}`] || [];
+            if (entries.length === 0) {
+                html += '<div class="tt-cell empty-cell"></div>';
+            } else if (entries.length === 1) {
+                const e = entries[0];
+                const color = getSubjColor(e.subject);
+                if (mode === 'teacher') {
+                    html += `<div class="tt-cell">
+                        <span class="subject-name ${color}">${truncate(e.subject, 7)}</span>
+                        <span class="sub-info">${e.grade}-${e.class_no}반</span>
+                    </div>`;
+                } else {
+                    html += `<div class="tt-cell">
+                        <span class="subject-name ${color}">${truncate(e.subject, 7)}</span>
+                        <span class="sub-info">${e.member_name}</span>
+                    </div>`;
+                }
+            } else {
+                const e0 = entries[0];
+                const color = getSubjColor(e0.subject);
+                const list = entries.map(e => `${e.grade}-${e.class_no}`).slice(0, 3).join(',');
+                const extra = entries.length > 3 ? '..' : '';
+                if (mode === 'teacher') {
+                    html += `<div class="tt-cell">
+                        <span class="subject-name ${color}">${truncate(e0.subject, 6)}</span>
+                        <span class="sub-info">${list}${extra}</span>
+                    </div>`;
+                } else {
+                    html += `<div class="tt-cell">
+                        <span class="subject-name ${color}">${truncate(e0.subject, 7)}</span>
+                        <span class="sub-info">${e0.member_name}</span>
+                    </div>`;
+                }
+            }
+        }
+    }
+    html += '</div>';
+    return html;
+}
+
+// ========== 요약 ==========
+function buildTeacherSummary(rows) {
+    const subjects = {}, grades = {};
+    rows.forEach(r => {
+        subjects[r.subject] = (subjects[r.subject] || 0) + 1;
+        const g = String(r.grade);
+        if (!grades[g]) grades[g] = new Set();
+        grades[g].add(String(r.class_no));
+    });
+    const subjStr = Object.entries(subjects).sort((a, b) => b[1] - a[1]).map(([s, h]) => `${s}(${h})`).join(', ');
+    const gradeStr = Object.entries(grades).sort().map(([g, cs]) => `${g}학년(${cs.size}반)`).join(', ');
+    return `담당: ${gradeStr} | 과목: ${subjStr}`;
+}
+
+function buildClassSummary(rows) {
+    const subjects = {};
+    rows.forEach(r => { subjects[r.subject] = (subjects[r.subject] || 0) + 1; });
+    return '과목: ' + Object.entries(subjects).sort((a, b) => b[1] - a[1]).map(([s, h]) => `${s}(${h})`).join(', ');
+}
+
+function truncate(s, max) { return s && s.length > max ? s.substring(0, max) : s || ''; }
+
+// ========== 인쇄 ==========
+function doPrint() {
+    const layout = document.getElementById('printLayout').value;
+    let styleEl = document.getElementById('dynamicPrintStyle');
+    if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'dynamicPrintStyle'; document.head.appendChild(styleEl); }
+    styleEl.textContent = `@media print { @page { size: A4 ${layout}; } }`;
+    window.print();
+}
+
+// ========== 사이드바 ==========
+function toggleMobileSidebar() {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+    document.getElementById('mobile-overlay').classList.toggle('active');
+}
+function closeMobileSidebar() {
+    document.getElementById('sidebar').classList.remove('mobile-open');
+    document.getElementById('mobile-overlay').classList.remove('active');
+}
+
+init();
+</script>
+</body>
+</html>

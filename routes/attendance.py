@@ -87,7 +87,7 @@ def save_attendance():
             return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
 
         if not records:
-            return jsonify({'success': False, 'message': '저장할 출결 데이터가 없습니다.'})
+            return jsonify({'success': False, 'message': '출결 상태를 선택한 후 저장해주세요.'})
 
         valid_statuses = {'present', 'absent', 'late', 'early_leave', 'sick'}
 
@@ -332,7 +332,8 @@ def get_my_attendance():
     cursor = None
     try:
         school_id = session.get('school_id') or sanitize_input(request.args.get('school_id'), 50)
-        student_id = session.get('user_id') or sanitize_input(request.args.get('member_id'), 50)
+        # [보안] 본인 출결만 조회 — 세션 user_id 강제 사용 (파라미터 무시)
+        student_id = session.get('user_id')
         month = sanitize_input(request.args.get('month'), 7)
 
         if not all([school_id, student_id]):

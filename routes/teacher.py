@@ -37,7 +37,7 @@ def get_teacher_info():
         if not member_id:
             member_id = session.get('user_id')
         if not member_id:
-            return jsonify({'success': False, 'message': '로그인 정보가 없습니다.'})
+            return jsonify({'success': False, 'message': '세션이 만료되었습니다. 다시 로그인해주세요.'})
         
         conn = get_db_connection()
         if not conn:
@@ -227,6 +227,68 @@ def get_teachers_list():
     except Exception as e:
         print(f"교사 목록 조회 오류: {e}")
         return jsonify({'success': False, 'message': f'교사 목록 조회 오류: {str(e)}'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+# ============================================
+# 교사 일괄 수정 API
+# ============================================
+@teacher_bp.route('/api/teachers/update-batch', methods=['POST'])
+def update_teachers_batch():
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json()
+        teachers_list = data.get('teachers', [])
+
+        if not teachers_list:
+            return jsonify({'success': False, 'message': '수정할 교사 정보가 없습니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+
+        cursor = conn.cursor()
+        updated = 0
+
+        for t in teachers_list:
+            member_id = sanitize_input(t.get('member_id'), 50)
+            if not member_id:
+                continue
+
+            fields = []
+            values = []
+
+            if 'member_name' in t:
+                fields.append('member_name = %s')
+                values.append(sanitize_input(t['member_name'], 100))
+            if 'department' in t:
+                fields.append('department = %s')
+                values.append(sanitize_input(t['department'], 100))
+            if 'department_position' in t:
+                fields.append('department_position = %s')
+                values.append(sanitize_input(t['department_position'], 50))
+            if 'class_grade' in t:
+                fields.append('class_grade = %s')
+                values.append(sanitize_input(str(t['class_grade']), 10) if t['class_grade'] else None)
+            if 'class_no' in t:
+                fields.append('class_no = %s')
+                values.append(sanitize_input(str(t['class_no']), 50) if t['class_no'] else None)
+
+            if fields:
+                values.append(member_id)
+                query = f"UPDATE tea_all SET {', '.join(fields)} WHERE member_id = %s"
+                cursor.execute(query, values)
+                updated += cursor.rowcount
+
+        conn.commit()
+        return jsonify({'success': True, 'message': f'{updated}명의 교사 정보가 수정되었습니다.', 'updated': updated})
+
+    except Exception as e:
+        print(f"교사 일괄 수정 오류: {e}")
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'message': f'교사 정보 수정 오류: {str(e)}'})
     finally:
         if cursor: cursor.close()
         if conn: conn.close()

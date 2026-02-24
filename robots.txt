@@ -11,10 +11,9 @@ Disallow: /login_process
 Disallow: /*.json$
 
 # 학교별 대시보드 (로그인 필요 영역)
-Disallow: /highschool/tea/
-Disallow: /highschool/st/
-Disallow: /highschool/fm/
-Disallow: /highschool/admission/
+Disallow: /highschool/
+Disallow: /middleschool/
+Disallow: /academy/
 
 # 템플릿 페이지
 Disallow: /templates/

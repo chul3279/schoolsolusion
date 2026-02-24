@@ -488,11 +488,15 @@
                 if (data.success && data.schedules?.length > 0) {
                     container.innerHTML = data.schedules.map(s => {
                         const isPast = new Date(s.counsel_date) < new Date();
-                        const statusBadge = s.status === 'completed'
-                            ? '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">완료</span>'
-                            : isPast
-                                ? '<span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full text-xs font-medium">지남</span>'
-                                : '<span class="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs font-medium">예정</span>';
+                        const statusMap = {
+                            'completed': '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">완료</span>',
+                            'confirmed': '<span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">확정</span>',
+                            'cancelled': '<span class="px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-xs font-bold">취소</span>',
+                            'pending': '<span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">대기중</span>'
+                        };
+                        const statusBadge = statusMap[s.status] || (isPast
+                            ? '<span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full text-xs font-medium">지남</span>'
+                            : '<span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">대기중</span>');
                         const typeIcons = {phone: 'fa-phone', visit: 'fa-user', online: 'fa-video'};
                         const typeNames = {phone: '전화', visit: '방문', online: '온라인'};
                         return `

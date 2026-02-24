@@ -624,6 +624,10 @@ def delete_homeroom_notice():
 # ============================================
 @homeroom_bp.route('/api/homeroom/counsel-schedule/list', methods=['GET'])
 def get_counsel_schedule_list():
+    # [보안] 교사와 학부모만 조회 가능 (학생 차단)
+    user_role = session.get('user_role')
+    if user_role not in ('teacher', 'parent'):
+        return jsonify({'success': False, 'message': '조회 권한이 없습니다.'}), 403
     conn = None
     cursor = None
     try:
@@ -632,6 +636,9 @@ def get_counsel_schedule_list():
         class_grade = sanitize_input(request.args.get('class_grade'), 10)
         class_no = sanitize_input(request.args.get('class_no'), 10)
         student_id = sanitize_input(request.args.get('student_id'), 50)
+        # [보안] 학부모는 반드시 student_id 필터 필요
+        if user_role == 'parent' and not student_id:
+            return jsonify({'success': False, 'message': '자녀 정보가 필요합니다.'})
         if not class_grade or not class_no:
             return jsonify({'success': False, 'message': '학급 정보가 필요합니다.'})
 
@@ -801,6 +808,9 @@ def update_counsel_schedule_status():
 # ============================================
 @homeroom_bp.route('/api/homeroom/counsel-log/list', methods=['GET'])
 def get_counsel_log_list():
+    # [보안] 교사만 상담 일지 조회 가능
+    if session.get('user_role') != 'teacher':
+        return jsonify({'success': False, 'message': '교사만 조회할 수 있습니다.'}), 403
     conn = None
     cursor = None
     try:

@@ -324,7 +324,6 @@
                             <select id="newSchoolLevel" class="form-input">
                                 <option value="고등">고등</option>
                                 <option value="중등">중등</option>
-                                <option value="초등">초등</option>
                             </select>
                         </div>
                         <button onclick="addOpenSubjectByInput()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-bold shadow transition h-[42px]">
@@ -571,7 +570,7 @@
         // ==========================================
         async function loadCurriculumFromDB() {
             try {
-                const res = await fetch('/api/cours-subject/list?school_level=고등');
+                const res = await fetch('/api/cours-subject/list?school_level=중학교');
                 const data = await res.json();
                 if (data.success && data.subjects) {
                     curriculumData = data.subjects.map(s => s.subject);
@@ -1392,7 +1391,6 @@
                         <select class="table-input w-full text-slate-600" onchange="updateOpenSubject(${idx}, 'schoolLevel', this.value)">
                             <option value="고등" ${subj.schoolLevel === '고등' ? 'selected' : ''}>고등</option>
                             <option value="중등" ${subj.schoolLevel === '중등' ? 'selected' : ''}>중등</option>
-                            <option value="초등" ${subj.schoolLevel === '초등' ? 'selected' : ''}>초등</option>
                         </select>
                     </td>
                     <td class="text-center p-1 no-print"><button onclick="removeOpenSubject(${idx})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded transition"><i class="fas fa-trash-alt"></i></button></td>`;

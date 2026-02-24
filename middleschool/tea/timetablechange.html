@@ -22,13 +22,29 @@
         .class-tag { font-size: 0.7rem; color: #64748b; }
         .changed-cell { background-color: #fff7ed !important; }
         .changed-tag { color: #c2410c; border-color: #fdba74; background-color: #ffedd5; }
+        .exchanged-cell { background-color: #f0fdf4 !important; }
+        .exchanged-tag { color: #15803d; border-color: #86efac; background-color: #dcfce7; }
 
         .search-dropdown { position: absolute; z-index: 50; background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; width: 100%; }
         .search-dropdown div { padding: 8px 12px; cursor: pointer; font-size: 0.85rem; }
         .search-dropdown div:hover { background: #eef2ff; }
 
+        .tab-btn { transition: all 0.2s; cursor: pointer; }
+        .tab-btn.active { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; box-shadow: 0 4px 12px rgba(99,102,241,0.3); border-color: transparent; }
+
+        .period-card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; cursor: pointer; transition: all 0.2s; }
+        .period-card:hover { border-color: #a5b4fc; background: #f5f3ff; }
+        .period-card.selected-mine { border-color: #6366f1; background: #eef2ff; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+        .period-card.selected-target { border-color: #22c55e; background: #f0fdf4; box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+
+        .status-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        .status-pending { background: #fef9c3; color: #a16207; }
+        .status-approved { background: #dcfce7; color: #15803d; }
+        .status-rejected { background: #fee2e2; color: #dc2626; }
+        .status-cancelled { background: #f1f5f9; color: #64748b; }
+
         @media print {
-            aside, header, .no-print, .search-bar { display: none !important; }
+            aside, header, .no-print, .search-bar, .tab-bar { display: none !important; }
             @page { size: A4 landscape; margin: 5mm; }
             body { background: white !important; }
             main { overflow: visible !important; }
@@ -36,13 +52,13 @@
             .tt-head { background: #d0d0d0 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .subject-tag { border-color: #333; }
             .changed-cell { background: #ffe0c0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .exchanged-cell { background: #c0ffd0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
 
         #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
         #mobile-overlay.active { display: block; }
         #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
 
-        /* 모바일 큰 글씨 대응: 터치 영역 확대 + 사이드바 전체 스크롤 */
         @media (max-width: 767px) {
             #sidebar.mobile-open { overflow-y: auto !important; }
             #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
@@ -126,6 +142,21 @@
         </div>
     </div>
 
+    <!-- 거절 사유 모달 -->
+    <div id="rejectModal" class="fixed inset-0 bg-black bg-opacity-30 z-50 hidden items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="bg-red-600 text-white p-4"><h3 class="font-bold"><i class="fas fa-times-circle mr-2"></i>교환 요청 거절</h3></div>
+            <div class="p-6 space-y-4">
+                <div><label class="block text-sm font-bold text-slate-600 mb-2">거절 사유</label>
+                <input type="text" id="rejectReasonInput" class="w-full border border-slate-300 rounded-lg p-2 text-sm" placeholder="거절 사유 입력 (선택)"></div>
+                <div class="flex gap-2">
+                    <button class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-2.5 rounded-lg font-bold" onclick="closeRejectModal()">취소</button>
+                    <button class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-bold" onclick="confirmReject()">거절 확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 사이드바 -->
     <div id="mobile-overlay"></div>
     <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 flex-col flex-shrink-0 hidden md:flex no-print shadow-2xl">
@@ -148,6 +179,7 @@
                 <li><a href="class_maker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-layer-group w-6 mr-3"></i> 반편성</a></li>
                 <li><a href="timetablemaker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-edit w-6 mr-3"></i> 시간표 작성</a></li>
                 <li><a href="#" class="flex items-center px-6 py-3 bg-slate-800 text-white border-l-4 border-blue-500"><i class="fas fa-calendar-alt w-6 mr-3 text-green-400"></i> <span class="font-medium">시간표 조회/변경</span></a></li>
+                <li><a href="timetableprint.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-print w-6 mr-3"></i> 시간표 출력</a></li>
             </ul>
         </nav>
         <div class="p-4 border-t border-slate-700">
@@ -168,96 +200,189 @@
             </button>
         </header>
 
-        <!-- 검색 바 -->
-        <div class="bg-white border-b px-8 py-3 z-20 shadow-sm flex items-center gap-4 flex-wrap search-bar no-print">
-            <div class="flex items-center gap-2">
-                <label class="text-xs font-bold text-slate-500">기준일자</label>
-                <input type="date" id="searchDate" class="border border-slate-300 rounded px-2 py-1.5 text-sm text-slate-700">
-            </div>
-            <div class="h-6 w-px bg-slate-200"></div>
-            <div class="flex items-center gap-2">
-                <label class="text-xs font-bold text-slate-500">검색 대상</label>
-                <select id="searchMode" class="border border-slate-300 rounded px-2 py-1.5 text-sm text-slate-700" onchange="toggleSearchMode()">
-                    <option value="teacher">교사별</option>
-                    <option value="class">학급별</option>
-                </select>
-            </div>
-
-            <!-- 교사별 검색 -->
-            <div id="teacherSearchWrap" class="flex items-center gap-2 relative">
-                <input type="text" id="searchTeacherInput" class="border border-slate-300 rounded px-2 py-1.5 text-sm w-48" placeholder="교사명 입력" autocomplete="off">
-                <div id="searchTeacherDropdown" class="search-dropdown hidden" style="top:100%; left:0; width:192px;"></div>
-            </div>
-
-            <!-- 학급별 검색 -->
-            <div id="classSearchWrap" class="hidden flex items-center gap-2">
-                <select id="searchGrade" class="border border-slate-300 rounded px-2 py-1.5 text-sm" onchange="onGradeChange()">
-                </select>
-                <select id="searchClassNo" class="border border-slate-300 rounded px-2 py-1.5 text-sm">
-                </select>
-            </div>
-
-            <button onclick="doSearch()" class="bg-indigo-600 text-white px-4 py-1.5 rounded text-sm font-bold hover:bg-indigo-700 transition">
-                <i class="fas fa-search mr-1"></i> 조회
+        <!-- 탭 바 -->
+        <div class="bg-white border-b px-8 py-2 z-20 no-print tab-bar flex items-center gap-2 flex-wrap">
+            <button onclick="switchTab('timetable')" class="tab-btn active px-5 py-2.5 rounded-xl font-bold text-sm border-2 border-transparent" id="tab-timetable">
+                <i class="fas fa-calendar-alt mr-2"></i>시간표 조회/변경
+            </button>
+            <button onclick="switchTab('exchange-request')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200 text-slate-600" id="tab-exchange-request">
+                <i class="fas fa-exchange-alt mr-2"></i>수업 교환 요청
+            </button>
+            <button onclick="switchTab('exchange-list')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200 text-slate-600" id="tab-exchange-list">
+                <i class="fas fa-list-alt mr-2"></i>교환 요청 목록
+                <span id="pendingBadge" class="hidden ml-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">0</span>
             </button>
         </div>
 
-        <!-- 콘텐츠 -->
-        <div class="flex-1 overflow-y-auto p-8 bg-slate-50">
-            <div class="max-w-7xl mx-auto">
+        <!-- ============================== 탭1: 시간표 조회/변경 ============================== -->
+        <div id="panel-timetable" class="tab-panel flex-1 flex flex-col overflow-hidden">
+            <!-- 검색 바 -->
+            <div class="bg-white border-b px-8 py-3 z-10 shadow-sm flex items-center gap-4 flex-wrap search-bar no-print">
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-500">기준일자</label>
+                    <input type="date" id="searchDate" class="border border-slate-300 rounded px-2 py-1.5 text-sm text-slate-700">
+                </div>
+                <div class="h-6 w-px bg-slate-200"></div>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-500">검색 대상</label>
+                    <select id="searchMode" class="border border-slate-300 rounded px-2 py-1.5 text-sm text-slate-700" onchange="toggleSearchMode()">
+                        <option value="teacher">교사별</option>
+                        <option value="class">학급별</option>
+                    </select>
+                </div>
+                <div id="teacherSearchWrap" class="flex items-center gap-2 relative">
+                    <input type="text" id="searchTeacherInput" class="border border-slate-300 rounded px-2 py-1.5 text-sm w-48" placeholder="교사명 입력" autocomplete="off">
+                    <div id="searchTeacherDropdown" class="search-dropdown hidden" style="top:100%; left:0; width:192px;"></div>
+                </div>
+                <div id="classSearchWrap" class="hidden flex items-center gap-2">
+                    <select id="searchGrade" class="border border-slate-300 rounded px-2 py-1.5 text-sm" onchange="onGradeChange()"></select>
+                    <select id="searchClassNo" class="border border-slate-300 rounded px-2 py-1.5 text-sm"></select>
+                </div>
+                <button onclick="doSearch()" class="bg-indigo-600 text-white px-4 py-1.5 rounded text-sm font-bold hover:bg-indigo-700 transition">
+                    <i class="fas fa-search mr-1"></i> 조회
+                </button>
+            </div>
 
-                <!-- 시간표 영역 -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-6">
-                    <div class="flex justify-between items-end mb-4">
-                        <h3 class="font-bold text-lg text-slate-800" id="tableTitle">
-                            <i class="fas fa-chalkboard-teacher mr-2 text-indigo-500"></i>교사 또는 학급을 검색하세요
-                        </h3>
-                        <div class="text-xs text-slate-400">
-                            <i class="fas fa-info-circle mr-1"></i>셀을 클릭하여 보강 및 변경 처리를 할 수 있습니다.
+            <div class="flex-1 overflow-y-auto p-8 bg-slate-50">
+                <div class="max-w-7xl mx-auto">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-6">
+                        <div class="flex justify-between items-end mb-4">
+                            <h3 class="font-bold text-lg text-slate-800" id="tableTitle">
+                                <i class="fas fa-chalkboard-teacher mr-2 text-indigo-500"></i>교사 또는 학급을 검색하세요
+                            </h3>
+                            <div class="text-xs text-slate-400">
+                                <i class="fas fa-info-circle mr-1"></i>셀 클릭 → 보강/변경 처리 &nbsp;|&nbsp;
+                                <span class="inline-block w-3 h-3 rounded bg-orange-200 align-middle"></span> 대강
+                                <span class="inline-block w-3 h-3 rounded bg-green-200 align-middle ml-2"></span> 교환
+                            </div>
+                        </div>
+                        <div class="tt-grid">
+                            <div class="tt-head bg-slate-100"></div>
+                            <div class="tt-head">월</div><div class="tt-head">화</div><div class="tt-head">수</div><div class="tt-head">목</div><div class="tt-head">금</div>
+                            <div id="timetableBody" style="display: contents;"></div>
+                        </div>
+                        <div id="emptyState" class="text-center py-16 text-slate-400">
+                            <i class="fas fa-calendar-alt fa-3x mb-4"></i>
+                            <p class="font-bold text-lg">시간표를 조회하려면 교사 또는 학급을 검색하세요.</p>
                         </div>
                     </div>
-
-                    <div class="tt-grid">
-                        <div class="tt-head bg-slate-100"></div>
-                        <div class="tt-head">월</div>
-                        <div class="tt-head">화</div>
-                        <div class="tt-head">수</div>
-                        <div class="tt-head">목</div>
-                        <div class="tt-head">금</div>
-                        <div id="timetableBody" style="display: contents;"></div>
+                    <div id="changesPanel" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden no-print">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-800"><i class="fas fa-history mr-2 text-amber-500"></i>변경 이력 (<span id="changesCount">0</span>건)</h3>
+                        </div>
+                        <div class="overflow-auto max-h-[300px]">
+                            <table class="w-full text-sm">
+                                <thead class="bg-slate-50 sticky top-0 text-xs text-slate-500">
+                                    <tr>
+                                        <th class="p-2 text-center w-20">요일/교시</th>
+                                        <th class="p-2 text-left">기존 교사</th>
+                                        <th class="p-2 text-left">기존 과목</th>
+                                        <th class="p-2 text-center"><i class="fas fa-arrow-right"></i></th>
+                                        <th class="p-2 text-left">변경 교사</th>
+                                        <th class="p-2 text-left">변경 과목</th>
+                                        <th class="p-2 text-left">사유</th>
+                                        <th class="p-2 text-center w-16">취소</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="changesTableBody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <!-- 빈 상태 메시지 -->
-                    <div id="emptyState" class="text-center py-16 text-slate-400">
-                        <i class="fas fa-calendar-alt fa-3x mb-4"></i>
-                        <p class="font-bold text-lg">시간표를 조회하려면 교사 또는 학급을 검색하세요.</p>
+        <!-- ============================== 탭2: 수업 교환 요청 ============================== -->
+        <div id="panel-exchange-request" class="tab-panel hidden flex-1 overflow-y-auto p-8 bg-slate-50">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <!-- 카드1: 내 교환 교시 선택 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="font-bold text-lg mb-4"><i class="fas fa-hand-pointer mr-2 text-indigo-500"></i>1. 내 교환 교시 선택</h3>
+                    <p class="text-sm text-slate-500 mb-4">교환할 날짜를 선택한 후, 내 시간표에서 교환하고 싶은 교시를 클릭하세요.</p>
+                    <div class="flex items-center gap-4 mb-4 flex-wrap">
+                        <input type="date" id="exReqDate" class="border border-slate-300 rounded px-3 py-2 text-sm">
+                        <button onclick="loadMyScheduleForExchange()" class="bg-indigo-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-indigo-700 transition">
+                            <i class="fas fa-sync-alt mr-1"></i>내 시간표 불러오기
+                        </button>
+                    </div>
+                    <div id="myScheduleGrid" class="text-center py-8 text-slate-400">
+                        <i class="fas fa-calendar-day fa-2x mb-2"></i>
+                        <p>날짜를 선택하고 불러오기를 클릭하세요.</p>
                     </div>
                 </div>
 
-                <!-- 변경이력 패널 -->
-                <div id="changesPanel" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden no-print">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-slate-800"><i class="fas fa-history mr-2 text-amber-500"></i>변경 이력 (<span id="changesCount">0</span>건)</h3>
+                <!-- 카드2: 교환 대상 교사/교시 선택 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="font-bold text-lg mb-4"><i class="fas fa-user-friends mr-2 text-green-500"></i>2. 교환 대상 교사 / 교시 선택</h3>
+                    <div class="flex items-center gap-4 mb-4 flex-wrap relative">
+                        <div class="relative">
+                            <input type="text" id="exTargetTeacher" class="border border-slate-300 rounded px-3 py-2 text-sm w-60" placeholder="교사명 검색" autocomplete="off">
+                            <div id="exTargetDropdown" class="search-dropdown hidden" style="width:240px;"></div>
+                        </div>
+                        <button onclick="loadTargetScheduleForExchange()" class="bg-green-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-green-700 transition">
+                            <i class="fas fa-search mr-1"></i>시간표 조회
+                        </button>
                     </div>
-                    <div class="overflow-auto max-h-[300px]">
-                        <table class="w-full text-sm">
-                            <thead class="bg-slate-50 sticky top-0 text-xs text-slate-500">
-                                <tr>
-                                    <th class="p-2 text-center w-20">요일/교시</th>
-                                    <th class="p-2 text-left">기존 교사</th>
-                                    <th class="p-2 text-left">기존 과목</th>
-                                    <th class="p-2 text-center"><i class="fas fa-arrow-right"></i></th>
-                                    <th class="p-2 text-left">변경 교사</th>
-                                    <th class="p-2 text-left">변경 과목</th>
-                                    <th class="p-2 text-left">사유</th>
-                                    <th class="p-2 text-center w-16">취소</th>
-                                </tr>
-                            </thead>
-                            <tbody id="changesTableBody" class="divide-y divide-slate-100"></tbody>
-                        </table>
+                    <div id="targetScheduleGrid" class="text-center py-8 text-slate-400">
+                        <i class="fas fa-user-clock fa-2x mb-2"></i>
+                        <p>교환 대상 교사를 검색하세요.</p>
                     </div>
                 </div>
 
+                <!-- 카드3: 교환 요약 + 요청 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="font-bold text-lg mb-4"><i class="fas fa-paper-plane mr-2 text-blue-500"></i>3. 교환 요청</h3>
+                    <div id="exchangeSummary" class="p-4 bg-slate-50 rounded-lg border border-slate-200 mb-4 text-sm text-slate-500">
+                        위에서 교시를 선택하면 교환 요약이 표시됩니다.
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-600 mb-2">교환 사유</label>
+                        <input type="text" id="exReqReason" class="w-full border border-slate-300 rounded-lg p-2 text-sm" placeholder="교환 사유 입력">
+                    </div>
+                    <button onclick="submitExchangeRequest()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-indigo-700 transition disabled:opacity-50" id="btnSubmitExchange" disabled>
+                        <i class="fas fa-paper-plane mr-2"></i>교환 요청 보내기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================== 탭3: 교환 요청 목록 ============================== -->
+        <div id="panel-exchange-list" class="tab-panel hidden flex-1 overflow-y-auto p-8 bg-slate-50">
+            <div class="max-w-5xl mx-auto space-y-6">
+                <!-- 필터 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex items-center gap-4 flex-wrap">
+                    <select id="exListStatus" class="border border-slate-300 rounded px-3 py-2 text-sm" onchange="loadExchangeList()">
+                        <option value="all">전체 상태</option>
+                        <option value="pending" selected>대기중</option>
+                        <option value="approved">승인됨</option>
+                        <option value="rejected">거절됨</option>
+                        <option value="cancelled">취소됨</option>
+                    </select>
+                    <input type="date" id="exListDate" class="border border-slate-300 rounded px-3 py-2 text-sm" onchange="loadExchangeList()">
+                    <button onclick="loadExchangeList()" class="bg-slate-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-slate-700 transition">
+                        <i class="fas fa-sync-alt mr-1"></i>새로고침
+                    </button>
+                </div>
+                <!-- 받은 요청 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="font-bold text-lg mb-4">
+                        <i class="fas fa-inbox mr-2 text-red-500"></i>받은 교환 요청
+                        <span id="receivedCount" class="text-sm font-normal text-slate-400 ml-2">0건</span>
+                    </h3>
+                    <div id="receivedExchanges" class="space-y-3">
+                        <div class="text-center py-6 text-slate-400 text-sm">받은 교환 요청이 없습니다.</div>
+                    </div>
+                </div>
+                <!-- 보낸 요청 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="font-bold text-lg mb-4">
+                        <i class="fas fa-paper-plane mr-2 text-blue-500"></i>보낸 교환 요청
+                        <span id="sentCount" class="text-sm font-normal text-slate-400 ml-2">0건</span>
+                    </h3>
+                    <div id="sentExchanges" class="space-y-3">
+                        <div class="text-center py-6 text-slate-400 text-sm">보낸 교환 요청이 없습니다.</div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -269,14 +394,51 @@
 
         let currentUser = null;
         let allTeachers = [];
-        let classInfo = {};      // { '1': ['1','2','3'], '2': [...] } 학년별 반 목록
-        let timetableData = [];  // API 응답 원본
-        let changesData = [];    // 변경이력
+        let classInfo = {};
+        let timetableData = [];
+        let changesData = [];
         let searchMode = 'teacher';
-        let currentTarget = {};  // 현재 조회 대상 정보
-
-        // 모달용
+        let currentTarget = {};
         let modalCell = null;
+
+        // 교환 요청 상태
+        let exMySchedule = [];       // 내 시간표
+        let exTargetSchedule = [];   // 대상 시간표
+        let exSelectedMine = null;   // { day, period, subject, grade, class_no }
+        let exSelectedTarget = null;
+        let exTargetInfo = null;     // { member_id, member_name }
+        let exReqDayName = '';       // 선택된 날짜의 요일명
+
+        // 거절 모달 상태
+        let rejectExchangeId = null;
+
+        // ==========================================
+        // 탭 전환
+        // ==========================================
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('bg-white', 'border-slate-200', 'text-slate-600');
+            });
+            const activeBtn = document.getElementById('tab-' + tabName);
+            activeBtn.classList.add('active');
+            activeBtn.classList.remove('bg-white', 'border-slate-200', 'text-slate-600');
+
+            document.querySelectorAll('.tab-panel').forEach(p => {
+                p.classList.add('hidden');
+                p.classList.remove('flex');
+            });
+            const panel = document.getElementById('panel-' + tabName);
+            panel.classList.remove('hidden');
+            if (tabName === 'timetable') panel.classList.add('flex');
+
+            if (tabName === 'exchange-list') loadExchangeList();
+            if (tabName === 'exchange-request') {
+                if (!document.getElementById('exReqDate').value) {
+                    document.getElementById('exReqDate').value = new Date().toISOString().split('T')[0];
+                }
+            }
+        }
 
         // ==========================================
         // 초기화
@@ -300,30 +462,34 @@
             }
 
             document.getElementById('schoolBadge').textContent = currentUser.member_school || currentUser.school_id || '';
+            document.getElementById('searchDate').value = new Date().toISOString().split('T')[0];
 
-            // 오늘 날짜 설정
-            const today = new Date();
-            document.getElementById('searchDate').value = today.toISOString().split('T')[0];
-
-            // 교사 목록 + 학급 정보 로드
             await loadTeachersList();
             await loadClassInfo();
-
-            // 초기 그리드 (빈 그리드)
             renderEmptyGrid();
 
-            // 교사 검색 자동완성 (선택 시 자동 조회)
+            // 탭1 교사 검색 자동완성
             setupTeacherAutocomplete('searchTeacherInput', 'searchTeacherDropdown', (t) => {
                 document.getElementById('searchTeacherInput').value = t.member_name;
+                document.getElementById('searchTeacherInput').dataset.memberId = t.member_id || '';
                 document.getElementById('searchTeacherDropdown').classList.add('hidden');
                 doSearch();
             });
-
-            // 모달 교사 자동완성
+            // 탭1 모달 교사 자동완성
             setupTeacherAutocomplete('modalNewTeacher', 'modalTeacherDropdown', (t) => {
                 document.getElementById('modalNewTeacher').value = t.member_name;
                 document.getElementById('modalTeacherDropdown').classList.add('hidden');
             });
+            // 탭2 교환 대상 교사 자동완성
+            setupTeacherAutocomplete('exTargetTeacher', 'exTargetDropdown', (t) => {
+                document.getElementById('exTargetTeacher').value = t.member_name;
+                document.getElementById('exTargetTeacher').dataset.memberId = t.member_id || '';
+                document.getElementById('exTargetDropdown').classList.add('hidden');
+                exTargetInfo = { member_id: t.member_id, member_name: t.member_name };
+            });
+
+            // pending 배지 로드
+            loadPendingCount();
         }
 
         async function loadTeachersList() {
@@ -332,10 +498,7 @@
                 if (currentUser.school_id) url += 'school_id=' + encodeURIComponent(currentUser.school_id);
                 else if (currentUser.member_school) url += 'member_school=' + encodeURIComponent(currentUser.member_school);
                 const res = await fetch(url);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.success) allTeachers = data.data || [];
-                }
+                if (res.ok) { const data = await res.json(); if (data.success) allTeachers = data.data || []; }
             } catch (e) { console.error('교사 목록 로드 실패:', e); }
         }
 
@@ -348,31 +511,17 @@
                 if (!res.ok) return;
                 const data = await res.json();
                 if (!data.success) return;
-
-                // 학년별 반 목록 추출
                 classInfo = {};
                 (data.data || []).forEach(row => {
                     const g = String(row.grade || '').trim();
                     if (!g) return;
                     if (!classInfo[g]) classInfo[g] = new Set();
-                    // class_no가 "1, 2, 3" 형태일 수 있으므로 분리
-                    String(row.class_no || '').split(',').forEach(c => {
-                        const cn = c.trim();
-                        if (cn && !isNaN(cn)) classInfo[g].add(cn);
-                    });
+                    String(row.class_no || '').split(',').forEach(c => { const cn = c.trim(); if (cn && !isNaN(cn)) classInfo[g].add(cn); });
                 });
-
-                // Set → 정렬된 배열
-                for (const g in classInfo) {
-                    classInfo[g] = [...classInfo[g]].sort((a, b) => Number(a) - Number(b));
-                }
-
-                // 학년 select 채우기
+                for (const g in classInfo) classInfo[g] = [...classInfo[g]].sort((a, b) => Number(a) - Number(b));
                 const gradeSelect = document.getElementById('searchGrade');
                 const grades = Object.keys(classInfo).sort((a, b) => Number(a) - Number(b));
                 gradeSelect.innerHTML = grades.map(g => `<option value="${g}">${g}학년</option>`).join('');
-
-                // 첫 번째 학년의 반 목록 채우기
                 if (grades.length > 0) onGradeChange();
             } catch (e) { console.error('학급 정보 로드 실패:', e); }
         }
@@ -387,7 +536,6 @@
         function setupTeacherAutocomplete(inputId, dropdownId, onSelect) {
             const input = document.getElementById(inputId);
             const dropdown = document.getElementById(dropdownId);
-
             input.addEventListener('input', () => {
                 const kw = input.value.trim();
                 if (!kw) { dropdown.classList.add('hidden'); return; }
@@ -395,39 +543,25 @@
                 if (matched.length === 0) {
                     dropdown.innerHTML = '<div class="text-slate-400 p-2 text-xs">결과 없음</div>';
                 } else {
-                    dropdown.innerHTML = matched.slice(0, 15).map(t =>
-                        `<div data-name="${t.member_name}">
-                            <span class="font-medium">${t.member_name}</span>
-                            <span class="text-xs text-slate-400 ml-2">${t.department || ''}</span>
-                        </div>`
+                    dropdown.innerHTML = matched.slice(0, 15).map((t, i) =>
+                        `<div data-idx="${i}"><span class="font-medium">${t.member_name}</span><span class="text-xs text-slate-400 ml-2">${t.department || ''}</span></div>`
                     ).join('');
-                    dropdown.querySelectorAll('[data-name]').forEach(el => {
-                        el.addEventListener('click', () => {
-                            const t = matched.find(x => x.member_name === el.dataset.name);
-                            if (t) onSelect(t);
-                        });
+                    dropdown.querySelectorAll('[data-idx]').forEach(el => {
+                        el.addEventListener('click', () => { const t = matched[parseInt(el.dataset.idx)]; if (t) onSelect(t); });
                     });
                 }
                 dropdown.classList.remove('hidden');
             });
-
             input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    dropdown.classList.add('hidden');
-                    if (inputId === 'searchTeacherInput') doSearch();
-                }
+                if (e.key === 'Enter') { e.preventDefault(); dropdown.classList.add('hidden'); if (inputId === 'searchTeacherInput') doSearch(); }
             });
-
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('#' + inputId) && !e.target.closest('#' + dropdownId)) {
-                    dropdown.classList.add('hidden');
-                }
+                if (!e.target.closest('#' + inputId) && !e.target.closest('#' + dropdownId)) dropdown.classList.add('hidden');
             });
         }
 
         // ==========================================
-        // 검색 모드 전환
+        // 탭1: 시간표 조회/변경
         // ==========================================
         function toggleSearchMode() {
             searchMode = document.getElementById('searchMode').value;
@@ -435,17 +569,15 @@
             document.getElementById('classSearchWrap').classList.toggle('hidden', searchMode !== 'class');
         }
 
-        // ==========================================
-        // 검색 실행
-        // ==========================================
         async function doSearch() {
             const changeDate = document.getElementById('searchDate').value;
-
             if (searchMode === 'teacher') {
-                const name = document.getElementById('searchTeacherInput').value.trim();
+                const input = document.getElementById('searchTeacherInput');
+                const name = input.value.trim();
                 if (!name) { alert('교사명을 입력하세요.'); return; }
-                currentTarget = { mode: 'teacher', member_name: name };
-                await loadTeacherWeek(name, changeDate);
+                const memberId = input.dataset.memberId || '';
+                currentTarget = { mode: 'teacher', member_name: name, member_id: memberId };
+                await loadTeacherWeek(name, changeDate, memberId);
             } else {
                 const grade = document.getElementById('searchGrade').value;
                 const classNo = document.getElementById('searchClassNo').value;
@@ -454,25 +586,21 @@
             }
         }
 
-        async function loadTeacherWeek(memberName, changeDate) {
+        async function loadTeacherWeek(memberName, changeDate, memberId) {
             try {
                 let url = '/api/timetable/teacher/week?member_name=' + encodeURIComponent(memberName);
+                if (memberId) url += '&member_id=' + encodeURIComponent(memberId);
                 if (currentUser.school_id) url += '&school_id=' + encodeURIComponent(currentUser.school_id);
                 else url += '&member_school=' + encodeURIComponent(currentUser.member_school);
                 if (changeDate) url += '&change_date=' + encodeURIComponent(changeDate);
-
                 const res = await fetch(url);
                 if (!res.ok) throw new Error('서버 오류');
                 const data = await res.json();
                 if (!data.success) { alert(data.message); return; }
-
                 timetableData = data.timetable || [];
                 changesData = data.changes || [];
-
-                document.getElementById('tableTitle').innerHTML =
-                    `<i class="fas fa-chalkboard-teacher mr-2 text-indigo-500"></i>${memberName} 선생님 시간표`;
+                document.getElementById('tableTitle').innerHTML = `<i class="fas fa-chalkboard-teacher mr-2 text-indigo-500"></i>${memberName} 선생님 시간표`;
                 document.getElementById('emptyState').classList.add('hidden');
-
                 renderTimetable('teacher');
                 loadChanges(changeDate);
             } catch (e) { alert('시간표 조회 실패: ' + e.message); }
@@ -484,60 +612,44 @@
                 if (currentUser.school_id) url += '&school_id=' + encodeURIComponent(currentUser.school_id);
                 else url += '&member_school=' + encodeURIComponent(currentUser.member_school);
                 if (changeDate) url += '&change_date=' + encodeURIComponent(changeDate);
-
                 const res = await fetch(url);
                 if (!res.ok) throw new Error('서버 오류');
                 const data = await res.json();
                 if (!data.success) { alert(data.message); return; }
-
                 timetableData = data.timetable || [];
                 changesData = data.changes || [];
-
-                document.getElementById('tableTitle').innerHTML =
-                    `<i class="fas fa-users mr-2 text-green-500"></i>${grade}학년 ${classNo}반 시간표`;
+                document.getElementById('tableTitle').innerHTML = `<i class="fas fa-users mr-2 text-green-500"></i>${grade}학년 ${classNo}반 시간표`;
                 document.getElementById('emptyState').classList.add('hidden');
-
                 renderTimetable('class');
                 loadChanges(changeDate);
             } catch (e) { alert('시간표 조회 실패: ' + e.message); }
         }
 
-        // ==========================================
-        // 시간표 그리드 렌더링
-        // ==========================================
         function renderEmptyGrid() {
             const con = document.getElementById('timetableBody');
             con.innerHTML = '';
             for (let p = 1; p <= PERIODS; p++) {
                 con.innerHTML += `<div class="period-badge">${p}</div>`;
-                for (let d = 0; d < 5; d++) {
-                    con.innerHTML += `<div class="tt-cell"></div>`;
-                }
+                for (let d = 0; d < 5; d++) con.innerHTML += `<div class="tt-cell"></div>`;
             }
         }
 
         function renderTimetable(mode) {
             const con = document.getElementById('timetableBody');
             con.innerHTML = '';
-
-            // 그리드 데이터 맵핑: key = "요일-교시"
             const grid = {};
             timetableData.forEach(item => {
                 const dIdx = DAY_IDX[item.day_of_week];
                 if (dIdx === undefined || !item.period) return;
                 const key = `${dIdx}-${item.period}`;
-                // 같은 교시에 여러 학급 수업이 있을 수 있음 (교사별 조회 시)
                 if (!grid[key]) grid[key] = [];
                 grid[key].push(item);
             });
-
-            // 변경사항 맵핑
             const changeMap = {};
             changesData.forEach(c => {
                 const dIdx = DAY_IDX[c.day_of_week];
                 if (dIdx === undefined) return;
-                const key = `${dIdx}-${c.period}`;
-                changeMap[key] = c;
+                changeMap[`${dIdx}-${c.period}`] = c;
             });
 
             for (let p = 1; p <= PERIODS; p++) {
@@ -550,12 +662,23 @@
                     let content = '';
 
                     if (change) {
-                        cellClass += ' changed-cell';
-                        content = `<div class="subject-tag changed-tag">${change.new_subject || '자습'}</div>`;
-                        if (mode === 'teacher') {
-                            content += `<div class="class-tag text-orange-500">${change.original_grade || ''}-${change.original_class_no || ''} (변경)</div>`;
+                        const isExchange = (change.change_reason === '교환수업');
+                        if (isExchange) {
+                            cellClass += ' exchanged-cell';
+                            content = `<div class="subject-tag exchanged-tag">${change.new_subject || change.original_subject || ''}</div>`;
+                            if (mode === 'teacher') {
+                                content += `<div class="class-tag text-green-600">${change.original_grade || ''}-${change.original_class_no || ''} (교환)</div>`;
+                            } else {
+                                content += `<div class="class-tag text-green-600">${change.new_teacher || ''} (교환)</div>`;
+                            }
                         } else {
-                            content += `<div class="class-tag text-orange-500">${change.new_teacher || '자습'} (변경)</div>`;
+                            cellClass += ' changed-cell';
+                            content = `<div class="subject-tag changed-tag">${change.new_subject || '자습'}</div>`;
+                            if (mode === 'teacher') {
+                                content += `<div class="class-tag text-orange-500">${change.original_grade || ''}-${change.original_class_no || ''} (변경)</div>`;
+                            } else {
+                                content += `<div class="class-tag text-orange-500">${change.new_teacher || '자습'} (변경)</div>`;
+                            }
                         }
                     } else if (items.length > 0) {
                         const item = items[0];
@@ -565,35 +688,23 @@
                         } else {
                             content += `<div class="class-tag">${item.member_name || ''}</div>`;
                         }
-                        // 동일 교시에 여러 학급이면 추가 표시
-                        if (items.length > 1) {
-                            content += `<div class="class-tag text-indigo-400">+${items.length - 1}개</div>`;
-                        }
+                        if (items.length > 1) content += `<div class="class-tag text-indigo-400">+${items.length - 1}개</div>`;
                     }
 
                     const origData = items.length > 0 ? JSON.stringify(items[0]).replace(/'/g, '&#39;').replace(/"/g, '&quot;') : '';
                     const changeData = change ? JSON.stringify(change).replace(/'/g, '&#39;').replace(/"/g, '&quot;') : '';
-
                     con.innerHTML += `<div class="${cellClass}" onclick="openModal(${d}, ${p}, this)" data-day="${d}" data-period="${p}" data-orig="${origData}" data-change="${changeData}">${content}</div>`;
                 }
             }
         }
 
-        // ==========================================
         // 변경 모달
-        // ==========================================
         function openModal(dayIdx, period, cellEl) {
             modalCell = { dayIdx, period, el: cellEl };
-
             const day = DAYS[dayIdx];
             const origStr = cellEl.getAttribute('data-orig');
-            const changeStr = cellEl.getAttribute('data-change');
-
             let orig = origStr ? JSON.parse(origStr) : null;
-            let change = changeStr ? JSON.parse(changeStr) : null;
-
             document.getElementById('modalTargetInfo').textContent = `${day}요일 ${period}교시`;
-
             if (orig) {
                 document.getElementById('modalOrigSubject').textContent = orig.subject || '-';
                 if (currentTarget.mode === 'teacher') {
@@ -608,113 +719,82 @@
                 document.getElementById('modalOrigLabel').textContent = currentTarget.mode === 'teacher' ? '학급' : '기존 교사';
                 document.getElementById('modalOrigTeacher').textContent = '-';
             }
-
             document.getElementById('modalNewTeacher').value = '';
             document.getElementById('modalNewSubject').value = '자습';
             document.getElementById('modalReason').value = '출장(관내)';
-
             const modal = document.getElementById('changeModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
         }
 
         function closeModal() {
             const modal = document.getElementById('changeModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            modal.classList.add('hidden'); modal.classList.remove('flex');
             modalCell = null;
         }
-
-        document.getElementById('changeModal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('changeModal')) closeModal();
-        });
+        document.getElementById('changeModal').addEventListener('click', (e) => { if (e.target === document.getElementById('changeModal')) closeModal(); });
 
         async function applyChange() {
             if (!modalCell) return;
-
             const { dayIdx, period } = modalCell;
             const day = DAYS[dayIdx];
             const origStr = modalCell.el.getAttribute('data-orig');
             const orig = origStr ? JSON.parse(origStr) : {};
-
             const newTeacher = document.getElementById('modalNewTeacher').value.trim();
             const newSubject = document.getElementById('modalNewSubject').value.trim() || '자습';
             const reason = document.getElementById('modalReason').value;
             const changeDate = document.getElementById('searchDate').value;
-
             if (!changeDate) { alert('기준일자를 선택하세요.'); return; }
-
             try {
                 const res = await fetch('/api/timetable/change/save', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        school_id: currentUser.school_id,
-                        member_school: currentUser.member_school,
-                        change_date: changeDate,
-                        day_of_week: day,
-                        period: period,
+                        school_id: currentUser.school_id, member_school: currentUser.member_school,
+                        change_date: changeDate, day_of_week: day, period: period,
                         original_teacher: currentTarget.mode === 'teacher' ? currentTarget.member_name : (orig.member_name || ''),
                         original_subject: orig.subject || '',
                         original_grade: orig.grade || (currentTarget.mode === 'class' ? currentTarget.grade : ''),
                         original_class_no: orig.class_no || (currentTarget.mode === 'class' ? currentTarget.class_no : ''),
-                        new_teacher: newTeacher || '자습',
-                        new_subject: newSubject,
-                        change_reason: reason,
-                        changed_by: currentUser.member_name || currentUser.member_id
+                        new_teacher: newTeacher || '자습', new_subject: newSubject,
+                        change_reason: reason, changed_by: currentUser.member_name || currentUser.member_id
                     })
                 });
                 if (!res.ok) throw new Error('서버 오류');
                 const data = await res.json();
-                if (data.success) {
-                    closeModal();
-                    doSearch(); // 그리드 갱신
-                } else {
-                    alert(data.message);
-                }
+                if (data.success) { closeModal(); doSearch(); } else { alert(data.message); }
             } catch (e) { alert('변경 저장 실패: ' + e.message); }
         }
 
-        // ==========================================
         // 변경이력 패널
-        // ==========================================
         async function loadChanges(changeDate) {
             try {
                 let url = `/api/timetable/changes?school_id=${encodeURIComponent(currentUser.school_id)}`;
                 if (changeDate) url += `&change_date=${encodeURIComponent(changeDate)}`;
-
                 const res = await fetch(url);
                 if (!res.ok) return;
                 const data = await res.json();
                 if (!data.success) return;
-
                 const changes = data.changes || [];
                 const panel = document.getElementById('changesPanel');
                 const tbody = document.getElementById('changesTableBody');
                 document.getElementById('changesCount').textContent = changes.length;
-
-                if (changes.length === 0) {
-                    panel.classList.add('hidden');
-                    return;
-                }
-
+                if (changes.length === 0) { panel.classList.add('hidden'); return; }
                 panel.classList.remove('hidden');
-                tbody.innerHTML = changes.map(c => `
-                    <tr class="hover:bg-slate-50">
+                tbody.innerHTML = changes.map(c => {
+                    const isEx = (c.change_reason === '교환수업');
+                    const reasonBadge = isEx ? '<span class="status-badge status-approved">교환</span>' : (c.change_reason || '');
+                    return `<tr class="hover:bg-slate-50">
                         <td class="p-2 text-center font-medium">${c.day_of_week} ${c.period}교시</td>
                         <td class="p-2">${c.original_teacher || '-'}</td>
                         <td class="p-2">${c.original_subject || '-'}</td>
                         <td class="p-2 text-center text-indigo-400"><i class="fas fa-arrow-right"></i></td>
-                        <td class="p-2 font-medium text-orange-600">${c.new_teacher || '-'}</td>
-                        <td class="p-2 font-medium text-orange-600">${c.new_subject || '-'}</td>
-                        <td class="p-2 text-xs text-slate-500">${c.change_reason || ''}</td>
+                        <td class="p-2 font-medium ${isEx ? 'text-green-600' : 'text-orange-600'}">${c.new_teacher || '-'}</td>
+                        <td class="p-2 font-medium ${isEx ? 'text-green-600' : 'text-orange-600'}">${c.new_subject || '-'}</td>
+                        <td class="p-2 text-xs text-slate-500">${reasonBadge}</td>
                         <td class="p-2 text-center">
-                            <button onclick="cancelChange(${c.id})" class="text-red-400 hover:text-red-600" title="변경 취소">
-                                <i class="fas fa-undo"></i>
-                            </button>
+                            <button onclick="cancelChange(${c.id})" class="text-red-400 hover:text-red-600" title="변경 취소"><i class="fas fa-undo"></i></button>
                         </td>
-                    </tr>
-                `).join('');
+                    </tr>`;
+                }).join('');
             } catch (e) { console.error('변경이력 로드 실패:', e); }
         }
 
@@ -722,18 +802,356 @@
             if (!confirm('이 변경사항을 취소하시겠습니까?')) return;
             try {
                 const res = await fetch('/api/timetable/change/delete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id, school_id: currentUser.school_id })
                 });
                 if (!res.ok) throw new Error('서버 오류');
                 const data = await res.json();
-                if (data.success) {
-                    doSearch(); // 전체 갱신
-                } else {
-                    alert(data.message);
-                }
+                if (data.success) doSearch(); else alert(data.message);
             } catch (e) { alert('취소 실패: ' + e.message); }
+        }
+
+        // ==========================================
+        // 탭2: 수업 교환 요청
+        // ==========================================
+        function getDayName(dateStr) {
+            const d = new Date(dateStr);
+            return DAYS[d.getDay() - 1] || null; // 0=일, 1=월...
+        }
+
+        async function loadMyScheduleForExchange() {
+            const dateStr = document.getElementById('exReqDate').value;
+            if (!dateStr) { alert('날짜를 선택하세요.'); return; }
+            const dayName = getDayName(dateStr);
+            if (!dayName) { alert('주말은 선택할 수 없습니다.'); return; }
+            exReqDayName = dayName;
+            exSelectedMine = null;
+            exSelectedTarget = null;
+            updateExchangeSummary();
+
+            try {
+                let url = '/api/timetable/teacher/week?member_name=' + encodeURIComponent(currentUser.member_name);
+                if (currentUser.member_id) url += '&member_id=' + encodeURIComponent(currentUser.member_id);
+                if (currentUser.school_id) url += '&school_id=' + encodeURIComponent(currentUser.school_id);
+                else url += '&member_school=' + encodeURIComponent(currentUser.member_school);
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (!data.success) { alert(data.message); return; }
+
+                exMySchedule = (data.timetable || []).filter(t => t.day_of_week === dayName);
+                const container = document.getElementById('myScheduleGrid');
+
+                if (exMySchedule.length === 0) {
+                    container.innerHTML = `<div class="text-center py-6 text-slate-400"><i class="fas fa-info-circle mr-1"></i>${dayName}요일에 배정된 수업이 없습니다.</div>`;
+                    return;
+                }
+
+                container.innerHTML = `<div class="text-sm font-bold text-slate-500 mb-3"><i class="fas fa-calendar-day mr-1"></i>${dateStr} (${dayName}요일) - 내 수업 목록</div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    ${exMySchedule.map((t, i) => `
+                        <div class="period-card" onclick="selectMyPeriod(${i})" id="myPeriod-${i}">
+                            <div class="text-lg font-bold text-indigo-600">${t.period}교시</div>
+                            <div class="text-sm font-medium text-slate-700">${t.subject || ''}</div>
+                            <div class="text-xs text-slate-400">${t.grade || ''}-${t.class_no || ''}</div>
+                        </div>
+                    `).join('')}
+                    </div>`;
+            } catch (e) { alert('시간표 로드 실패: ' + e.message); }
+        }
+
+        function selectMyPeriod(idx) {
+            const t = exMySchedule[idx];
+            exSelectedMine = { day: t.day_of_week, period: parseInt(t.period), subject: t.subject, grade: t.grade, class_no: t.class_no };
+            document.querySelectorAll('#myScheduleGrid .period-card').forEach(el => el.classList.remove('selected-mine'));
+            document.getElementById('myPeriod-' + idx).classList.add('selected-mine');
+            updateExchangeSummary();
+        }
+
+        async function loadTargetScheduleForExchange() {
+            const input = document.getElementById('exTargetTeacher');
+            const name = input.value.trim();
+            if (!name) { alert('교사명을 입력하세요.'); return; }
+            const memberId = input.dataset.memberId || '';
+            if (!exReqDayName) { alert('먼저 날짜를 선택하고 내 시간표를 불러오세요.'); return; }
+
+            exTargetInfo = { member_id: memberId, member_name: name };
+            exSelectedTarget = null;
+            updateExchangeSummary();
+
+            try {
+                let url = '/api/timetable/teacher/week?member_name=' + encodeURIComponent(name);
+                if (memberId) url += '&member_id=' + encodeURIComponent(memberId);
+                if (currentUser.school_id) url += '&school_id=' + encodeURIComponent(currentUser.school_id);
+                else url += '&member_school=' + encodeURIComponent(currentUser.member_school);
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (!data.success) { alert(data.message); return; }
+
+                exTargetSchedule = (data.timetable || []).filter(t => t.day_of_week === exReqDayName);
+                const container = document.getElementById('targetScheduleGrid');
+
+                if (exTargetSchedule.length === 0) {
+                    container.innerHTML = `<div class="text-center py-6 text-slate-400"><i class="fas fa-info-circle mr-1"></i>${name} 선생님은 ${exReqDayName}요일에 배정된 수업이 없습니다.</div>`;
+                    return;
+                }
+
+                container.innerHTML = `<div class="text-sm font-bold text-slate-500 mb-3"><i class="fas fa-user-clock mr-1"></i>${name} 선생님 - ${exReqDayName}요일 수업 목록</div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    ${exTargetSchedule.map((t, i) => `
+                        <div class="period-card" onclick="selectTargetPeriod(${i})" id="targetPeriod-${i}">
+                            <div class="text-lg font-bold text-green-600">${t.period}교시</div>
+                            <div class="text-sm font-medium text-slate-700">${t.subject || ''}</div>
+                            <div class="text-xs text-slate-400">${t.grade || ''}-${t.class_no || ''}</div>
+                        </div>
+                    `).join('')}
+                    </div>`;
+            } catch (e) { alert('시간표 로드 실패: ' + e.message); }
+        }
+
+        function selectTargetPeriod(idx) {
+            const t = exTargetSchedule[idx];
+            exSelectedTarget = { day: t.day_of_week, period: parseInt(t.period), subject: t.subject, grade: t.grade, class_no: t.class_no };
+            document.querySelectorAll('#targetScheduleGrid .period-card').forEach(el => el.classList.remove('selected-target'));
+            document.getElementById('targetPeriod-' + idx).classList.add('selected-target');
+            updateExchangeSummary();
+        }
+
+        function updateExchangeSummary() {
+            const summary = document.getElementById('exchangeSummary');
+            const btn = document.getElementById('btnSubmitExchange');
+
+            if (!exSelectedMine || !exSelectedTarget || !exTargetInfo) {
+                summary.innerHTML = '<span class="text-slate-400">위에서 교시를 선택하면 교환 요약이 표시됩니다.</span>';
+                btn.disabled = true;
+                return;
+            }
+
+            const m = exSelectedMine;
+            const t = exSelectedTarget;
+            summary.innerHTML = `
+                <div class="flex items-center justify-center gap-4 text-base">
+                    <div class="text-center">
+                        <div class="text-xs text-slate-500 mb-1">내 수업</div>
+                        <div class="font-bold text-indigo-600">${m.day} ${m.period}교시</div>
+                        <div class="text-sm">${m.subject} (${m.grade}-${m.class_no})</div>
+                    </div>
+                    <div class="text-2xl text-slate-400"><i class="fas fa-exchange-alt"></i></div>
+                    <div class="text-center">
+                        <div class="text-xs text-slate-500 mb-1">${exTargetInfo.member_name} 선생님</div>
+                        <div class="font-bold text-green-600">${t.day} ${t.period}교시</div>
+                        <div class="text-sm">${t.subject} (${t.grade}-${t.class_no})</div>
+                    </div>
+                </div>`;
+            btn.disabled = false;
+        }
+
+        async function submitExchangeRequest() {
+            if (!exSelectedMine || !exSelectedTarget || !exTargetInfo) return;
+            const dateStr = document.getElementById('exReqDate').value;
+            const reason = document.getElementById('exReqReason').value.trim();
+
+            if (!confirm(`${exTargetInfo.member_name} 선생님에게 교환 요청을 보내시겠습니까?`)) return;
+
+            try {
+                const res = await fetch('/api/timetable/exchange/create', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        school_id: currentUser.school_id,
+                        member_school: currentUser.member_school,
+                        exchange_date: dateStr,
+                        requester_id: currentUser.member_id,
+                        requester_name: currentUser.member_name,
+                        requester_day: exSelectedMine.day,
+                        requester_period: exSelectedMine.period,
+                        requester_subject: exSelectedMine.subject,
+                        requester_grade: exSelectedMine.grade,
+                        requester_class_no: exSelectedMine.class_no,
+                        target_id: exTargetInfo.member_id,
+                        target_name: exTargetInfo.member_name,
+                        target_day: exSelectedTarget.day,
+                        target_period: exSelectedTarget.period,
+                        target_subject: exSelectedTarget.subject,
+                        target_grade: exSelectedTarget.grade,
+                        target_class_no: exSelectedTarget.class_no,
+                        reason: reason
+                    })
+                });
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (data.success) {
+                    alert('교환 요청이 등록되었습니다!');
+                    // 초기화
+                    exSelectedMine = null; exSelectedTarget = null;
+                    document.getElementById('myScheduleGrid').innerHTML = '<div class="text-center py-8 text-slate-400"><i class="fas fa-check-circle fa-2x mb-2 text-green-400"></i><p>요청이 전송되었습니다.</p></div>';
+                    document.getElementById('targetScheduleGrid').innerHTML = '<div class="text-center py-8 text-slate-400"><i class="fas fa-user-clock fa-2x mb-2"></i><p>교환 대상 교사를 검색하세요.</p></div>';
+                    document.getElementById('exReqReason').value = '';
+                    updateExchangeSummary();
+                    loadPendingCount();
+                } else { alert(data.message); }
+            } catch (e) { alert('요청 실패: ' + e.message); }
+        }
+
+        // ==========================================
+        // 탭3: 교환 요청 목록
+        // ==========================================
+        async function loadExchangeList() {
+            try {
+                let url = `/api/timetable/exchange/list?school_id=${encodeURIComponent(currentUser.school_id)}&member_id=${encodeURIComponent(currentUser.member_id)}`;
+                const status = document.getElementById('exListStatus').value;
+                if (status !== 'all') url += '&status=' + encodeURIComponent(status);
+                const dateVal = document.getElementById('exListDate').value;
+                if (dateVal) url += '&exchange_date=' + encodeURIComponent(dateVal);
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (!data.success) { alert(data.message); return; }
+
+                const items = data.data || [];
+                const received = items.filter(i => i.target_id === currentUser.member_id);
+                const sent = items.filter(i => i.requester_id === currentUser.member_id);
+
+                document.getElementById('receivedCount').textContent = received.length + '건';
+                document.getElementById('sentCount').textContent = sent.length + '건';
+
+                const recDiv = document.getElementById('receivedExchanges');
+                if (received.length === 0) {
+                    recDiv.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">받은 교환 요청이 없습니다.</div>';
+                } else {
+                    recDiv.innerHTML = received.map(r => renderExchangeCard(r, 'received')).join('');
+                }
+
+                const sentDiv = document.getElementById('sentExchanges');
+                if (sent.length === 0) {
+                    sentDiv.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">보낸 교환 요청이 없습니다.</div>';
+                } else {
+                    sentDiv.innerHTML = sent.map(r => renderExchangeCard(r, 'sent')).join('');
+                }
+            } catch (e) { console.error('교환 목록 로드 실패:', e); }
+        }
+
+        function renderExchangeCard(r, type) {
+            const statusMap = {
+                'pending': { label: '대기중', cls: 'status-pending' },
+                'approved': { label: '승인됨', cls: 'status-approved' },
+                'rejected': { label: '거절됨', cls: 'status-rejected' },
+                'cancelled': { label: '취소됨', cls: 'status-cancelled' }
+            };
+            const st = statusMap[r.status] || { label: r.status, cls: '' };
+
+            let actions = '';
+            if (r.status === 'pending' && type === 'received') {
+                actions = `
+                    <button onclick="respondExchange(${r.id}, 'approve')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold transition">승인</button>
+                    <button onclick="openRejectModal(${r.id})" class="bg-red-400 hover:bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold transition">거절</button>`;
+            } else if (r.status === 'pending' && type === 'sent') {
+                actions = `<button onclick="cancelExchange(${r.id})" class="bg-slate-400 hover:bg-slate-500 text-white px-3 py-1.5 rounded text-xs font-bold transition">취소</button>`;
+            } else if (r.status === 'approved') {
+                actions = `<button onclick="cancelExchange(${r.id})" class="bg-red-400 hover:bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold transition">교환 취소</button>`;
+            }
+
+            const rejectInfo = r.status === 'rejected' && r.reject_reason ? ` | 거절사유: ${r.reject_reason}` : '';
+
+            return `<div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 gap-4 flex-wrap">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                        <span class="status-badge ${st.cls}">${st.label}</span>
+                        <span class="text-sm font-bold text-slate-700">${r.exchange_date} (${r.requester_day})</span>
+                    </div>
+                    <div class="text-sm text-slate-600">
+                        <span class="font-medium text-indigo-600">${r.requester_name}</span>
+                        ${r.requester_period}교시 ${r.requester_subject || ''}(${r.requester_grade || ''}-${r.requester_class_no || ''})
+                        <i class="fas fa-exchange-alt mx-2 text-slate-400"></i>
+                        <span class="font-medium text-green-600">${r.target_name}</span>
+                        ${r.target_period}교시 ${r.target_subject || ''}(${r.target_grade || ''}-${r.target_class_no || ''})
+                    </div>
+                    <div class="text-xs text-slate-400 mt-1">사유: ${r.reason || '-'}${rejectInfo} | 요청일: ${(r.created_at || '').slice(0, 10)}</div>
+                </div>
+                <div class="flex gap-2 flex-shrink-0">${actions}</div>
+            </div>`;
+        }
+
+        async function respondExchange(id, action) {
+            if (action === 'approve' && !confirm('이 교환 요청을 승인하시겠습니까?')) return;
+            try {
+                const res = await fetch('/api/timetable/exchange/respond', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        exchange_id: id, school_id: currentUser.school_id,
+                        action: action, reject_reason: ''
+                    })
+                });
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (data.success) { alert(data.message); loadExchangeList(); loadPendingCount(); }
+                else alert(data.message);
+            } catch (e) { alert('처리 실패: ' + e.message); }
+        }
+
+        function openRejectModal(id) {
+            rejectExchangeId = id;
+            document.getElementById('rejectReasonInput').value = '';
+            const m = document.getElementById('rejectModal');
+            m.classList.remove('hidden'); m.classList.add('flex');
+        }
+        function closeRejectModal() {
+            const m = document.getElementById('rejectModal');
+            m.classList.add('hidden'); m.classList.remove('flex');
+            rejectExchangeId = null;
+        }
+        document.getElementById('rejectModal').addEventListener('click', (e) => { if (e.target === document.getElementById('rejectModal')) closeRejectModal(); });
+
+        async function confirmReject() {
+            if (!rejectExchangeId) return;
+            const reason = document.getElementById('rejectReasonInput').value.trim();
+            try {
+                const res = await fetch('/api/timetable/exchange/respond', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        exchange_id: rejectExchangeId, school_id: currentUser.school_id,
+                        action: 'reject', reject_reason: reason
+                    })
+                });
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (data.success) { closeRejectModal(); alert(data.message); loadExchangeList(); loadPendingCount(); }
+                else alert(data.message);
+            } catch (e) { alert('처리 실패: ' + e.message); }
+        }
+
+        async function cancelExchange(id) {
+            if (!confirm('이 교환 요청을 취소하시겠습니까?')) return;
+            try {
+                const res = await fetch('/api/timetable/exchange/cancel', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ exchange_id: id, school_id: currentUser.school_id })
+                });
+                if (!res.ok) throw new Error('서버 오류');
+                const data = await res.json();
+                if (data.success) { alert(data.message); loadExchangeList(); loadPendingCount(); }
+                else alert(data.message);
+            } catch (e) { alert('취소 실패: ' + e.message); }
+        }
+
+        async function loadPendingCount() {
+            try {
+                const res = await fetch(`/api/timetable/exchange/list?school_id=${encodeURIComponent(currentUser.school_id)}&member_id=${encodeURIComponent(currentUser.member_id)}&status=pending`);
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data.success) return;
+                const count = (data.data || []).filter(i => i.target_id === currentUser.member_id).length;
+                const badge = document.getElementById('pendingBadge');
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            } catch (e) { console.error(e); }
         }
 
         // ==========================================

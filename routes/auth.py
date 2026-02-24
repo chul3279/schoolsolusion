@@ -399,7 +399,7 @@ def login_process():
         
         school_id = user.get('school_id') or user.get('schoolinfo_school_id') or ''
         school_level = user.get('school_level', 'high')
-        level_map = {'ele': 'elementaryschool', 'mid': 'middleschool', 'high': 'highschool', 'special': 'specialschool', 'etc': 'etc'}
+        level_map = {'mid': 'middleschool', 'high': 'highschool', 'special': 'specialschool', 'etc': 'etc'}
         school_folder = level_map.get(school_level, 'highschool')
         
         session['authenticated_user_id'] = user['member_id']
@@ -628,7 +628,7 @@ def select_role():
         if selected_role not in user_roles:
             return jsonify({'success': False, 'message': '해당 역할 권한이 없습니다.'})
         
-        level_map = {'ele': 'elementaryschool', 'mid': 'middleschool', 'high': 'highschool', 'special': 'specialschool', 'etc': 'etc'}
+        level_map = {'mid': 'middleschool', 'high': 'highschool', 'special': 'specialschool', 'etc': 'etc'}
         school_level = user.get('school_level', 'high')
         school_folder = level_map.get(school_level, 'highschool')
         school_id = user.get('school_id', '')
@@ -789,7 +789,7 @@ def select_child():
         c_school = child.get('member_school', '')
         c_school_id = child.get('school_id', '')
         
-        level_map = {'ele': 'elementaryschool', 'mid': 'middleschool', 'high': 'highschool', 'special': 'specialschool', 'etc': 'etc'}
+        level_map = {'mid': 'middleschool', 'high': 'highschool', 'special': 'specialschool', 'etc': 'etc'}
         school_folder = 'highschool'
         if c_school:
             cursor.execute("SELECT school_level FROM schoolinfo WHERE member_school = %s", (c_school,))
@@ -893,50 +893,72 @@ def get_member_info():
     cursor = None
     try:
         member_id = sanitize_input(request.args.get('member_id'), 50)
-        
+
         if not member_id:
             return jsonify({'success': False, 'message': '회원 ID가 필요합니다.'})
-        
+
+        # [보안] 본인 여부 판별
+        session_user_id = session.get('user_id')
+        is_self = (member_id == session_user_id)
+        requester_role = session.get('user_role', '')
+
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
-        
+
         cursor = conn.cursor()
-        
+
         cursor.execute("""
             SELECT member_id, member_name, member_birth, member_school, school_id,
                    member_roll, member_add, member_tel, child_name, child_birth
             FROM member WHERE member_id = %s
         """, (member_id,))
         member = cursor.fetchone()
-        
+
         if not member:
             return jsonify({'success': False, 'message': '회원 정보를 찾을 수 없습니다.'})
-        
+
         member_birth = member.get('member_birth')
         if member_birth and hasattr(member_birth, 'strftime'):
             member_birth = member_birth.strftime('%Y-%m-%d')
-        
+
         child_birth = member.get('child_birth')
         if child_birth and hasattr(child_birth, 'strftime'):
             child_birth = child_birth.strftime('%Y-%m-%d')
-        
+
         member_roll = member.get('member_roll', '')
         roles = [r.strip() for r in member_roll.split(',') if r.strip()]
-        
-        response_data = {
-            'member_id': member.get('member_id') or '',
-            'member_name': member.get('member_name') or '',
-            'member_birth': member_birth or '',
-            'member_school': member.get('member_school') or '',
-            'school_id': member.get('school_id') or '',
-            'member_roll': member_roll,
-            'roles': roles,
-            'member_add': member.get('member_add') or '',
-            'member_tel': member.get('member_tel') or '',
-            'child_name': member.get('child_name') or '',
-            'child_birth': child_birth or ''
-        }
+
+        # [보안] 본인이면 전체 정보, 타인이면 제한된 정보만 반환
+        if is_self:
+            response_data = {
+                'member_id': member.get('member_id') or '',
+                'member_name': member.get('member_name') or '',
+                'member_birth': member_birth or '',
+                'member_school': member.get('member_school') or '',
+                'school_id': member.get('school_id') or '',
+                'member_roll': member_roll,
+                'roles': roles,
+                'member_add': member.get('member_add') or '',
+                'member_tel': member.get('member_tel') or '',
+                'child_name': member.get('child_name') or '',
+                'child_birth': child_birth or ''
+            }
+        else:
+            # 타인 정보: 이름, 학교, 역할만 반환 (주소/전화/생년월일 제외)
+            response_data = {
+                'member_id': member.get('member_id') or '',
+                'member_name': member.get('member_name') or '',
+                'member_birth': '',
+                'member_school': member.get('member_school') or '',
+                'school_id': member.get('school_id') or '',
+                'member_roll': member_roll,
+                'roles': roles,
+                'member_add': '',
+                'member_tel': '',
+                'child_name': '',
+                'child_birth': ''
+            }
         
         if 'teacher' in roles:
             cursor.execute("""

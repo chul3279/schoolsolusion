@@ -7,7 +7,7 @@
     <script src="/static/js/tailwindcss.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; }
@@ -22,9 +22,9 @@
 
         th { background: #f8fafc; color: #64748b; padding: 12px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; text-align: center; font-size: 0.85rem; font-weight: 700; }
         td { border-bottom: 1px solid #e2e8f0; padding: 0; text-align: center; font-size: 0.9rem; height: 45px; }
-        
-        .edit-input { 
-            width: 100%; height: 100%; border: none; padding: 8px; text-align: center; 
+
+        .edit-input {
+            width: 100%; height: 100%; border: none; padding: 8px; text-align: center;
             background: transparent; transition: background 0.2s; outline: none;
         }
         .edit-input:focus { background: #eef2ff; }
@@ -33,46 +33,43 @@
 
         .tt-grid { display: grid; grid-template-columns: 50px repeat(5, 1fr); border: 1px solid #e2e8f0; background: #fff; }
         .tt-head { background: #f8fafc; color: #64748b; font-weight: bold; text-align: center; padding: 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; }
-        .tt-cell { border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; min-height: 80px; position: relative; padding: 4px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .tt-cell { border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; min-height: 70px; position: relative; padding: 2px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
         .period-badge { background: #f1f5f9; color: #94a3b8; font-weight: bold; display: flex; align-items: center; justify-content: center; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
-        .block-item { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 6px; margin: 2px; border-radius: 6px; cursor: grab; font-size: 0.8rem; font-weight: 600; width: 95%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        
+        .block-item { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 4px 6px; margin: 1px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; width: 95%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); text-align: center; }
+        .block-item.elective { background: #faf5ff; border-color: #d8b4fe; color: #7c3aed; }
+        .block-item.linked-top { border-bottom: none; border-radius: 6px 6px 0 0; margin-bottom: 0; }
+        .block-item.linked-bottom { border-top: 1px dashed #bfdbfe; border-radius: 0 0 6px 6px; margin-top: 0; }
+
+        .tt-cell.conflict { background: #fef2f2 !important; }
+        .tt-cell.drag-over { background: #eef2ff !important; outline: 2px dashed #4f46e5; }
+
         /* 자동완성 드롭다운 */
         .autocomplete-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: white; border: 1px solid #e2e8f0; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-height: 200px;
+            overflow-y: auto; z-index: 1000; display: none;
         }
         .autocomplete-dropdown.show { display: block; }
-        .autocomplete-item {
-            padding: 10px 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 0.9rem;
-        }
+        .autocomplete-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
         .autocomplete-item:hover { background: #eef2ff; }
         .autocomplete-item:last-child { border-bottom: none; }
         .autocomplete-item .match { color: #4f46e5; font-weight: bold; }
+
+        /* 블록 리스트 스크롤바 항상 표시 */
+        #blockList { scrollbar-width: thin; scrollbar-color: #cbd5e1 #f1f5f9; }
+        #blockList::-webkit-scrollbar { width: 8px; }
+        #blockList::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        #blockList::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        #blockList::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         @media print {
             aside, header, .step-btn, button, label, select, input, #mobile-overlay, #lockOverlay, #paymentModal, .no-print { display: none !important; }
             @page { size: landscape; margin: 10mm; }
             body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; height: auto !important; overflow: visible !important; }
             main, .flex-1, .h-screen, .max-w-7xl, .h-\[600px\], .h-\[700px\], .min-h-\[700px\] { height: auto !important; overflow: visible !important; width: 100% !important; max-width: none !important; }
-            #step-3 { display: block !important; }
-            #step-3 > .flex.justify-between { display: none !important; }
-            #step-3 > .flex.gap-6 { display: block !important; height: auto !important; }
-            #step-3 > .flex.gap-6 > .w-64 { display: none !important; }
-            #step-3 > .flex.gap-6 > .flex-1 { width: 100% !important; }
+            #step-4 { display: block !important; }
+            #step-4 > .flex.justify-between { display: none !important; }
             .tt-grid { border: 2px solid #333 !important; }
             .tt-head { background: #f0f0f0 !important; border: 1px solid #333 !important; font-weight: bold !important; }
             .tt-cell { border: 1px solid #999 !important; }
@@ -84,7 +81,6 @@
         #mobile-overlay.active { display: block; }
         #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
 
-        /* 모바일 큰 글씨 대응: 터치 영역 확대 + 사이드바 전체 스크롤 */
         @media (max-width: 767px) {
             #sidebar.mobile-open { overflow-y: auto !important; }
             #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
@@ -135,6 +131,7 @@
                 <li><a href="class_maker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-layer-group w-6 mr-3"></i> 반편성</a></li>
                 <li><a href="#" class="flex items-center px-6 py-3 bg-slate-800 text-white border-l-4 border-blue-500"><i class="fas fa-edit w-6 mr-3 text-green-400"></i> <span class="font-medium">시간표 작성</span></a></li>
                 <li><a href="timetablechange.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-calendar-alt w-6 mr-3"></i> 시간표 조회/변경</a></li>
+                <li><a href="timetableprint.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-print w-6 mr-3"></i> 시간표 출력</a></li>
             </ul>
         </nav>
         <div class="p-4 border-t border-slate-700">
@@ -143,7 +140,7 @@
     </aside>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
-        
+
         <header class="bg-white h-16 border-b flex items-center justify-between px-8 shadow-sm z-30 flex-shrink-0">
             <div class="flex items-center gap-4">
                 <button id="sidebar-toggle" onclick="toggleMobileSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars text-xl"></i></button>
@@ -172,7 +169,7 @@
                 </button>
             </div>
         </header>
-        
+
         <!-- 결제 모달 -->
         <div id="paymentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
             <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
@@ -201,7 +198,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- 작업 불가 오버레이 -->
         <div id="lockOverlay" class="hidden absolute inset-0 bg-white bg-opacity-80 z-10 flex items-center justify-center" style="top: 64px;">
             <div class="text-center p-8">
@@ -218,15 +215,17 @@
             <div class="flex space-x-8">
                 <button onclick="goStep(1)" id="btn-step-1" class="step-btn active py-4 text-sm">1. 기본 정보 (교사/과목)</button>
                 <button onclick="goStep(2)" id="btn-step-2" class="step-btn py-4 text-sm">2. 수업 묶음 (Block)</button>
-                <button onclick="goStep(3)" id="btn-step-3" class="step-btn py-4 text-sm">3. 시간표 배치</button>
+                <button onclick="goStep(3)" id="btn-step-3" class="step-btn py-4 text-sm">3. 특이사항</button>
+                <button onclick="goStep(4)" id="btn-step-4" class="step-btn py-4 text-sm">4. 시간표 만들기</button>
             </div>
         </div>
 
         <div class="flex-1 overflow-y-auto p-8 bg-slate-50">
             <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-8 min-h-[700px]">
 
+                <!-- ========== STEP 1 ========== -->
                 <div id="step-1" class="fade-in block space-y-6">
-                    
+
                     <!-- 교사 명단 관리 -->
                     <div class="border-b border-slate-100 pb-6">
                         <div class="flex justify-between items-center mb-4">
@@ -247,7 +246,7 @@
                                 </button>
                             </div>
                         </div>
-                        
+
                         <!-- 학년별 학급수 설정 -->
                         <div class="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 mb-4">
                             <div>
@@ -264,7 +263,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- 교과목 관리 -->
                     <div class="border-b border-slate-100 pb-6">
                         <div class="flex justify-between items-center mb-4">
@@ -285,14 +284,13 @@
                                 </button>
                             </div>
                         </div>
-                        
-                        <!-- 교과목 미리보기 -->
+
                         <div id="subjectPreview" class="bg-green-50 p-3 rounded-lg border border-green-200 hidden">
                             <div class="text-sm text-green-700 font-medium mb-2">불러온 교과목 목록:</div>
                             <div id="subjectTags" class="flex flex-wrap gap-2"></div>
                         </div>
                     </div>
-                    
+
                     <!-- 이전 DB 불러오기 / DB에 저장하기 -->
                     <div class="border-b border-slate-100 pb-6">
                         <div class="flex justify-between items-center">
@@ -354,73 +352,327 @@
                         </div>
                     </div>
 
+                    <!-- 교사 DB 검색/수정 -->
+                    <div class="bg-emerald-50/50 p-5 rounded-xl border border-emerald-200">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-search text-emerald-500"></i>
+                            <span class="text-sm font-bold text-emerald-700">교사 DB 검색 / 수정</span>
+                            <span class="text-xs text-emerald-400">— 검색 조건을 입력하고 검색 버튼을 누르세요</span>
+                        </div>
+                        <div class="flex gap-3 items-end">
+                            <div class="flex-1">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">성명</label>
+                                <input type="text" id="sName" class="form-input" placeholder="교사명" autocomplete="off">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">교과군</label>
+                                <select id="sDept" class="form-input">
+                                    <option value="">전체</option>
+                                    <option value="국어">국어</option><option value="수학">수학</option><option value="영어">영어</option>
+                                    <option value="사회">사회</option><option value="과학">과학</option><option value="체육">체육</option>
+                                    <option value="예술">예술</option><option value="정보">정보</option><option value="한문">한문</option>
+                                    <option value="교양">교양</option>
+                                </select>
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">직위</label>
+                                <select id="sPosition" class="form-input">
+                                    <option value="">전체</option>
+                                    <option value="교사">교사</option><option value="교장">교장</option><option value="교감">교감</option>
+                                </select>
+                            </div>
+                            <div class="w-28">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 ml-1">담당학년</label>
+                                <select id="sGrade" class="form-input">
+                                    <option value="">전체</option>
+                                    <option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option>
+                                </select>
+                            </div>
+                            <button onclick="searchTeachersDB()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-bold h-[42px] transition shadow-sm flex items-center gap-2 whitespace-nowrap">
+                                <i class="fas fa-search"></i> 검색
+                            </button>
+                            <button onclick="clearSearchResults()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-4 py-2.5 rounded-lg font-bold h-[42px] transition flex items-center gap-2 whitespace-nowrap">
+                                <i class="fas fa-times"></i> 초기화
+                            </button>
+                        </div>
+                        <div id="searchResultWrap" class="hidden mt-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-bold text-emerald-700"><i class="fas fa-list mr-1"></i> 검색 결과 <span id="searchCount" class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs">0명</span></span>
+                                <button onclick="saveSearchEdits()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center transition">
+                                    <i class="fas fa-save mr-2"></i> 수정사항 저장
+                                </button>
+                            </div>
+                            <div class="overflow-hidden border border-emerald-200 rounded-xl max-h-[300px] overflow-y-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-emerald-50 sticky top-0 z-10">
+                                        <tr>
+                                            <th style="width:50px">No</th>
+                                            <th style="width:14%">성명</th>
+                                            <th style="width:12%">교과군</th>
+                                            <th style="width:10%">직위</th>
+                                            <th style="width:8%">담당학년</th>
+                                            <th style="width:10%">담당반</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="searchResultBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 교사 목록 테이블 -->
-                    <div class="overflow-hidden border border-slate-200 rounded-xl h-[350px] overflow-y-auto shadow-sm">
-                        <table class="w-full text-sm">
-                            <thead class="bg-slate-50 sticky top-0 z-10">
-                                <tr>
-                                    <th style="width:50px">No</th>
-                                    <th style="width:12%">성명</th>
-                                    <th style="width:18%">담당과목</th>
-                                    <th style="width:8%">학년</th>
-                                    <th>담당반</th>
-                                    <th style="width:8%">학급수</th>
-                                    <th style="width:8%">반별시간</th>
-                                    <th style="width:8%">총 시수</th>
-                                    <th style="width:60px">관리</th>
+                    <div>
+                        <div class="flex gap-3 items-end mb-2">
+                            <span class="text-sm font-bold text-slate-600 flex items-center"><i class="fas fa-filter mr-1 text-slate-400"></i>목록 필터</span>
+                            <input type="text" id="fName" class="form-input h-8 text-xs" style="width:120px" placeholder="성명" oninput="applyListFilter()">
+                            <input type="text" id="fSubject" class="form-input h-8 text-xs" style="width:120px" placeholder="담당과목" oninput="applyListFilter()">
+                            <select id="fGrade" class="form-input h-8 text-xs" style="width:90px" onchange="applyListFilter()">
+                                <option value="">학년</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option>
+                            </select>
+                            <button onclick="clearListFilter()" class="text-xs text-slate-400 hover:text-slate-600 underline">초기화</button>
+                            <span id="filterCount" class="text-xs text-slate-400 ml-auto"></span>
+                        </div>
+                        <div class="overflow-hidden border border-slate-200 rounded-xl h-[350px] overflow-y-auto shadow-sm">
+                            <table class="w-full text-sm">
+                                <thead class="bg-slate-50 sticky top-0 z-10">
+                                    <tr>
+                                        <th style="width:50px">No</th>
+                                        <th style="width:12%">성명</th>
+                                        <th style="width:18%">담당과목</th>
+                                        <th style="width:8%">학년</th>
+                                        <th>담당반</th>
+                                        <th style="width:8%">학급수</th>
+                                        <th style="width:8%">반별시간</th>
+                                        <th style="width:8%">총 시수</th>
+                                        <th style="width:60px">관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teacherListBody"></tbody>
+                            </table>
+                            <div id="emptyMsg" class="flex flex-col items-center justify-center py-16 text-slate-400">
+                                <i class="fas fa-inbox fa-3x mb-4 opacity-30"></i>
+                                <span>등록된 교사 데이터가 없습니다.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== STEP 2: 수업 묶음 (Block) ========== -->
+                <div id="step-2" class="hidden fade-in space-y-6">
+                    <div class="border-b pb-4">
+                        <h2 class="text-xl font-bold text-slate-800">수업 묶음(Block) 생성</h2>
+                        <p class="text-slate-500 text-sm mt-1">같은 시간에 배치할 교사/과목을 하나의 블록으로 묶습니다. 블록 배치 시 해당 교사들이 동시에 수업합니다.</p>
+                    </div>
+                    <div class="flex gap-6 min-h-[600px]">
+                        <!-- 좌측: 블록 생성기 -->
+                        <div class="w-1/3 space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200 flex flex-col">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-bold text-slate-700"><i class="fas fa-cubes mr-1"></i>블록 생성기</span>
+                                <button onclick="autoGenerateBlocks()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition" title="교사 목록 기반 자동 생성">
+                                    <i class="fas fa-magic mr-1"></i> 자동 생성
+                                </button>
+                            </div>
+                            <input type="text" id="blockName" placeholder="블록명 (예: 1학년 국어)" class="form-input font-bold">
+                            <div class="flex gap-2">
+                                <div class="flex-1">
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">학년</label>
+                                    <select id="blockGrade" class="form-input" onchange="updateBlockTeacherSelect()">
+                                        <option value="1">1학년</option>
+                                        <option value="2">2학년</option>
+                                        <option value="3">3학년</option>
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">연속시수</label>
+                                    <select id="blockLinked" class="form-input">
+                                        <option value="1">1교시</option>
+                                        <option value="2">2연속</option>
+                                        <option value="3">3연속</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <label class="flex items-center gap-2 text-sm bg-purple-50 p-2 rounded-lg border border-purple-200">
+                                <input type="checkbox" id="blockElective" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="font-medium text-purple-700">선택과목 묶음</span>
+                                <span class="text-xs text-purple-400">(전체 학급 동시 배치)</span>
+                            </label>
+                            <div class="flex-1 flex flex-col min-h-0">
+                                <label class="text-xs font-bold text-slate-500 mb-1">대상 교사 (Ctrl+클릭 다중 선택)</label>
+                                <select id="blockTeacherSelect" multiple class="form-input flex-1 min-h-[180px] text-sm"></select>
+                            </div>
+                            <button onclick="createBlock()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-bold shadow-sm transition">
+                                <i class="fas fa-plus mr-2"></i>블록 생성
+                            </button>
+                        </div>
+                        <!-- 우측: 블록 목록 -->
+                        <div class="w-2/3 flex flex-col">
+                            <!-- 상단 툴바 -->
+                            <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-t-xl px-4 py-2">
+                                <div class="flex items-center gap-3">
+                                    <label class="flex items-center gap-1.5 text-sm text-slate-600 cursor-pointer">
+                                        <input type="checkbox" id="blockSelectAll" onchange="toggleSelectAllBlocks(this.checked)" class="w-4 h-4 rounded text-indigo-600">
+                                        <span class="font-medium">전체선택</span>
+                                    </label>
+                                    <span id="blockSelCount" class="text-xs text-slate-400"></span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="editSelectedBlocks()" class="text-xs px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold transition disabled:opacity-40" id="btnEditSelected" disabled>
+                                        <i class="fas fa-edit mr-1"></i>선택 수정
+                                    </button>
+                                    <button onclick="deleteSelectedBlocks()" class="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 font-bold transition disabled:opacity-40" id="btnDeleteSelected" disabled>
+                                        <i class="fas fa-trash-alt mr-1"></i>선택 삭제
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- 블록 리스트 -->
+                            <div class="flex-1 border border-t-0 border-slate-200 rounded-b-xl p-3 overflow-y-auto" id="blockList" style="max-height:500px; scrollbar-width:thin;">
+                                <div class="text-center py-16 text-slate-400">
+                                    <i class="fas fa-cubes fa-3x mb-4 opacity-30"></i>
+                                    <p>생성된 블록이 없습니다.</p>
+                                    <p class="text-xs mt-2">왼쪽에서 블록을 생성하거나 [자동 생성] 버튼을 사용하세요.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== STEP 3: 특이사항 (교사별 배치 고려사항) ========== -->
+                <div id="step-3" class="hidden fade-in space-y-6">
+                    <div class="border-b pb-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-800">교사별 배치 고려사항</h2>
+                                <p class="text-slate-500 text-sm mt-1">교사별 수업 불가 요일이나 특정 교시 제외 등을 설정합니다. 시간표 자동생성 시 반영됩니다.</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="loadConstraintsFromDB()" class="text-xs bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg font-bold transition">
+                                    <i class="fas fa-cloud-download-alt mr-1"></i> DB 불러오기
+                                </button>
+                                <button onclick="saveConstraintsToDB()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold transition">
+                                    <i class="fas fa-cloud-upload-alt mr-1"></i> DB 저장
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border-collapse" id="constraintTable">
+                            <thead>
+                                <tr class="bg-slate-100">
+                                    <th class="border border-slate-300 px-3 py-2 text-left font-bold w-28">교사명</th>
+                                    <th class="border border-slate-300 px-2 py-2 text-center font-bold w-12">월</th>
+                                    <th class="border border-slate-300 px-2 py-2 text-center font-bold w-12">화</th>
+                                    <th class="border border-slate-300 px-2 py-2 text-center font-bold w-12">수</th>
+                                    <th class="border border-slate-300 px-2 py-2 text-center font-bold w-12">목</th>
+                                    <th class="border border-slate-300 px-2 py-2 text-center font-bold w-12">금</th>
+                                    <th class="border border-slate-300 px-3 py-2 text-left font-bold" style="min-width:200px">제외 교시</th>
+                                    <th class="border border-slate-300 px-3 py-2 text-left font-bold w-40">사유</th>
                                 </tr>
                             </thead>
-                            <tbody id="teacherListBody"></tbody>
+                            <tbody id="constraintBody">
+                            </tbody>
                         </table>
-                        <div id="emptyMsg" class="flex flex-col items-center justify-center py-16 text-slate-400">
-                            <i class="fas fa-inbox fa-3x mb-4 opacity-30"></i>
-                            <span>등록된 교사 데이터가 없습니다.</span>
-                        </div>
                     </div>
+                    <p class="text-xs text-slate-400"><i class="fas fa-info-circle mr-1"></i>요일 체크 해제 = 해당 요일 전체 수업 불가. 제외 교시 = 특정 요일의 특정 교시만 제외.</p>
                 </div>
 
-                <div id="step-2" class="hidden fade-in space-y-6">
-                    <div class="border-b pb-4"><h2 class="text-xl font-bold text-slate-800">수업 묶음(Block) 생성</h2><p class="text-slate-500 text-sm mt-1">이동 수업이나 분반 수업을 하나의 블록으로 묶어 배치합니다.</p></div>
-                    <div class="flex gap-8 h-[600px]">
-                        <div class="w-1/3 space-y-4 bg-slate-50 p-6 rounded-xl border border-slate-200 h-full flex flex-col">
-                            <input type="text" id="blockName" placeholder="묶음 명칭 (예: 1학년 영어A/B)" class="form-input font-bold">
-                            <div class="flex-1 flex flex-col">
-                                <label class="text-xs font-bold text-slate-500 mb-2">대상 교사 선택 (다중 선택)</label>
-                                <select id="subjectSelect" multiple class="form-input flex-1 h-full"></select>
-                            </div>
-                            <button onclick="createBlock()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-bold shadow-sm transition">블록 생성하기</button>
-                        </div>
-                        <div class="w-2/3 h-full overflow-y-auto" id="blockList"></div>
-                    </div>
-                </div>
-
-                <div id="step-3" class="hidden fade-in space-y-4">
+                <!-- ========== STEP 4: 시간표 만들기 ========== -->
+                <div id="step-4" class="hidden fade-in space-y-4">
                     <div class="print-title hidden text-center mb-4">
                         <h2 class="text-2xl font-bold" id="printTitle"></h2>
                         <p class="text-sm text-slate-500" id="printDate"></p>
                     </div>
-                    <div class="flex justify-between items-center border-b pb-4">
-                        <h2 class="text-xl font-bold text-slate-800">시간표 배치</h2>
+                    <div class="flex justify-between items-center border-b pb-3">
+                        <div class="flex items-center gap-4">
+                            <h2 class="text-xl font-bold text-slate-800">시간표 만들기</h2>
+                            <div class="flex gap-1" id="gradeTabs">
+                                <button onclick="selectGrade('1')" data-grade="1" class="grade-tab px-4 py-1.5 rounded-lg text-sm font-bold transition bg-indigo-600 text-white shadow-sm">1학년</button>
+                                <button onclick="selectGrade('2')" data-grade="2" class="grade-tab px-4 py-1.5 rounded-lg text-sm font-bold transition bg-white text-slate-500 border border-slate-200 hover:bg-slate-50">2학년</button>
+                                <button onclick="selectGrade('3')" data-grade="3" class="grade-tab px-4 py-1.5 rounded-lg text-sm font-bold transition bg-white text-slate-500 border border-slate-200 hover:bg-slate-50">3학년</button>
+                            </div>
+                        </div>
                         <div class="flex gap-2">
+                            <button onclick="showAutoGenModal()" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg font-bold transition">
+                                <i class="fas fa-magic mr-1"></i> 자동 생성
+                            </button>
+                            <button onclick="loadScheduleFromDB()" class="text-xs bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg font-bold transition">
+                                <i class="fas fa-cloud-download-alt mr-1"></i> DB 불러오기
+                            </button>
+                            <button onclick="saveScheduleToDB()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold transition">
+                                <i class="fas fa-cloud-upload-alt mr-1"></i> DB 저장
+                            </button>
                             <button onclick="printTimetable()" class="text-xs bg-slate-600 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg font-bold transition">
                                 <i class="fas fa-print mr-1"></i> 인쇄
                             </button>
-                            <button onclick="clearTimetable()" class="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-lg font-bold transition">
-                                <i class="fas fa-trash-alt mr-1"></i> 초기화
+                            <button onclick="clearCurrentTimetable()" class="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-lg font-bold transition">
+                                <i class="fas fa-trash-alt mr-1"></i> 현재 학년 초기화
                             </button>
                         </div>
                     </div>
-                    <div class="flex gap-6 h-[600px]">
-                        <div class="w-64 bg-slate-50 border border-slate-200 rounded-xl p-4 overflow-y-auto flex-shrink-0">
-                            <h4 class="text-sm font-bold text-slate-500 mb-3 uppercase tracking-wider">Available Blocks</h4>
-                            <div id="draggableBlocks" class="space-y-2"></div>
+                    <!-- 반 선택 -->
+                    <div id="classButtons" class="flex gap-2 flex-wrap"></div>
+                    <!-- 그리드 + 팔레트 -->
+                    <div class="flex gap-4" style="height:520px;">
+                        <div class="w-52 bg-slate-50 border border-slate-200 rounded-xl p-3 overflow-y-auto flex-shrink-0">
+                            <h4 class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Blocks</h4>
+                            <div id="draggableBlocks" class="space-y-1.5"></div>
                         </div>
-                        <div class="flex-1 overflow-auto bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+                        <div class="flex-1 overflow-auto bg-white rounded-xl border border-slate-200 shadow-sm p-3">
                             <div class="tt-grid rounded-lg overflow-hidden">
                                 <div class="tt-head bg-slate-100"></div>
                                 <div class="tt-head">월</div><div class="tt-head">화</div><div class="tt-head">수</div><div class="tt-head">목</div><div class="tt-head">금</div>
                                 <div id="timetableBody" style="display: contents;"></div>
                             </div>
+                        </div>
+                    </div>
+                    <!-- 통계/충돌 정보 -->
+                    <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                        <div class="flex items-center gap-4 text-sm">
+                            <span class="font-bold text-slate-600"><i class="fas fa-info-circle mr-1"></i>배치 현황</span>
+                            <span id="statInfo" class="text-slate-500">블록을 그리드에 드래그하여 시간표를 배치하세요. 셀 클릭으로 제거할 수 있습니다.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 자동 생성 모달 -->
+                <div id="autoGenModal" class="hidden fixed inset-0 bg-black/30 z-50 flex items-center justify-center" onclick="if(event.target===this)hideAutoGenModal()">
+                    <div class="bg-white rounded-2xl shadow-2xl w-[520px] max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+                        <div class="flex justify-between items-center p-5 border-b">
+                            <h3 class="font-bold text-lg text-slate-800"><i class="fas fa-magic mr-2 text-amber-500"></i>시간표 자동 생성</h3>
+                            <button onclick="hideAutoGenModal()" class="text-slate-400 hover:text-slate-600 transition"><i class="fas fa-times text-lg"></i></button>
+                        </div>
+                        <div class="p-5 space-y-4">
+                            <div class="space-y-3">
+                                <label class="flex items-center gap-2 text-sm text-slate-600">
+                                    <input type="checkbox" id="genAvoidConsecutive" checked class="rounded text-indigo-600">
+                                    같은 과목 하루 2시간 초과 방지
+                                </label>
+                                <label class="flex items-center gap-2 text-sm text-slate-600">
+                                    <input type="checkbox" id="genRespectLinked" checked class="rounded text-indigo-600">
+                                    연속시수 블록 유지
+                                </label>
+                                <label class="flex items-center gap-2 text-sm text-slate-600">
+                                    <input type="checkbox" id="genElectiveFirst" checked class="rounded text-indigo-600">
+                                    선택과목 우선 배치
+                                </label>
+                                <div class="pt-2">
+                                    <label class="text-xs font-bold text-slate-500 block mb-1">대상 학년</label>
+                                    <div class="flex gap-3">
+                                        <label class="flex items-center gap-1 text-sm"><input type="checkbox" value="1" class="gen-grade-chk rounded text-indigo-600" checked> 1학년</label>
+                                        <label class="flex items-center gap-1 text-sm"><input type="checkbox" value="2" class="gen-grade-chk rounded text-indigo-600" checked> 2학년</label>
+                                        <label class="flex items-center gap-1 text-sm"><input type="checkbox" value="3" class="gen-grade-chk rounded text-indigo-600" checked> 3학년</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 pt-2">
+                                <button onclick="runAutoGenerate()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-sm transition">
+                                    <i class="fas fa-magic mr-1"></i> 자동 생성 실행
+                                </button>
+                                <button onclick="clearAllSchedule()" class="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-3 rounded-xl font-bold text-xs transition">
+                                    <i class="fas fa-trash-alt mr-1"></i> 전체 초기화
+                                </button>
+                            </div>
+                            <div id="genResultArea" class="text-sm text-slate-500"></div>
                         </div>
                     </div>
                 </div>
@@ -432,10 +684,17 @@
     <datalist id="teacherNameSuggestions"></datalist>
 
     <script>
-        let teachers = []; 
-        let blocks = []; 
-        let schedule = {}; 
-        let standardSubjects = []; // 교과목 목록 (메모리에 저장)
+        // ==========================================
+        // 데이터 변수
+        // ==========================================
+        let teachers = [];
+        let blocks = [];
+        let allSchedule = {};   // "grade_class" -> { "day_period" -> { blockId, subject, teacher } }
+        let teacherBusy = {};   // "teacherName" -> Set of "day_period"
+        let teacherConstraints = {};  // "memberId|name" -> [{day, period}]  (period=null이면 요일전체)
+        let currentGrade = '1';
+        let currentClass = '1';
+        let standardSubjects = [];
         let currentUser = null;
         let isVerified = false;
         let currentPointValue = 0;
@@ -449,29 +708,31 @@
             unitHours: ['hours', '시수', '반별시간']
         };
 
+        function getGradeCount(g) { return parseInt(document.getElementById(`grade${g}_cnt`).value) || 10; }
+
         // ==========================================
-        // 초기화
+        // 초기화 / 결제 / 유저 정보
         // ==========================================
         async function initUserInfo() {
             const userStr = localStorage.getItem('schoolus_user');
             if (!userStr) { alert('로그인이 필요합니다.'); window.location.href = '/'; return; }
             currentUser = JSON.parse(userStr);
-            
+
             const schoolBadge = document.getElementById('userSchoolBadge');
             if (currentUser.member_school) { schoolBadge.textContent = currentUser.member_school; }
             else { schoolBadge.textContent = '학교 미설정'; }
-            
+
             const userName = document.getElementById('userName');
             const userAvatar = document.getElementById('userAvatar');
             if (currentUser.member_name) {
                 if (userName) userName.textContent = currentUser.member_name + ' 선생님';
                 if (userAvatar) userAvatar.textContent = currentUser.member_name.charAt(0);
             }
-            
+
             await loadUserPoint();
             await checkVerification();
         }
-        
+
         async function loadUserPoint() {
             try {
                 const url = `/api/teacher/info?member_id=${encodeURIComponent(currentUser.member_id)}`;
@@ -486,7 +747,7 @@
                 }
             } catch (error) { console.error('포인트 로드 오류:', error); }
         }
-        
+
         function displayPoint(point) {
             const el = document.getElementById('userPoint');
             if (!el) return;
@@ -494,16 +755,16 @@
             else if (point === null || point === undefined || point === '') { el.textContent = '0'; currentPointValue = 0; }
             else { const num = parseInt(point); currentPointValue = isNaN(num) ? 0 : num; el.textContent = currentPointValue.toLocaleString(); }
         }
-        
+
         async function checkVerification() {
             try {
                 let url = '/api/verification/check?';
                 if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
                 else url += `member_id=${encodeURIComponent(currentUser.member_id)}`;
-                
+
                 const response = await fetch(url);
                 const data = await response.json();
-                
+
                 if (data.success && data.verified) {
                     isVerified = true;
                     document.getElementById('paymentBadge').classList.add('hidden');
@@ -518,12 +779,11 @@
                 }
             } catch (error) { console.error('결제 상태 확인 오류:', error); }
         }
-        
+
         function showPaymentModal() {
             const modal = document.getElementById('paymentModal');
             const currentPointEl = document.getElementById('modalCurrentPoint');
             const afterPointEl = document.getElementById('modalAfterPoint');
-            
             if (currentPointValue === 'free') { currentPointEl.textContent = 'Free (무료)'; afterPointEl.textContent = 'Free (무료)'; }
             else {
                 currentPointEl.textContent = currentPointValue.toLocaleString() + ' P';
@@ -534,9 +794,9 @@
             }
             modal.classList.remove('hidden');
         }
-        
+
         function closePaymentModal() { document.getElementById('paymentModal').classList.add('hidden'); }
-        
+
         async function processPayment() {
             try {
                 const response = await fetch('/api/verification/pay', {
@@ -567,21 +827,18 @@
                 let url = '/api/timetable-data/list?';
                 if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
                 else if (currentUser.member_school) url += `member_school=${encodeURIComponent(currentUser.member_school)}`;
-                
                 const response = await fetch(url);
                 const data = await response.json();
-                
                 if (data.success && data.data) {
                     const subjects = new Set();
                     data.data.forEach(d => { if (d.subject && d.subject.trim()) subjects.add(d.subject.trim()); });
                     standardSubjects = Array.from(subjects).sort((a, b) => a.localeCompare(b, 'ko'));
-                    updateSubjectCount();
-                    showSubjectPreview();
+                    updateSubjectCount(); showSubjectPreview();
                     alert(`DB에서 ${standardSubjects.length}개 교과목을 불러왔습니다.`);
                 } else { alert(data.message || '교과목 불러오기 실패'); }
             } catch (error) { console.error('교과목 DB 오류:', error); alert('DB 연결 오류: ' + error.message); }
         }
-        
+
         function handleSubjectUpload(e) {
             if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); e.target.value = ''; return; }
             const file = e.target.files[0]; if (!file) return;
@@ -597,16 +854,15 @@
                 const subjects = new Set();
                 for (let i = 1; i < jsonData.length; i++) { const val = String(jsonData[i][subjIdx] || '').trim(); if (val) subjects.add(val); }
                 standardSubjects = Array.from(subjects).sort((a, b) => a.localeCompare(b, 'ko'));
-                updateSubjectCount();
-                showSubjectPreview();
+                updateSubjectCount(); showSubjectPreview();
                 alert(`엑셀에서 ${standardSubjects.length}개 교과목을 불러왔습니다.`);
                 e.target.value = '';
             };
             reader.readAsArrayBuffer(file);
         }
-        
+
         function updateSubjectCount() { document.getElementById('subjectCount').textContent = standardSubjects.length + '개'; }
-        
+
         function showSubjectPreview() {
             const preview = document.getElementById('subjectPreview');
             const tags = document.getElementById('subjectTags');
@@ -618,40 +874,32 @@
                 tags.innerHTML = html;
             } else { preview.classList.add('hidden'); }
         }
-        
-        // 교과목 자동완성 필터링 (순서 무관 부분 매칭)
+
         function filterSubjects(input) {
             const query = input.value.toLowerCase().trim();
             const dropdown = document.getElementById('subjectDropdown');
             if (!query || standardSubjects.length === 0) { dropdown.classList.remove('show'); return; }
-            
             const filtered = standardSubjects.filter(subj => {
-                const lower = subj.toLowerCase();
-                let idx = 0;
+                const lower = subj.toLowerCase(); let idx = 0;
                 for (const char of query) { idx = lower.indexOf(char, idx); if (idx === -1) return false; idx++; }
                 return true;
             }).slice(0, 10);
-            
             if (filtered.length > 0) {
                 dropdown.innerHTML = filtered.map(subj => {
                     let lower = subj.toLowerCase(), lastIdx = 0, result = '';
-                    for (const char of query) {
-                        const idx = lower.indexOf(char, lastIdx);
-                        if (idx !== -1) { result += subj.substring(lastIdx, idx) + `<span class="match">${subj[idx]}</span>`; lastIdx = idx + 1; }
-                    }
+                    for (const char of query) { const idx = lower.indexOf(char, lastIdx); if (idx !== -1) { result += subj.substring(lastIdx, idx) + `<span class="match">${subj[idx]}</span>`; lastIdx = idx + 1; } }
                     result += subj.substring(lastIdx);
                     return `<div class="autocomplete-item" onclick="selectSubject('${subj}')">${result}</div>`;
                 }).join('');
                 dropdown.classList.add('show');
             } else { dropdown.classList.remove('show'); }
         }
-        
+
         function showSubjectDropdown(input) { if (standardSubjects.length > 0 && input.value.trim()) filterSubjects(input); }
         function selectSubject(subject) { document.getElementById('tSubject').value = subject; document.getElementById('subjectDropdown').classList.remove('show'); }
-        
+
         document.addEventListener('click', function(e) {
             if (!e.target.closest('#tSubject') && !e.target.closest('#subjectDropdown')) document.getElementById('subjectDropdown').classList.remove('show');
-            // 테이블 내 드롭다운도 닫기
             document.querySelectorAll('.autocomplete-dropdown').forEach(dd => { if (!e.target.closest('.autocomplete-dropdown') && !e.target.classList.contains('edit-input')) dd.classList.remove('show'); });
         });
 
@@ -664,15 +912,14 @@
                 let url = '/api/teachers/list?';
                 if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
                 else if (currentUser.member_school) url += `member_school=${encodeURIComponent(currentUser.member_school)}`;
-                
                 const response = await fetch(url);
                 const data = await response.json();
-                
                 if (data.success && data.data) {
                     teachers = [];
                     data.data.forEach(t => {
                         teachers.push({
-                            id: t.id || Date.now() + Math.random(), name: t.member_name || '', subject: '',
+                            id: t.id || Date.now() + Math.random(), memberId: t.member_id || '',
+                            name: t.member_name || '', subject: '',
                             grade: t.class_grade || '', classes: t.class_no || '',
                             classCount: t.class_no ? String(t.class_no).split(/[, ]+/).filter(x => x.trim()).length : 0,
                             unitHours: 4, totalHours: 0, department: t.department || ''
@@ -684,59 +931,43 @@
                 } else { alert(data.message || '교사 목록을 불러올 수 없습니다.'); }
             } catch (error) { console.error('교사 목록 로드 오류:', error); alert('교사 목록 로드 중 오류가 발생했습니다.'); }
         }
-        
+
         async function loadFromTimetableTea() {
             if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
             try {
                 let url = '/api/timetable-tea/list?';
                 if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
                 else if (currentUser.member_school) url += `member_school=${encodeURIComponent(currentUser.member_school)}`;
-                
                 const response = await fetch(url);
                 const data = await response.json();
-                
                 if (data.success && data.data) {
                     teachers = [];
-                    
                     data.data.forEach(t => {
-                        // DB에서 그대로 불러오기 (class_no는 "1, 2, 3" 형태, class_conut은 DB값 사용)
-                        const classCount = t.class_conut || 0;  // DB의 class_conut 우선
+                        const classCount = t.class_conut || 0;
                         const unitHours = t.hours || 4;
-                        
                         teachers.push({
-                            id: t.id || Date.now() + Math.random(),
-                            name: t.member_name || '',
-                            subject: t.subject || '',
-                            grade: t.grade || '',
-                            classes: t.class_no || '',  // "1, 2, 3" 그대로
-                            classCount: classCount,
-                            unitHours: unitHours,
+                            id: t.id || Date.now() + Math.random(), memberId: t.member_id || '',
+                            name: t.member_name || '', subject: t.subject || '',
+                            grade: t.grade || '', classes: t.class_no || '',
+                            classCount: classCount, unitHours: unitHours,
                             totalHours: classCount * unitHours
                         });
                     });
-                    
                     sortTeachers(); renderTeacherList();
                     alert(`이전 작업에서 ${teachers.length}개의 데이터를 불러왔습니다.`);
                 } else { alert(data.message || '이전 작업을 불러올 수 없습니다.'); }
             } catch (error) { console.error('이전 작업 로드 오류:', error); alert('이전 작업 로드 중 오류가 발생했습니다.'); }
         }
-        
+
         async function saveToTimetableTea() {
             if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
             if (teachers.length === 0) { alert('저장할 교사 데이터가 없습니다.'); return; }
             if (!confirm(`${teachers.length}개의 교사-과목 데이터를 timetable_tea에 저장하시겠습니까?\n(기존 데이터는 삭제됩니다)`)) return;
-            
             try {
-                // 각 교사-과목 조합을 하나의 레코드로 저장 (class_no는 "1, 2, 3" 그대로)
                 const timetableData = teachers.map(t => ({
-                    member_name: t.name,
-                    subject: t.subject,
-                    grade: t.grade,
-                    class_no: t.classes,  // "1, 2, 3" 그대로 저장
-                    class_conut: t.classCount,  // 입력한 학급수 그대로 저장
-                    hours: t.unitHours
+                    member_id: t.memberId, member_name: t.name, subject: t.subject, grade: t.grade,
+                    class_no: t.classes, class_conut: t.classCount, hours: t.unitHours
                 }));
-                
                 const response = await fetch('/api/timetable-tea/save', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ school_id: currentUser.school_id, member_school: currentUser.member_school, data: timetableData })
@@ -746,23 +977,236 @@
             } catch (error) { console.error('저장 오류:', error); alert('저장 중 오류가 발생했습니다.'); }
         }
 
-        // ==========================================
-        // 기존 함수들
-        // ==========================================
         function sortTeachers() { teachers.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko')); }
 
         function goStep(n) {
             if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
             document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`btn-step-${n}`).classList.add('active');
-            for (let i = 1; i <= 3; i++) document.getElementById(`step-${i}`).classList.add('hidden');
+            for (let i = 1; i <= 4; i++) document.getElementById(`step-${i}`).classList.add('hidden');
             document.getElementById(`step-${n}`).classList.remove('hidden');
-            if (n === 2) updateSubjectSelect();
-            if (n === 3) renderDraggablePalette();
+            if (n === 2) updateBlockTeacherSelect();
+            if (n === 3) renderConstraintTable();
+            if (n === 4) { updateGradeClassUI(); renderClassGrid(); renderDraggablePalette(); updateStatInfo(); }
+        }
+
+        // ==========================================
+        // Step 3: 특이사항 (교사별 제약조건)
+        // ==========================================
+        const DAYS = ['월', '화', '수', '목', '금'];
+        const DAY_IDX = {'월':0, '화':1, '수':2, '목':3, '금':4};
+
+        function getTeacherKey(t) {
+            return t.memberId || t.name;
+        }
+
+        function renderConstraintTable() {
+            const tbody = document.getElementById('constraintBody');
+            if (!tbody) return;
+            // 교사 목록에서 고유 교사 추출 (memberId 또는 name 기준)
+            const seen = new Set();
+            const uniqueTeachers = [];
+            teachers.forEach(t => {
+                const tk = getTeacherKey(t);
+                if (!tk || seen.has(tk)) return;
+                seen.add(tk);
+                uniqueTeachers.push(t);
+            });
+            uniqueTeachers.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+
+            let html = '';
+            uniqueTeachers.forEach((t, idx) => {
+                const tk = getTeacherKey(t);
+                const cons = teacherConstraints[tk] || [];
+                const dayOffs = new Set(cons.filter(c => c.period === null).map(c => c.day));
+                const periodOffs = cons.filter(c => c.period !== null);
+                const reason = cons.length > 0 ? cons[0].reason || '' : '';
+
+                // 제외 교시 텍스트
+                const periodText = periodOffs.map(p => `${p.day}${p.period}`).join(', ');
+
+                const dept = t.department ? ` <span class="text-xs text-slate-400">${t.department}</span>` : '';
+
+                html += `<tr data-tk="${tk}" data-idx="${idx}">
+                    <td class="border border-slate-300 px-3 py-2 font-medium">${t.name}${dept}</td>`;
+
+                DAYS.forEach(d => {
+                    const off = dayOffs.has(d);
+                    html += `<td class="border border-slate-300 px-1 py-1 text-center">
+                        <input type="checkbox" ${off ? '' : 'checked'} onchange="onDayToggle('${tk}','${d}',this.checked)"
+                            class="w-4 h-4 accent-blue-600 cursor-pointer" title="${d}요일 수업 ${off ? '불가' : '가능'}">
+                    </td>`;
+                });
+
+                html += `<td class="border border-slate-300 px-2 py-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-xs text-slate-600 flex-1 period-off-text" data-tk="${tk}">${periodText || '-'}</span>
+                            <button onclick="openPeriodOffEditor('${tk}')" class="text-blue-500 hover:text-blue-700 text-xs px-1" title="교시 제외 편집">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td class="border border-slate-300 px-2 py-1">
+                        <input type="text" value="${reason}" onchange="onReasonChange('${tk}',this.value)"
+                            class="w-full border-0 bg-transparent text-xs focus:outline-none" placeholder="사유 입력...">
+                    </td>
+                </tr>`;
+            });
+
+            tbody.innerHTML = html || '<tr><td colspan="8" class="text-center py-8 text-slate-400">Step 1에서 교사를 추가하세요.</td></tr>';
+        }
+
+        function onDayToggle(tk, day, checked) {
+            if (!teacherConstraints[tk]) teacherConstraints[tk] = [];
+            if (!checked) {
+                // 체크 해제 = day_off 추가 (기존 해당 요일 period_off도 제거)
+                teacherConstraints[tk] = teacherConstraints[tk].filter(c => c.day !== day);
+                teacherConstraints[tk].push({ day, period: null, reason: getConstraintReason(tk) });
+            } else {
+                // 체크 = day_off 제거
+                teacherConstraints[tk] = teacherConstraints[tk].filter(c => !(c.day === day && c.period === null));
+            }
+        }
+
+        function onReasonChange(tk, reason) {
+            if (!teacherConstraints[tk]) teacherConstraints[tk] = [];
+            teacherConstraints[tk].forEach(c => c.reason = reason);
+        }
+
+        function getConstraintReason(tk) {
+            const cons = teacherConstraints[tk] || [];
+            return cons.length > 0 ? cons[0].reason || '' : '';
+        }
+
+        function openPeriodOffEditor(tk) {
+            if (!teacherConstraints[tk]) teacherConstraints[tk] = [];
+            const cons = teacherConstraints[tk];
+            const dayOffs = new Set(cons.filter(c => c.period === null).map(c => c.day));
+            const periodOffs = cons.filter(c => c.period !== null);
+            const reason = getConstraintReason(tk);
+
+            // 팝업 생성
+            let existing = document.getElementById('periodOffModal');
+            if (existing) existing.remove();
+
+            const tName = teachers.find(t => getTeacherKey(t) === tk)?.name || tk;
+
+            let html = `<div id="periodOffModal" class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center" onclick="if(event.target===this)closePeriodOffModal()">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+                    <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
+                        <h3 class="font-bold"><i class="fas fa-clock mr-2"></i>${tName} — 제외 교시 설정</h3>
+                        <button onclick="closePeriodOffModal()" class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="p-4">
+                        <p class="text-xs text-slate-500 mb-3">수업을 배치하지 않을 교시를 선택하세요. (요일 전체 제외는 테이블에서 체크 해제)</p>
+                        <div class="grid grid-cols-6 gap-1 text-center text-xs font-bold mb-1">
+                            <div></div>`;
+            DAYS.forEach(d => { html += `<div class="${dayOffs.has(d) ? 'text-slate-300' : 'text-slate-700'}">${d}</div>`; });
+            html += '</div>';
+
+            for (let p = 1; p <= 7; p++) {
+                html += `<div class="grid grid-cols-6 gap-1 text-center mb-1">
+                    <div class="text-xs font-bold text-slate-500 py-1">${p}교시</div>`;
+                DAYS.forEach(d => {
+                    const disabled = dayOffs.has(d);
+                    const checked = periodOffs.some(po => po.day === d && po.period === p);
+                    html += `<div>
+                        <input type="checkbox" ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''}
+                            data-day="${d}" data-period="${p}"
+                            class="period-off-cb w-4 h-4 accent-red-500 cursor-pointer ${disabled ? 'opacity-30' : ''}">
+                    </div>`;
+                });
+                html += '</div>';
+            }
+
+            html += `</div>
+                    <div class="p-4 border-t flex justify-end gap-2">
+                        <button onclick="closePeriodOffModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-sm font-bold">취소</button>
+                        <button onclick="savePeriodOffModal('${tk}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold">적용</button>
+                    </div>
+                </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', html);
+        }
+
+        function closePeriodOffModal() {
+            document.getElementById('periodOffModal')?.remove();
+        }
+
+        function savePeriodOffModal(tk) {
+            const reason = getConstraintReason(tk);
+            // 기존 period_off만 제거 (day_off는 유지)
+            teacherConstraints[tk] = (teacherConstraints[tk] || []).filter(c => c.period === null);
+
+            // 체크된 period_off 추가
+            document.querySelectorAll('#periodOffModal .period-off-cb:checked:not(:disabled)').forEach(cb => {
+                teacherConstraints[tk].push({
+                    day: cb.dataset.day,
+                    period: parseInt(cb.dataset.period),
+                    reason: reason
+                });
+            });
+
+            closePeriodOffModal();
+            // 테이블 텍스트 업데이트
+            const periodOffs = teacherConstraints[tk].filter(c => c.period !== null);
+            const textEl = document.querySelector(`.period-off-text[data-tk="${tk}"]`);
+            if (textEl) textEl.textContent = periodOffs.map(p => `${p.day}${p.period}`).join(', ') || '-';
+        }
+
+        async function saveConstraintsToDB() {
+            if (!currentUser?.school_id) { alert('학교 정보가 없습니다.'); return; }
+            const constraints = [];
+            for (const [tk, cons] of Object.entries(teacherConstraints)) {
+                const t = teachers.find(t => getTeacherKey(t) === tk);
+                cons.forEach(c => {
+                    constraints.push({
+                        member_id: t?.memberId || tk,
+                        member_name: t?.name || tk,
+                        constraint_type: c.period === null ? 'day_off' : 'period_off',
+                        day_of_week: c.day,
+                        period: c.period,
+                        reason: c.reason || ''
+                    });
+                });
+            }
+            try {
+                const res = await fetch('/api/timetable-constraint/save', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ school_id: currentUser.school_id, constraints })
+                });
+                const data = await res.json();
+                if (data.success) alert(`저장 완료: ${constraints.length}건`);
+                else alert('저장 실패: ' + data.message);
+            } catch (e) { alert('저장 오류: ' + e.message); }
+        }
+
+        async function loadConstraintsFromDB() {
+            if (!currentUser?.school_id) { alert('학교 정보가 없습니다.'); return; }
+            try {
+                const res = await fetch(`/api/timetable-constraint/list?school_id=${encodeURIComponent(currentUser.school_id)}`);
+                const data = await res.json();
+                if (!data.success) { alert('불러오기 실패: ' + data.message); return; }
+
+                teacherConstraints = {};
+                (data.data || []).forEach(row => {
+                    const tk = row.member_id || row.member_name;
+                    if (!teacherConstraints[tk]) teacherConstraints[tk] = [];
+                    teacherConstraints[tk].push({
+                        day: row.day_of_week,
+                        period: row.period !== null && row.period !== undefined ? parseInt(row.period) : null,
+                        reason: row.reason || ''
+                    });
+                });
+
+                renderConstraintTable();
+                alert(`${(data.data || []).length}건 불러오기 완료`);
+            } catch (e) { alert('불러오기 오류: ' + e.message); }
         }
 
         function autoCalcClassCount(val, targetId) { if (!val) return; const count = val.split(/[, ]+/).filter(x => x.trim() !== '').length; if (count > 0) document.getElementById(targetId).value = count; }
-        
+
         function downloadTemplate() {
             const headers = ['member_name', 'subject', 'grade', 'class_no', 'class_count', 'hours'];
             const sampleData = [headers, ['홍길동', '국어', '1', '1, 2, 3', '3', '4'], ['김철수', '수학', '2', '1, 2', '2', '4']];
@@ -816,14 +1260,29 @@
             updateTeacherSuggestions();
             document.getElementById('teacherCount').textContent = teachers.length + '명';
             const tb = document.getElementById('teacherListBody'); tb.innerHTML = '';
-            if (teachers.length === 0) { document.getElementById('emptyMsg').style.display = 'flex'; return; }
+            if (teachers.length === 0) { document.getElementById('emptyMsg').style.display = 'flex'; document.getElementById('filterCount').textContent = ''; return; }
             document.getElementById('emptyMsg').style.display = 'none';
 
+            const fName = (document.getElementById('fName')?.value || '').trim().toLowerCase();
+            const fSubject = (document.getElementById('fSubject')?.value || '').trim().toLowerCase();
+            const fGrade = document.getElementById('fGrade')?.value || '';
+
+            // 동명이인 감지
+            const nameCount = {};
+            teachers.forEach(t => { nameCount[t.name] = (nameCount[t.name] || 0) + 1; });
+
+            let visibleCount = 0;
             teachers.forEach((t, i) => {
+                if (fName && !t.name.toLowerCase().includes(fName)) return;
+                if (fSubject && !t.subject.toLowerCase().includes(fSubject)) return;
+                if (fGrade && String(t.grade) !== fGrade) return;
+                visibleCount++;
+                const isDup = nameCount[t.name] > 1;
+                const dupBadge = isDup && t.department ? `<span class="text-[10px] text-purple-500 font-normal ml-1">(${t.department})</span>` : '';
                 const row = document.createElement('tr'); row.className = "hover:bg-slate-50 transition";
                 row.innerHTML = `
                     <td class="text-slate-400 font-medium">${i + 1}</td>
-                    <td><input type="text" class="edit-input font-bold text-slate-700" value="${t.name}" onchange="updateTeacher(${i}, 'name', this.value)"></td>
+                    <td><div class="flex items-center"><input type="text" class="edit-input font-bold text-slate-700" value="${t.name}" onchange="updateTeacher(${i}, 'name', this.value)">${dupBadge}</div></td>
                     <td class="relative">
                         <input type="text" class="edit-input text-slate-600" value="${t.subject}" oninput="filterSubjectsInline(this, ${i})" onfocus="showInlineDropdown(this, ${i})" onchange="updateTeacher(${i}, 'subject', this.value)">
                         <div id="dropdown-${i}" class="autocomplete-dropdown"></div>
@@ -837,9 +1296,20 @@
                 `;
                 tb.appendChild(row);
             });
+
+            const fc = document.getElementById('filterCount');
+            if (fName || fSubject || fGrade) fc.textContent = `${visibleCount} / ${teachers.length}명 표시`;
+            else fc.textContent = '';
         }
-        
-        // 테이블 내 과목 자동완성
+
+        function applyListFilter() { renderTeacherList(); }
+        function clearListFilter() {
+            document.getElementById('fName').value = '';
+            document.getElementById('fSubject').value = '';
+            document.getElementById('fGrade').value = '';
+            renderTeacherList();
+        }
+
         function filterSubjectsInline(input, idx) {
             const query = input.value.toLowerCase().trim();
             const dropdown = document.getElementById(`dropdown-${idx}`);
@@ -864,29 +1334,1064 @@
             const name = document.getElementById('tName').value, sub = document.getElementById('tSubject').value, grade = document.getElementById('tGrade').value;
             const cls = document.getElementById('tClasses').value, cnt = parseInt(document.getElementById('tClassCount').value) || 0, unit = parseInt(document.getElementById('tUnitHours').value) || 0;
             if (!name) return alert('교사 성명을 입력하세요.');
-            teachers.push({ id: Date.now() + Math.random(), name, subject: sub, grade, classes: cls, classCount: cnt, unitHours: unit, totalHours: cnt * unit });
+            teachers.push({ id: Date.now() + Math.random(), memberId: '', name, subject: sub, grade, classes: cls, classCount: cnt, unitHours: unit, totalHours: cnt * unit });
             sortTeachers();
             document.getElementById('tName').value = ''; document.getElementById('tSubject').value = ''; document.getElementById('tClasses').value = ''; document.getElementById('tClassCount').value = 0;
             renderTeacherList();
         }
 
-        function initTimetable() { const con = document.getElementById('timetableBody'); con.innerHTML = ''; for (let p = 1; p <= 7; p++) { con.innerHTML += `<div class="tt-cell period-badge">${p}</div>`; for (let d = 0; d < 5; d++) { con.innerHTML += `<div id="${d}-${p}" class="tt-cell bg-white transition hover:bg-indigo-50" ondrop="drop(event)" ondragover="event.preventDefault()"></div>`; } } }
+        // ==========================================
+        // 교사 DB 검색 / 수정
+        // ==========================================
+        let searchResults = [];
 
-        function renderDraggablePalette() { document.getElementById('draggableBlocks').innerHTML = blocks.map(b => `<div draggable="true" ondragstart="event.dataTransfer.setData('text','${b.id}')" class="bg-white border border-slate-200 p-3 rounded-lg mb-2 cursor-move shadow-sm text-sm font-bold text-slate-700 hover:shadow-md hover:border-indigo-300 hover:text-indigo-600 transition flex items-center"><i class="fas fa-grip-vertical mr-2 text-slate-300"></i> ${b.name}</div>`).join(''); }
+        async function searchTeachersDB() {
+            try {
+                let url = '/api/teachers/list?';
+                if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
+                else if (currentUser.member_school) url += `member_school=${encodeURIComponent(currentUser.member_school)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (!data.success || !data.data) { alert(data.message || '교사 목록을 불러올 수 없습니다.'); return; }
+                const fName = (document.getElementById('sName')?.value || '').trim().toLowerCase();
+                const fDept = document.getElementById('sDept')?.value || '';
+                const fPos = document.getElementById('sPosition')?.value || '';
+                const fGrade = document.getElementById('sGrade')?.value || '';
+                searchResults = data.data.filter(t => {
+                    if (fName && !(t.member_name || '').toLowerCase().includes(fName)) return false;
+                    if (fDept && (t.department || '') !== fDept) return false;
+                    if (fPos && (t.department_position || '') !== fPos) return false;
+                    if (fGrade && String(t.class_grade || '') !== fGrade) return false;
+                    return true;
+                });
+                renderSearchResults();
+            } catch (error) { console.error('교사 검색 오류:', error); alert('교사 검색 중 오류가 발생했습니다.'); }
+        }
 
-        function drop(ev) { ev.preventDefault(); const bid = ev.dataTransfer.getData('text'); const blk = blocks.find(b => b.id === bid); let tgt = ev.target; while (tgt && !tgt.classList.contains('tt-cell')) { tgt = tgt.parentElement; } if (!tgt) return; tgt.innerHTML = `<div class="block-item">${blk.name}</div>`; schedule[tgt.id] = bid; }
+        function renderSearchResults() {
+            const wrap = document.getElementById('searchResultWrap');
+            const tb = document.getElementById('searchResultBody');
+            const cnt = document.getElementById('searchCount');
+            wrap.classList.remove('hidden'); cnt.textContent = searchResults.length + '명'; tb.innerHTML = '';
+            if (searchResults.length === 0) { tb.innerHTML = '<tr><td colspan="6" class="text-center text-slate-400 py-8">검색 결과가 없습니다.</td></tr>'; return; }
+            searchResults.forEach((t, i) => {
+                const row = document.createElement('tr'); row.className = 'hover:bg-emerald-50/50 transition';
+                row.innerHTML = `
+                    <td class="text-slate-400 font-medium text-center py-2">${i + 1}</td>
+                    <td><input type="text" class="edit-input font-bold text-slate-700" value="${t.member_name || ''}" onchange="searchResults[${i}].member_name=this.value; searchResults[${i}]._changed=true"></td>
+                    <td><select class="edit-input text-slate-600" onchange="searchResults[${i}].department=this.value; searchResults[${i}]._changed=true">
+                        <option value="">선택</option>
+                        ${['국어','수학','영어','사회','과학','체육','예술','정보','한문','교양'].map(d => `<option value="${d}" ${(t.department||'')===d?'selected':''}>${d}</option>`).join('')}
+                    </select></td>
+                    <td><select class="edit-input text-slate-600" onchange="searchResults[${i}].department_position=this.value; searchResults[${i}]._changed=true">
+                        <option value="">선택</option>
+                        ${['교사','교장','교감'].map(p => `<option value="${p}" ${(t.department_position||'')===p?'selected':''}>${p}</option>`).join('')}
+                    </select></td>
+                    <td><select class="edit-input text-slate-600" onchange="searchResults[${i}].class_grade=this.value; searchResults[${i}]._changed=true">
+                        <option value="">-</option>
+                        ${['1','2','3'].map(g => `<option value="${g}" ${String(t.class_grade||'')==g?'selected':''}>${g}학년</option>`).join('')}
+                    </select></td>
+                    <td><input type="text" class="edit-input text-slate-600" value="${t.class_no || ''}" onchange="searchResults[${i}].class_no=this.value; searchResults[${i}]._changed=true"></td>
+                `;
+                tb.appendChild(row);
+            });
+        }
 
-        function updateSubjectSelect() { document.getElementById('subjectSelect').innerHTML = teachers.map(t => `<option value="${t.id}">${t.name} - ${t.subject} (${t.totalHours}h)</option>`).join(''); }
+        async function saveSearchEdits() {
+            const changed = searchResults.filter(t => t._changed);
+            if (changed.length === 0) { alert('수정된 항목이 없습니다.'); return; }
+            if (!confirm(`${changed.length}명의 교사 정보를 저장하시겠습니까?`)) return;
+            try {
+                const response = await fetch('/api/teachers/update-batch', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ teachers: changed.map(t => ({
+                        member_id: t.member_id, member_name: t.member_name,
+                        department: t.department, department_position: t.department_position,
+                        class_grade: t.class_grade, class_no: t.class_no
+                    }))})
+                });
+                const data = await response.json();
+                if (data.success) { alert(`${changed.length}명의 교사 정보가 저장되었습니다.`); changed.forEach(t => delete t._changed); }
+                else { alert(data.message || '저장 실패'); }
+            } catch (error) { console.error('교사 정보 저장 오류:', error); alert('저장 중 오류가 발생했습니다.'); }
+        }
 
-        function createBlock() { if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; } const name = document.getElementById('blockName').value; const opts = Array.from(document.getElementById('subjectSelect').selectedOptions); if (!name || !opts.length) return alert('묶음 명칭과 과목을 선택하세요.'); const subjs = opts.map(o => { const t = teachers.find(x => x.id == o.value); return { tId: t.id, subject: t.subject, teacherName: t.name }; }); blocks.push({ id: 'blk' + Date.now(), name, subjects: subjs }); renderBlockList(); }
+        function clearSearchResults() {
+            document.getElementById('sName').value = ''; document.getElementById('sDept').value = '';
+            document.getElementById('sPosition').value = ''; document.getElementById('sGrade').value = '';
+            document.getElementById('searchResultWrap').classList.add('hidden'); searchResults = [];
+        }
 
-        function renderBlockList() { document.getElementById('blockList').innerHTML = blocks.map(b => `<div class="bg-white border border-slate-200 p-4 rounded-lg mb-3 flex justify-between items-center shadow-sm hover:shadow transition"><div><div class="font-bold text-slate-800 text-lg mb-1">${b.name}</div><div class="text-sm text-slate-500"><i class="fas fa-users mr-1"></i> ${b.subjects.map(s => s.teacherName).join(', ')}</div></div><button onclick="blocks=blocks.filter(x=>x.id!='${b.id}');renderBlockList()" class="text-red-400 hover:text-red-600 p-2"><i class="fas fa-trash-alt"></i></button></div>`).join(''); }
+        // ==========================================
+        // STEP 2: 수업 묶음 (Block) 관리
+        // ==========================================
+        function updateBlockTeacherSelect() {
+            const grade = document.getElementById('blockGrade').value;
+            const gradeTeachers = teachers.filter(t => String(t.grade) === grade);
+            const sel = document.getElementById('blockTeacherSelect');
+            const nc = {};
+            gradeTeachers.forEach(t => { nc[t.name] = (nc[t.name] || 0) + 1; });
+            sel.innerHTML = gradeTeachers.map(t => {
+                const origIdx = teachers.indexOf(t);
+                const dept = nc[t.name] > 1 && t.department ? ` [${t.department}]` : '';
+                return `<option value="${origIdx}">${t.name}${dept} - ${t.subject} (${t.classes || '?'}반) [${t.totalHours}h]</option>`;
+            }).join('');
+        }
 
-        function clearTimetable() { schedule = {}; initTimetable(); }
+        async function autoGenerateBlocks() {
+            if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
+            if (teachers.length === 0) { alert('먼저 교사 데이터를 불러오세요.'); return; }
 
+            // 1) timetable_data에서 subject_type 정보 로드
+            let subjectTypeMap = {};  // "grade_subject" → subject_type
+            let subjectDemandMap = {}; // "grade_subject" → hours
+            let classDemandMap = {};   // "grade_subject" → class_demand
+            try {
+                let url = '/api/timetable-data/list?';
+                if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
+                else if (currentUser.member_school) url += `member_school=${encodeURIComponent(currentUser.member_school)}`;
+                const resp = await fetch(url);
+                const result = await resp.json();
+                if (result.success && result.data) {
+                    result.data.forEach(d => {
+                        const key = `${d.grade}_${d.subject}`;
+                        subjectTypeMap[key] = d.subject_type || '';
+                        subjectDemandMap[key] = parseInt(d.subject_demand) || 0;
+                        classDemandMap[key] = parseInt(d.class_demand) || 0;
+                    });
+                }
+            } catch (e) { console.warn('편제표 로드 실패, 기본값 사용:', e); }
+
+            // 2) 과목별 그룹핑
+            const regularGroups = {};
+            const electiveSections = {};  // grade → [{teacher, subject, ...}]
+            const scienceSubjects = new Set(['물리학','화학','생명과학','지구과학']);
+            const socialSubjects = new Set(['세계사','사회와 문화','세계시민과 지리','현대사회와 윤리']);
+
+            teachers.forEach((t, idx) => {
+                if (!t.grade || !t.subject) return;
+                const key = `${t.grade}_${t.subject}`;
+                const stype = subjectTypeMap[key] || '';
+                const entry = {
+                    teacherIdx: idx, teacherId: t.memberId || '', teacherName: t.name, subject: t.subject,
+                    classes: t.classes ? t.classes.split(/[, ]+/).filter(x => x.trim()) : [],
+                    hoursPerClass: parseInt(t.unitHours) || 0
+                };
+
+                if (stype === '선택') {
+                    if (!electiveSections[t.grade]) electiveSections[t.grade] = [];
+                    electiveSections[t.grade].push(entry);
+                } else {
+                    if (!regularGroups[key]) regularGroups[key] = { grade: t.grade, subject: t.subject, entries: [] };
+                    regularGroups[key].entries.push(entry);
+                }
+            });
+
+            // 3) 일반/학기교차 블록 생성
+            blocks = [];
+            for (const key in regularGroups) {
+                const g = regularGroups[key];
+                blocks.push({
+                    id: 'blk_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 5),
+                    name: `${g.grade}학년 ${g.subject}`,
+                    grade: g.grade,
+                    isElective: false,
+                    linkedPeriods: 1,
+                    entries: g.entries,
+                    hoursPerWeek: g.entries[0]?.hoursPerClass || 0
+                });
+            }
+
+            // 4) 선택과목 블록 생성 (학년별로 과학탐구/사회탐구 묶음)
+            let electiveCount = 0;
+            for (const grade in electiveSections) {
+                const sections = electiveSections[grade];
+                const sciEntries = sections.filter(e => scienceSubjects.has(e.subject));
+                const socEntries = sections.filter(e => socialSubjects.has(e.subject));
+                const otherEntries = sections.filter(e => !scienceSubjects.has(e.subject) && !socialSubjects.has(e.subject));
+
+                // 일반과목 시수 합계 계산
+                let regularHours = 0;
+                let semesterSwapHours = 0;
+                for (const key in subjectDemandMap) {
+                    if (!key.startsWith(grade + '_')) continue;
+                    const cd = classDemandMap[key] || 0;
+                    const st = subjectTypeMap[key] || '';
+                    const cnt = getGradeCount(grade);
+                    if (cd >= cnt) regularHours += subjectDemandMap[key];
+                    else if (st === '학기교차') semesterSwapHours = Math.max(semesterSwapHours, subjectDemandMap[key]);
+                }
+                const electiveHours = Math.max(0, 35 - regularHours - semesterSwapHours);
+
+                if (sciEntries.length > 0) {
+                    const sciHours = Math.floor(electiveHours / 2);
+                    blocks.push({
+                        id: 'elec_sci_' + grade + '_' + Date.now().toString(36),
+                        name: `${grade}학년 과학탐구`,
+                        grade: grade,
+                        isElective: true,
+                        linkedPeriods: 1,
+                        entries: sciEntries,
+                        hoursPerWeek: sciHours
+                    });
+                    electiveCount++;
+                }
+                if (socEntries.length > 0) {
+                    const socHours = electiveHours - Math.floor(electiveHours / 2);
+                    blocks.push({
+                        id: 'elec_soc_' + grade + '_' + Date.now().toString(36),
+                        name: `${grade}학년 사회탐구`,
+                        grade: grade,
+                        isElective: true,
+                        linkedPeriods: 1,
+                        entries: socEntries,
+                        hoursPerWeek: socHours
+                    });
+                    electiveCount++;
+                }
+                if (otherEntries.length > 0) {
+                    blocks.push({
+                        id: 'elec_other_' + grade + '_' + Date.now().toString(36),
+                        name: `${grade}학년 기타선택`,
+                        grade: grade,
+                        isElective: true,
+                        linkedPeriods: 1,
+                        entries: otherEntries,
+                        hoursPerWeek: electiveHours
+                    });
+                    electiveCount++;
+                }
+            }
+
+            renderBlockList();
+            alert(`${blocks.length}개 블록 자동 생성 (일반: ${blocks.length - electiveCount}개, 선택: ${electiveCount}개)\n선택과목은 자동으로 전체반 동시 배치 블록으로 설정되었습니다.`);
+        }
+
+        function createBlock() {
+            if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
+            const name = document.getElementById('blockName').value.trim();
+            const grade = document.getElementById('blockGrade').value;
+            const isElective = document.getElementById('blockElective').checked;
+            const linkedPeriods = parseInt(document.getElementById('blockLinked').value) || 1;
+            const opts = Array.from(document.getElementById('blockTeacherSelect').selectedOptions);
+
+            if (!name || !opts.length) { alert('블록명과 교사를 선택하세요.'); return; }
+
+            const entries = opts.map(o => {
+                const idx = parseInt(o.value);
+                const t = teachers[idx];
+                return {
+                    teacherIdx: idx, teacherId: t.memberId || '', teacherName: t.name, subject: t.subject,
+                    classes: t.classes ? t.classes.split(/[, ]+/).filter(x => x.trim()) : [],
+                    hoursPerClass: parseInt(t.unitHours) || 0
+                };
+            });
+
+            blocks.push({
+                id: 'blk_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 5),
+                name, grade, isElective, linkedPeriods, entries,
+                hoursPerWeek: entries[0]?.hoursPerClass || 0
+            });
+
+            document.getElementById('blockName').value = '';
+            renderBlockList();
+        }
+
+        let selectedBlocks = new Set();
+
+        function renderBlockList() {
+            const container = document.getElementById('blockList');
+            if (!blocks.length) {
+                container.innerHTML = '<div class="text-center py-16 text-slate-400"><i class="fas fa-cubes fa-3x mb-4 opacity-30"></i><p>생성된 블록이 없습니다.</p><p class="text-xs mt-2">왼쪽에서 블록을 생성하거나 [자동 생성] 버튼을 사용하세요.</p></div>';
+                updateBlockSelectionUI();
+                return;
+            }
+
+            container.innerHTML = blocks.map(b => {
+                const typeBadge = b.isElective
+                    ? '<span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold">선택</span>'
+                    : '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">일반</span>';
+                const linkedBadge = b.linkedPeriods > 1
+                    ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-bold">${b.linkedPeriods}연속</span>` : '';
+                const teacherList = b.entries.map(e => `${e.teacherName}(${e.classes.join(',') || '?'}반)`).join(', ');
+                const checked = selectedBlocks.has(b.id) ? 'checked' : '';
+
+                // 배치 현황 계산
+                const placedSlots = new Set();
+                for (const ck in allSchedule) {
+                    if (!ck.startsWith(b.grade + '_')) continue;
+                    for (const cellKey in allSchedule[ck]) {
+                        if (allSchedule[ck][cellKey].blockId === b.id) placedSlots.add(cellKey);
+                    }
+                }
+                const placed = placedSlots.size;
+                const statusColor = placed >= b.hoursPerWeek ? 'text-green-500' : 'text-amber-500';
+                const selBg = selectedBlocks.has(b.id) ? 'bg-indigo-50' : 'bg-white';
+
+                return `<div class="${selBg} border ${b.isElective ? 'border-purple-200' : 'border-slate-200'} p-3 rounded-lg mb-2 shadow-sm hover:shadow transition">
+                    <div class="flex items-start gap-2">
+                        <input type="checkbox" class="block-sel-chk w-4 h-4 mt-1 rounded text-indigo-600 cursor-pointer flex-shrink-0"
+                            data-block-id="${b.id}" ${checked} onchange="toggleBlockSelect('${b.id}', this.checked)">
+                        <div class="flex-1 min-w-0 cursor-pointer" onclick="editBlock('${b.id}')">
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                <span class="font-bold text-slate-800 text-sm">${b.name}</span>
+                                <span class="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[10px]">${b.grade}학년</span>
+                                ${typeBadge} ${linkedBadge}
+                                <span class="text-xs ${statusColor} font-bold">${placed}/${b.hoursPerWeek}h</span>
+                            </div>
+                            <div class="text-xs text-slate-500 truncate"><i class="fas fa-users mr-1"></i>${teacherList}</div>
+                        </div>
+                        <div class="flex gap-1 flex-shrink-0">
+                            <button onclick="event.stopPropagation();toggleBlockElective('${b.id}')" class="text-[10px] px-1.5 py-1 rounded ${b.isElective ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-500'} hover:opacity-80" title="선택/일반 전환">
+                                <i class="fas fa-exchange-alt"></i>
+                            </button>
+                            <select onclick="event.stopPropagation()" onchange="setBlockLinked('${b.id}', this.value)" class="text-[10px] border border-slate-200 rounded px-1 py-1" title="연속시수">
+                                <option value="1" ${b.linkedPeriods===1?'selected':''}>1h</option>
+                                <option value="2" ${b.linkedPeriods===2?'selected':''}>2h</option>
+                                <option value="3" ${b.linkedPeriods===3?'selected':''}>3h</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            updateBlockSelectionUI();
+        }
+
+        function toggleBlockSelect(blockId, checked) {
+            if (checked) selectedBlocks.add(blockId);
+            else selectedBlocks.delete(blockId);
+            updateBlockSelectionUI();
+        }
+
+        function toggleSelectAllBlocks(checked) {
+            if (checked) blocks.forEach(b => selectedBlocks.add(b.id));
+            else selectedBlocks.clear();
+            document.querySelectorAll('.block-sel-chk').forEach(chk => chk.checked = checked);
+            updateBlockSelectionUI();
+        }
+
+        function updateBlockSelectionUI() {
+            const cnt = selectedBlocks.size;
+            const countEl = document.getElementById('blockSelCount');
+            const editBtn = document.getElementById('btnEditSelected');
+            const delBtn = document.getElementById('btnDeleteSelected');
+            const allChk = document.getElementById('blockSelectAll');
+            if (countEl) countEl.textContent = cnt > 0 ? `${cnt}개 선택` : '';
+            if (editBtn) editBtn.disabled = cnt === 0;
+            if (delBtn) delBtn.disabled = cnt === 0;
+            if (allChk) allChk.checked = blocks.length > 0 && cnt === blocks.length;
+        }
+
+        function deleteSelectedBlocks() {
+            if (selectedBlocks.size === 0) return;
+            if (!confirm(`선택한 ${selectedBlocks.size}개 블록을 삭제하시겠습니까?\n배치된 시간표도 함께 제거됩니다.`)) return;
+            const toDelete = new Set(selectedBlocks);
+            blocks = blocks.filter(b => !toDelete.has(b.id));
+            // 스케줄에서도 제거
+            for (const blockId of toDelete) {
+                for (const ck in allSchedule) {
+                    for (const cellKey in allSchedule[ck]) {
+                        if (allSchedule[ck][cellKey].blockId === blockId) delete allSchedule[ck][cellKey];
+                    }
+                }
+            }
+            selectedBlocks.clear();
+            rebuildTeacherBusy();
+            renderBlockList();
+            renderClassGrid();
+            renderDraggablePalette();
+        }
+
+        function editSelectedBlocks() {
+            if (selectedBlocks.size === 0) return;
+            const ids = [...selectedBlocks];
+            const action = prompt(`선택한 ${ids.length}개 블록 일괄 수정\n\n1: 주당 시수 변경\n2: 선택/일반 전환\n3: 연속시수 변경\n\n번호 입력:`);
+            if (!action) return;
+            const selected = blocks.filter(b => selectedBlocks.has(b.id));
+            if (action === '1') {
+                const hrs = prompt('새 주당 시수:');
+                if (hrs !== null && !isNaN(parseInt(hrs))) selected.forEach(b => b.hoursPerWeek = parseInt(hrs));
+            } else if (action === '2') {
+                selected.forEach(b => b.isElective = !b.isElective);
+            } else if (action === '3') {
+                const lnk = prompt('연속시수 (1, 2, 3):');
+                if (lnk && [1,2,3].includes(parseInt(lnk))) selected.forEach(b => b.linkedPeriods = parseInt(lnk));
+            }
+            renderBlockList();
+        }
+
+        function toggleBlockElective(blockId) {
+            const b = blocks.find(x => x.id === blockId);
+            if (b) { b.isElective = !b.isElective; renderBlockList(); }
+        }
+
+        function setBlockLinked(blockId, val) {
+            const b = blocks.find(x => x.id === blockId);
+            if (b) { b.linkedPeriods = parseInt(val) || 1; renderBlockList(); }
+        }
+
+        function deleteBlock(blockId) {
+            if (!confirm('이 블록을 삭제하시겠습니까? 배치된 시간표도 함께 제거됩니다.')) return;
+            blocks = blocks.filter(b => b.id !== blockId);
+            // 스케줄에서도 제거
+            for (const ck in allSchedule) {
+                for (const cellKey in allSchedule[ck]) {
+                    if (allSchedule[ck][cellKey].blockId === blockId) delete allSchedule[ck][cellKey];
+                }
+            }
+            rebuildTeacherBusy();
+            renderBlockList();
+            renderClassGrid();
+            renderDraggablePalette();
+        }
+
+        // ==========================================
+        // 블록 수정
+        // ==========================================
+        function editBlock(blockId) {
+            const b = blocks.find(x => x.id === blockId);
+            if (!b) return;
+            const newName = prompt('블록명 수정:', b.name);
+            if (newName === null) return;
+            if (newName.trim()) b.name = newName.trim();
+
+            const newHours = prompt('주당 시수:', b.hoursPerWeek);
+            if (newHours !== null && !isNaN(parseInt(newHours))) b.hoursPerWeek = parseInt(newHours);
+
+            // 교사 목록 편집 안내
+            const entryInfo = b.entries.map((e, i) => `${i+1}. ${e.teacherName} - ${e.subject} (${e.classes.join(',') || '?'}반)`).join('\n');
+            const action = prompt(`교사 목록:\n${entryInfo}\n\n삭제할 번호 입력 (빈칸=유지):`);
+            if (action && !isNaN(parseInt(action))) {
+                const idx = parseInt(action) - 1;
+                if (idx >= 0 && idx < b.entries.length) {
+                    b.entries.splice(idx, 1);
+                }
+            }
+            renderBlockList();
+        }
+
+        // ==========================================
+        // 시간표 자동 생성 모달
+        // ==========================================
+        function showAutoGenModal() {
+            document.getElementById('autoGenModal').classList.remove('hidden');
+        }
+        function hideAutoGenModal() {
+            document.getElementById('autoGenModal').classList.add('hidden');
+        }
+
+        function clearAllSchedule() {
+            if (!confirm('전체 학년 시간표를 초기화하시겠습니까?')) return;
+            allSchedule = {};
+            teacherBusy = {};
+            document.getElementById('genResultArea').innerHTML = '<div class="text-center py-4 text-green-500"><i class="fas fa-check-circle fa-2x mb-2"></i><p class="font-medium">시간표가 초기화되었습니다.</p></div>';
+            renderBlockList();
+            renderClassGrid();
+            renderDraggablePalette();
+            updateStatInfo();
+        }
+
+        function runAutoGenerate() {
+            if (blocks.length === 0) { alert('먼저 수업 묶음(Block)을 생성하세요.'); return; }
+
+            const avoidConsecutive = document.getElementById('genAvoidConsecutive').checked;
+            const respectLinked = document.getElementById('genRespectLinked').checked;
+            const electiveFirst = document.getElementById('genElectiveFirst').checked;
+            const targetGrades = Array.from(document.querySelectorAll('.gen-grade-chk:checked')).map(c => c.value);
+
+            if (!targetGrades.length) { alert('대상 학년을 선택하세요.'); return; }
+
+            // 대상 학년 스케줄 초기화
+            for (const ck in allSchedule) {
+                const [g] = ck.split('_');
+                if (targetGrades.includes(g)) delete allSchedule[ck];
+            }
+            rebuildTeacherBusy();
+
+            // 블록 정렬: 선택과목 우선 → 시수 많은 순
+            const targetBlocks = blocks.filter(b => targetGrades.includes(String(b.grade)));
+            targetBlocks.sort((a, bb) => {
+                if (electiveFirst && a.isElective !== bb.isElective) return a.isElective ? -1 : 1;
+                return bb.hoursPerWeek - a.hoursPerWeek;
+            });
+
+            const results = [];
+            let totalPlaced = 0, totalNeeded = 0;
+
+            for (const block of targetBlocks) {
+                let placed = 0;
+                const needed = block.hoursPerWeek;
+                totalNeeded += needed;
+
+                // 가능한 시간대 목록 (분산 배치)
+                const slots = [];
+                for (let d = 0; d < 5; d++) {
+                    for (let p = 1; p <= 7; p++) slots.push([d, p]);
+                }
+                // 요일별 분산을 위해 순서 섞기 (요일 순환)
+                const shuffled = [];
+                for (let p = 1; p <= 7; p++) {
+                    for (let d = 0; d < 5; d++) shuffled.push([d, p]);
+                }
+
+                const dayCount = {};
+                const maxPerDay = avoidConsecutive ? 2 : 7;
+
+                for (const [d, p] of shuffled) {
+                    if (placed >= needed) break;
+                    if ((dayCount[d] || 0) >= maxPerDay) continue;
+
+                    // 연속시수 확인
+                    const linked = respectLinked ? block.linkedPeriods : 1;
+                    if (p + linked - 1 > 7) continue;
+
+                    // 배치 가능 여부 확인
+                    let canPlace = true;
+                    for (let lp = 0; lp < linked; lp++) {
+                        const cellId = `${d}_${p + lp}`;
+                        if (block.isElective) {
+                            const classCnt = getGradeCount(block.grade);
+                            for (let c = 1; c <= classCnt; c++) {
+                                if (allSchedule[`${block.grade}_${c}`]?.[cellId]) { canPlace = false; break; }
+                            }
+                        } else {
+                            for (const entry of block.entries) {
+                                for (const cls of entry.classes) {
+                                    if (allSchedule[`${block.grade}_${cls}`]?.[cellId]) { canPlace = false; break; }
+                                }
+                                if (!canPlace) break;
+                            }
+                        }
+                        if (!canPlace) break;
+                        // 교사 충돌
+                        for (const entry of block.entries) {
+                            const tk = teacherKey(entry);
+                            if (teacherBusy[tk]?.has(cellId)) { canPlace = false; break; }
+                        }
+                        if (!canPlace) break;
+                        // 교사 제약조건 (특이사항)
+                        for (const entry of block.entries) {
+                            const tk = teacherKey(entry);
+                            const cons = teacherConstraints[tk];
+                            if (cons) {
+                                const dayName = DAYS[d];
+                                const prd = p + lp;
+                                for (const c of cons) {
+                                    if (c.day === dayName && (c.period === null || c.period === prd)) {
+                                        canPlace = false; break;
+                                    }
+                                }
+                            }
+                            if (!canPlace) break;
+                        }
+                        if (!canPlace) break;
+                    }
+
+                    if (canPlace) {
+                        placeBlock(block, d, p);
+                        placed += linked;
+                        dayCount[d] = (dayCount[d] || 0) + linked;
+                    }
+                }
+
+                totalPlaced += placed;
+                results.push({ name: block.name, isElective: block.isElective, needed, placed, ok: placed >= needed });
+            }
+
+            // 결과 표시
+            const resultHtml = results.map(r => {
+                const icon = r.ok ? '<i class="fas fa-check-circle text-green-500"></i>' : '<i class="fas fa-exclamation-circle text-amber-500"></i>';
+                const badge = r.isElective ? '<span class="bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded text-[10px] font-bold">선택</span>' : '';
+                return `<div class="flex items-center justify-between py-1.5 border-b border-slate-100">
+                    <div class="flex items-center gap-2">${icon} <span class="font-medium text-slate-700">${r.name}</span> ${badge}</div>
+                    <span class="text-xs font-bold ${r.ok ? 'text-green-600' : 'text-amber-600'}">${r.placed}/${r.needed}h</span>
+                </div>`;
+            }).join('');
+
+            const constraintCount = Object.values(teacherConstraints).reduce((sum, arr) => sum + arr.length, 0);
+            const constraintNote = constraintCount > 0
+                ? `<p class="mt-1 text-xs text-blue-600"><i class="fas fa-info-circle mr-1"></i>교사 제약조건 ${constraintCount}건 반영됨</p>`
+                : '';
+            const summaryColor = totalPlaced >= totalNeeded ? 'text-green-600 bg-green-50' : 'text-amber-600 bg-amber-50';
+            document.getElementById('genResultArea').innerHTML = `
+                <div class="mb-3 p-3 rounded-lg ${summaryColor} font-bold text-sm">
+                    전체: ${totalPlaced}/${totalNeeded}h 배치 (${Math.round(totalPlaced/totalNeeded*100)}%)
+                    ${constraintNote}
+                </div>
+                <div class="max-h-[400px] overflow-y-auto">${resultHtml}</div>
+                <div class="mt-3 text-xs text-slate-400">
+                    <p>* 미배치 블록은 시간표에서 수동 드래그로 배치할 수 있습니다.</p>
+                </div>`;
+
+            renderBlockList();
+            renderClassGrid();
+            renderDraggablePalette();
+            updateStatInfo();
+        }
+
+        // ==========================================
+        // STEP 4: 시간표 만들기
+        // ==========================================
+        function selectGrade(grade) {
+            currentGrade = String(grade);
+            currentClass = '1';
+            updateGradeClassUI();
+            renderClassGrid();
+            renderDraggablePalette();
+            updateStatInfo();
+        }
+
+        function selectClass(cls) {
+            currentClass = String(cls);
+            updateGradeClassUI();
+            renderClassGrid();
+        }
+
+        function updateGradeClassUI() {
+            // 학년 탭
+            document.querySelectorAll('.grade-tab').forEach(btn => {
+                const g = btn.dataset.grade;
+                if (g === currentGrade) {
+                    btn.className = 'grade-tab px-4 py-1.5 rounded-lg text-sm font-bold transition bg-indigo-600 text-white shadow-sm';
+                } else {
+                    btn.className = 'grade-tab px-4 py-1.5 rounded-lg text-sm font-bold transition bg-white text-slate-500 border border-slate-200 hover:bg-slate-50';
+                }
+            });
+            // 반 버튼
+            const cnt = getGradeCount(currentGrade);
+            const container = document.getElementById('classButtons');
+            let html = '';
+            for (let i = 1; i <= cnt; i++) {
+                const active = String(i) === currentClass;
+                html += `<button onclick="selectClass('${i}')" class="px-3 py-1.5 rounded-lg text-sm font-bold transition ${active ? 'bg-indigo-500 text-white shadow-sm' : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200'}">${i}반</button>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function initTimetable() {
+            updateGradeClassUI();
+            renderClassGrid();
+        }
+
+        function renderClassGrid() {
+            const con = document.getElementById('timetableBody');
+            con.innerHTML = '';
+            const classKey = `${currentGrade}_${currentClass}`;
+            const classSchedule = allSchedule[classKey] || {};
+
+            for (let p = 1; p <= 7; p++) {
+                con.innerHTML += `<div class="tt-cell period-badge">${p}</div>`;
+                for (let d = 0; d < 5; d++) {
+                    const cellId = `${d}_${p}`;
+                    const entry = classSchedule[cellId];
+                    let content = '';
+                    let extraClass = 'bg-white';
+
+                    if (entry) {
+                        const block = blocks.find(b => b.id === entry.blockId);
+                        const isElective = block?.isElective || entry.isElective;
+                        const isLinkedTop = entry.linkedPos === 'top';
+                        const isLinkedBottom = entry.linkedPos === 'bottom';
+                        extraClass = isElective ? 'bg-purple-50/50' : 'bg-blue-50/50';
+                        let itemClass = 'block-item';
+                        if (isElective) itemClass += ' elective';
+                        if (isLinkedTop) itemClass += ' linked-top';
+                        if (isLinkedBottom) itemClass += ' linked-bottom';
+
+                        content = `<div class="${itemClass}" title="${entry.teacher} | ${entry.subject}">
+                            <div class="text-xs font-bold leading-tight">${entry.subject}</div>
+                            <div class="text-[10px] opacity-60">${entry.teacher}</div>
+                        </div>`;
+                    }
+
+                    con.innerHTML += `<div id="cell_${cellId}" class="tt-cell ${extraClass} transition hover:bg-indigo-50/50 cursor-pointer"
+                        ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+                        onclick="handleCellClick('${cellId}')"
+                        data-day="${d}" data-period="${p}">${content}</div>`;
+                }
+            }
+        }
+
+        function renderDraggablePalette() {
+            const container = document.getElementById('draggableBlocks');
+            const gradeBlocks = blocks.filter(b => String(b.grade) === currentGrade);
+
+            if (!gradeBlocks.length) {
+                container.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">해당 학년 블록 없음</div>';
+                return;
+            }
+
+            container.innerHTML = gradeBlocks.map(b => {
+                const placedSlots = new Set();
+                for (const ck in allSchedule) {
+                    if (!ck.startsWith(b.grade + '_')) continue;
+                    for (const cellKey in allSchedule[ck]) {
+                        if (allSchedule[ck][cellKey].blockId === b.id) placedSlots.add(cellKey);
+                    }
+                }
+                const placed = placedSlots.size;
+                const done = placed >= b.hoursPerWeek;
+                const bgColor = done ? 'bg-green-50 border-green-200' : 'bg-white border-slate-200';
+                const badge = b.isElective ? ' <span class="text-purple-400">S</span>' : '';
+
+                return `<div draggable="true" ondragstart="event.dataTransfer.setData('text','${b.id}')"
+                    class="${bgColor} border p-2 rounded-lg cursor-move shadow-sm text-xs font-bold ${done ? 'text-green-600' : 'text-slate-700'} hover:shadow-md transition flex items-center justify-between gap-1">
+                    <div class="flex items-center gap-1 truncate">
+                        <i class="fas fa-grip-vertical text-slate-300 text-[10px]"></i>
+                        <span class="truncate">${b.name}${badge}</span>
+                    </div>
+                    <span class="text-[10px] ${done ? 'text-green-500' : 'text-amber-500'} flex-shrink-0">${placed}/${b.hoursPerWeek}</span>
+                </div>`;
+            }).join('');
+        }
+
+        // ── 드래그 앤 드롭 ──
+        function handleDragOver(ev) {
+            ev.preventDefault();
+            let tgt = ev.target;
+            while (tgt && !tgt.classList.contains('tt-cell')) tgt = tgt.parentElement;
+            if (tgt) tgt.classList.add('drag-over');
+        }
+
+        function handleDragLeave(ev) {
+            let tgt = ev.target;
+            while (tgt && !tgt.classList.contains('tt-cell')) tgt = tgt.parentElement;
+            if (tgt) tgt.classList.remove('drag-over');
+        }
+
+        function handleDrop(ev) {
+            ev.preventDefault();
+            // drag-over 제거
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+            const blockId = ev.dataTransfer.getData('text');
+            const block = blocks.find(b => b.id === blockId);
+            if (!block) return;
+
+            let target = ev.target;
+            while (target && !target.classList.contains('tt-cell')) target = target.parentElement;
+            if (!target || !target.dataset.day) return;
+
+            const day = parseInt(target.dataset.day);
+            const period = parseInt(target.dataset.period);
+
+            // 연속시수 공간 확인
+            for (let p = 0; p < block.linkedPeriods; p++) {
+                if (period + p > 7) {
+                    alert(`${block.linkedPeriods}연속 시수를 배치할 공간이 부족합니다. (${period}교시 시작 불가)`);
+                    return;
+                }
+            }
+
+            // 이미 배치된 셀 확인
+            const classKey = `${currentGrade}_${currentClass}`;
+            for (let p = 0; p < block.linkedPeriods; p++) {
+                const cellId = `${day}_${period + p}`;
+                if (allSchedule[classKey]?.[cellId]) {
+                    alert(`${period + p}교시에 이미 수업이 배치되어 있습니다. 먼저 제거하세요.`);
+                    return;
+                }
+            }
+
+            // 충돌 감지
+            const conflicts = checkConflicts(block, day, period);
+            if (conflicts.length > 0) {
+                const msg = conflicts.map(c => `  ${c.teacher}: ${c.grade}학년 ${c.cls}반 ${c.subject}`).join('\n');
+                if (!confirm(`교사 시간 충돌:\n${msg}\n\n그래도 배치하시겠습니까?`)) return;
+            }
+
+            // 제약조건 경고
+            const constraintWarns = [];
+            for (let lp = 0; lp < block.linkedPeriods; lp++) {
+                const prd = period + lp;
+                const dayName = DAYS[day];
+                for (const entry of block.entries) {
+                    const tk = teacherKey(entry);
+                    const cons = teacherConstraints[tk];
+                    if (cons) {
+                        for (const c of cons) {
+                            if (c.day === dayName && (c.period === null || c.period === prd)) {
+                                const desc = c.period === null ? `${dayName} 전체 수업불가` : `${dayName} ${prd}교시 제외`;
+                                constraintWarns.push(`  ${entry.teacherName}: ${desc}${c.reason ? ' ('+c.reason+')' : ''}`);
+                            }
+                        }
+                    }
+                }
+            }
+            if (constraintWarns.length > 0) {
+                if (!confirm(`⚠ 교사 제약조건 위반:\n${constraintWarns.join('\n')}\n\n그래도 배치하시겠습니까?`)) return;
+            }
+
+            // 배치
+            placeBlock(block, day, period);
+            renderClassGrid();
+            renderDraggablePalette();
+            renderBlockList();
+            updateStatInfo();
+        }
+
+        // 교사 고유키: memberId가 있으면 memberId, 없으면 이름으로 폴백
+        function teacherKey(entry) {
+            return entry.teacherId || entry.teacherName;
+        }
+
+        function placeBlock(block, day, period) {
+            const classCnt = getGradeCount(block.grade);
+
+            for (let p = 0; p < block.linkedPeriods; p++) {
+                const actualPeriod = period + p;
+                const cellId = `${day}_${actualPeriod}`;
+                const linkedPos = block.linkedPeriods > 1 ? (p === 0 ? 'top' : (p === block.linkedPeriods - 1 ? 'bottom' : 'middle')) : null;
+
+                if (block.isElective) {
+                    // 선택과목: 전체 학급에 동시 배치
+                    for (let c = 1; c <= classCnt; c++) {
+                        const ck = `${block.grade}_${c}`;
+                        if (!allSchedule[ck]) allSchedule[ck] = {};
+                        const entry = block.entries.find(e => e.classes.includes(String(c)));
+                        allSchedule[ck][cellId] = {
+                            blockId: block.id,
+                            subject: entry ? entry.subject : '선택',
+                            teacher: entry ? entry.teacherName : '-',
+                            teacherId: entry ? (entry.teacherId || '') : '',
+                            isElective: true,
+                            linkedPos
+                        };
+                    }
+                } else {
+                    // 일반과목: 담당반에만 배치
+                    block.entries.forEach(entry => {
+                        entry.classes.forEach(cls => {
+                            const ck = `${block.grade}_${cls}`;
+                            if (!allSchedule[ck]) allSchedule[ck] = {};
+                            allSchedule[ck][cellId] = {
+                                blockId: block.id,
+                                subject: entry.subject,
+                                teacher: entry.teacherName,
+                                teacherId: entry.teacherId || '',
+                                isElective: false,
+                                linkedPos
+                            };
+                        });
+                    });
+                }
+
+                // teacherBusy 업데이트 (teacherId 기반)
+                block.entries.forEach(entry => {
+                    const tk = teacherKey(entry);
+                    if (!teacherBusy[tk]) teacherBusy[tk] = new Set();
+                    teacherBusy[tk].add(cellId);
+                });
+            }
+        }
+
+        function checkConflicts(block, day, period) {
+            const conflicts = [];
+            for (let p = 0; p < block.linkedPeriods; p++) {
+                const cellId = `${day}_${period + p}`;
+                block.entries.forEach(entry => {
+                    const tk = teacherKey(entry);
+                    if (teacherBusy[tk]?.has(cellId)) {
+                        // 어디서 충돌하는지 찾기
+                        for (const ck in allSchedule) {
+                            const sched = allSchedule[ck][cellId];
+                            if (sched && isTeacherInBlock(sched.blockId, tk)) {
+                                const [g, c] = ck.split('_');
+                                if (!conflicts.find(x => x.teacherKey === tk && x.cellId === cellId)) {
+                                    conflicts.push({ teacher: entry.teacherName, teacherKey: tk, grade: g, cls: c, subject: sched.subject, cellId });
+                                }
+                                break;
+                            }
+                        }
+                    }
+                });
+            }
+            return conflicts;
+        }
+
+        function isTeacherInBlock(blockId, tk) {
+            const b = blocks.find(x => x.id === blockId);
+            return b?.entries.some(e => teacherKey(e) === tk);
+        }
+
+        function rebuildTeacherBusy() {
+            teacherBusy = {};
+            for (const ck in allSchedule) {
+                for (const cellKey in allSchedule[ck]) {
+                    const entry = allSchedule[ck][cellKey];
+                    const block = blocks.find(b => b.id === entry.blockId);
+                    if (block) {
+                        block.entries.forEach(e => {
+                            const tk = teacherKey(e);
+                            if (!teacherBusy[tk]) teacherBusy[tk] = new Set();
+                            teacherBusy[tk].add(cellKey);
+                        });
+                    } else if (entry.teacher) {
+                        // DB에서 로드된 항목 (blockId 없음) — teacherId 우선
+                        const tk = entry.teacherId || entry.teacher;
+                        if (!teacherBusy[tk]) teacherBusy[tk] = new Set();
+                        teacherBusy[tk].add(cellKey);
+                    }
+                }
+            }
+        }
+
+        function handleCellClick(cellId) {
+            const classKey = `${currentGrade}_${currentClass}`;
+            const entry = allSchedule[classKey]?.[cellId];
+            if (!entry) return;
+
+            if (confirm(`${entry.subject} (${entry.teacher})\n이 배치를 제거하시겠습니까?`)) {
+                removePlacement(entry.blockId, cellId);
+                renderClassGrid();
+                renderDraggablePalette();
+                renderBlockList();
+                updateStatInfo();
+            }
+        }
+
+        function removePlacement(blockId, cellId) {
+            const block = blocks.find(b => b.id === blockId);
+            const [day, period] = cellId.split('_').map(Number);
+            const linked = block?.linkedPeriods || 1;
+
+            // 연속시수 시작점 찾기
+            let startPeriod = period;
+            if (block && linked > 1) {
+                // 현재 셀이 블록의 중간/끝일 수 있으므로 시작점 탐색
+                for (let sp = Math.max(1, period - linked + 1); sp <= period; sp++) {
+                    const testCell = `${day}_${sp}`;
+                    const ck = `${currentGrade}_${currentClass}`;
+                    if (allSchedule[ck]?.[testCell]?.blockId === blockId) {
+                        startPeriod = sp;
+                        break;
+                    }
+                }
+            }
+
+            // 해당 블록의 모든 연속 교시 + 모든 학급에서 제거
+            for (let p = 0; p < linked; p++) {
+                const removeCellId = `${day}_${startPeriod + p}`;
+                for (const ck in allSchedule) {
+                    if (allSchedule[ck][removeCellId]?.blockId === blockId) {
+                        delete allSchedule[ck][removeCellId];
+                    }
+                }
+            }
+
+            // blockId가 null인 경우 (DB 로드 항목) 해당 셀만 제거
+            if (!blockId) {
+                const ck = `${currentGrade}_${currentClass}`;
+                delete allSchedule[ck]?.[cellId];
+            }
+
+            rebuildTeacherBusy();
+        }
+
+        function clearCurrentTimetable() {
+            if (!confirm(`${currentGrade}학년 시간표를 모두 초기화하시겠습니까?`)) return;
+            for (const ck in allSchedule) {
+                if (ck.startsWith(currentGrade + '_')) delete allSchedule[ck];
+            }
+            rebuildTeacherBusy();
+            renderClassGrid();
+            renderDraggablePalette();
+            renderBlockList();
+            updateStatInfo();
+        }
+
+        function updateStatInfo() {
+            const el = document.getElementById('statInfo');
+            let totalCells = 0, filledCells = 0;
+            const classCnt = getGradeCount(currentGrade);
+            for (let c = 1; c <= classCnt; c++) {
+                const ck = `${currentGrade}_${c}`;
+                totalCells += 35; // 7*5
+                if (allSchedule[ck]) filledCells += Object.keys(allSchedule[ck]).length;
+            }
+            const pct = totalCells > 0 ? Math.round(filledCells / totalCells * 100) : 0;
+            el.textContent = `${currentGrade}학년: ${classCnt}학급 x 35교시 = ${totalCells}칸 중 ${filledCells}칸 배치 (${pct}%)`;
+        }
+
+        // ==========================================
+        // DB 저장 / 불러오기
+        // ==========================================
+        async function saveScheduleToDB() {
+            if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
+            const dayNames = ['월', '화', '수', '목', '금'];
+            const entries = [];
+            for (const ck in allSchedule) {
+                const [grade, classNo] = ck.split('_');
+                for (const cellKey in allSchedule[ck]) {
+                    const [d, p] = cellKey.split('_');
+                    const entry = allSchedule[ck][cellKey];
+                    entries.push({
+                        grade, class_no: classNo,
+                        day_of_week: dayNames[parseInt(d)],
+                        period: parseInt(p),
+                        subject: entry.subject,
+                        member_name: entry.teacher,
+                        member_id: entry.teacherId || ''
+                    });
+                }
+            }
+            if (entries.length === 0) { alert('저장할 시간표 데이터가 없습니다.'); return; }
+            if (!confirm(`${entries.length}건의 시간표 데이터를 DB에 저장하시겠습니까?\n(기존 시간표는 삭제됩니다)`)) return;
+
+            try {
+                const response = await fetch('/api/timetable/schedule/save', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ school_id: currentUser.school_id, member_school: currentUser.member_school, data: entries })
+                });
+                const data = await response.json();
+                if (data.success) { alert(data.message); } else { alert('저장 실패: ' + data.message); }
+            } catch (error) { console.error('시간표 저장 오류:', error); alert('저장 중 오류가 발생했습니다.'); }
+        }
+
+        async function loadScheduleFromDB() {
+            if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
+            try {
+                let url = '/api/timetable/schedule/load?';
+                if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
+                else if (currentUser.member_school) url += `member_school=${encodeURIComponent(currentUser.member_school)}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.success && data.data) {
+                    allSchedule = {};
+                    const dayMap = { '월': 0, '화': 1, '수': 2, '목': 3, '금': 4 };
+                    data.data.forEach(entry => {
+                        const ck = `${entry.grade}_${entry.class_no}`;
+                        const dayIdx = dayMap[entry.day_of_week];
+                        if (dayIdx === undefined) return;
+                        const cellKey = `${dayIdx}_${entry.period}`;
+                        if (!allSchedule[ck]) allSchedule[ck] = {};
+                        allSchedule[ck][cellKey] = {
+                            blockId: null,
+                            subject: entry.subject,
+                            teacher: entry.member_name,
+                            teacherId: entry.member_id || '',
+                            isElective: false,
+                            linkedPos: null
+                        };
+                    });
+                    rebuildTeacherBusy();
+                    renderClassGrid();
+                    renderDraggablePalette();
+                    updateStatInfo();
+                    alert(`DB에서 ${data.count}건의 시간표를 불러왔습니다.`);
+                } else {
+                    alert(data.message || '시간표를 불러올 수 없습니다.');
+                }
+            } catch (error) { console.error('시간표 불러오기 오류:', error); alert('불러오기 중 오류가 발생했습니다.'); }
+        }
+
+        // ==========================================
+        // 인쇄 / 엑셀 / 유틸리티
+        // ==========================================
         function printTimetable() {
             const school = currentUser.member_school || '';
-            document.getElementById('printTitle').textContent = `${school} 시간표`;
+            document.getElementById('printTitle').textContent = `${school} ${currentGrade}학년 ${currentClass}반 시간표`;
             const now = new Date();
             document.getElementById('printDate').textContent = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} 출력`;
             setTimeout(() => window.print(), 200);
@@ -894,15 +2399,46 @@
 
         function exportToExcel() {
             if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
-            const headers = ['id', 'member_name', 'member_school', 'member_birth', 'grade', 'class_no', 'class_count', 'hours', 'day_of_week', 'period', 'subject'];
-            const ws_data = [headers];
-            teachers.forEach(t => { ws_data.push([t.id || '', t.name || '', currentUser.member_school || '', '', t.grade || '', t.classes || '', t.classCount || '', t.unitHours || '', '', '', t.subject || '']); });
+            const dayNames = ['월', '화', '수', '목', '금'];
+            const headers = ['학년', '반', '요일', '교시', '과목', '교사'];
+            const wsData = [headers];
+
+            for (const ck in allSchedule) {
+                const [grade, classNo] = ck.split('_');
+                for (const cellKey in allSchedule[ck]) {
+                    const [d, p] = cellKey.split('_');
+                    const entry = allSchedule[ck][cellKey];
+                    wsData.push([grade, classNo, dayNames[parseInt(d)], parseInt(p), entry.subject, entry.teacher]);
+                }
+            }
+
+            if (wsData.length <= 1) {
+                // 교사 목록이라도 내보내기
+                const teacherHeaders = ['id', 'member_name', 'subject', 'grade', 'class_no', 'class_count', 'hours'];
+                const tData = [teacherHeaders];
+                teachers.forEach(t => { tData.push([t.id || '', t.name || '', t.subject || '', t.grade || '', t.classes || '', t.classCount || '', t.unitHours || '']); });
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(tData);
+                XLSX.utils.book_append_sheet(wb, ws, "Teachers");
+                XLSX.writeFile(wb, "schoolus_timetable_data.xlsx");
+                return;
+            }
+
+            // 정렬
+            wsData.sort((a, b) => {
+                if (a[0] === '학년') return -1;
+                return a[0] - b[0] || a[1] - b[1] || dayNames.indexOf(a[2]) - dayNames.indexOf(b[2]) || a[3] - b[3];
+            });
+
             const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(ws_data);
-            XLSX.utils.book_append_sheet(wb, ws, "Teachers");
-            XLSX.writeFile(wb, "schoolus_timetable_data.xlsx");
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, "시간표");
+            XLSX.writeFile(wb, "schoolus_timetable_schedule.xlsx");
         }
-        
+
+        // ==========================================
+        // 초기화 실행
+        // ==========================================
         initUserInfo();
         initTimetable();
 

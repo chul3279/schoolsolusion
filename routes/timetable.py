@@ -366,11 +366,12 @@ def get_teacher_timetable():
     cursor = None
     try:
         member_name = sanitize_input(request.args.get('member_name'), 50)
+        query_member_id = sanitize_input(request.args.get('member_id'), 100)
         member_school = sanitize_input(request.args.get('member_school'), 100)
         school_id = sanitize_input(request.args.get('school_id'), 50)
 
-        if not member_name or (not member_school and not school_id):
-            return jsonify({'success': False, 'message': '로그인 정보가 없습니다.'})
+        if (not member_name and not query_member_id) or (not member_school and not school_id):
+            return jsonify({'success': False, 'message': '세션이 만료되었습니다. 다시 로그인해주세요.'})
 
         day_map = {0: '월', 1: '화', 2: '수', 3: '목', 4: '금', 5: '토', 6: '일'}
         today = day_map.get(datetime.now().weekday(), '월')
@@ -381,18 +382,27 @@ def get_teacher_timetable():
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
         cursor = conn.cursor()
 
-        # 1) 원본 시간표 조회
-        if school_id:
+        # 1) 원본 시간표 조회 — member_id 우선, 없으면 member_name 폴백
+        if query_member_id:
+            id_col = "school_id" if school_id else "member_school"
+            id_val = school_id or member_school
+            cursor.execute(f"""
+                SELECT period, subject, grade, class_no
+                FROM timetable
+                WHERE member_id = %s AND {id_col} = %s AND day_of_week = %s
+                ORDER BY period
+            """, (query_member_id, id_val, today))
+        elif school_id:
             cursor.execute("""
                 SELECT period, subject, grade, class_no
-                FROM timetable_tea
+                FROM timetable
                 WHERE member_name = %s AND school_id = %s AND day_of_week = %s
                 ORDER BY period
             """, (member_name, school_id, today))
         else:
             cursor.execute("""
                 SELECT period, subject, grade, class_no
-                FROM timetable_tea
+                FROM timetable
                 WHERE member_name = %s AND member_school = %s AND day_of_week = %s
                 ORDER BY period
             """, (member_name, member_school, today))
@@ -505,22 +515,20 @@ def get_class_timetable():
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
         cursor = conn.cursor()
 
-        # 1) 원본 시간표 조회 (timetable_tea 기준, FIND_IN_SET으로 학급 매칭)
+        # 1) 원본 시간표 조회 (timetable 테이블 사용, class_no 단일값)
         if school_id:
             cursor.execute("""
                 SELECT period, subject, member_name, grade, class_no
-                FROM timetable_tea
-                WHERE school_id = %s AND grade = %s
-                  AND FIND_IN_SET(%s, REPLACE(class_no, ' ', ''))
+                FROM timetable
+                WHERE school_id = %s AND grade = %s AND class_no = %s
                   AND day_of_week = %s
                 ORDER BY period
             """, (school_id, grade, class_no, today))
         else:
             cursor.execute("""
                 SELECT period, subject, member_name, grade, class_no
-                FROM timetable_tea
-                WHERE member_school = %s AND grade = %s
-                  AND FIND_IN_SET(%s, REPLACE(class_no, ' ', ''))
+                FROM timetable
+                WHERE member_school = %s AND grade = %s AND class_no = %s
                   AND day_of_week = %s
                 ORDER BY period
             """, (member_school, grade, class_no, today))
@@ -800,7 +808,7 @@ def get_timetable_tea_list():
         
         if school_id:
             cursor.execute("""
-                SELECT id, school_id, member_school, grade, class_no, class_conut,
+                SELECT id, school_id, member_id, member_school, grade, class_no, class_conut,
                        day_of_week, period, subject, member_name, hours, member_birth
                 FROM timetable_tea
                 WHERE school_id = %s
@@ -808,7 +816,7 @@ def get_timetable_tea_list():
             """, (school_id,))
         else:
             cursor.execute("""
-                SELECT id, school_id, member_school, grade, class_no, class_conut,
+                SELECT id, school_id, member_id, member_school, grade, class_no, class_conut,
                        day_of_week, period, subject, member_name, hours, member_birth
                 FROM timetable_tea
                 WHERE member_school = %s
@@ -863,6 +871,7 @@ def save_timetable_tea():
         inserted = 0
         
         for item in tea_data:
+            item_member_id = sanitize_input(item.get('member_id'), 100)
             member_name = sanitize_input(item.get('member_name'), 100)
             subject = sanitize_input(item.get('subject'), 100)
             grade = sanitize_input(item.get('grade'), 10)
@@ -872,16 +881,16 @@ def save_timetable_tea():
             day_of_week = sanitize_input(item.get('day_of_week'), 10)
             period = item.get('period')
             member_birth = sanitize_input(item.get('member_birth'), 20)
-            
+
             if not member_name:
                 continue
-            
+
             cursor.execute("""
-                INSERT INTO timetable_tea 
-                (school_id, member_school, member_name, subject, grade, class_no, class_conut, 
+                INSERT INTO timetable_tea
+                (school_id, member_id, member_school, member_name, subject, grade, class_no, class_conut,
                  hours, day_of_week, period, member_birth, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-            """, (school_id, member_school, member_name, subject, grade, class_no, class_conut,
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+            """, (school_id, item_member_id, member_school, member_name, subject, grade, class_no, class_conut,
                   hours, day_of_week, period, member_birth))
             inserted += 1
         
@@ -913,9 +922,10 @@ def get_teacher_week_timetable():
         school_id = sanitize_input(request.args.get('school_id'), 50)
         member_school = sanitize_input(request.args.get('member_school'), 200)
         member_name = sanitize_input(request.args.get('member_name'), 50)
+        query_member_id = sanitize_input(request.args.get('member_id'), 100)
         change_date = sanitize_input(request.args.get('change_date'), 20)
 
-        if not member_name or (not school_id and not member_school):
+        if (not member_name and not query_member_id) or (not school_id and not member_school):
             return jsonify({'success': False, 'message': '교사명과 학교 정보가 필요합니다.'})
 
         conn = get_db_connection()
@@ -923,10 +933,21 @@ def get_teacher_week_timetable():
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
         cursor = conn.cursor()
 
-        if school_id:
+        # timetable 테이블에서 실제 시간표 조회 (timetable_tea는 배정 데이터만 있음)
+        if query_member_id:
+            id_col = "school_id" if school_id else "member_school"
+            id_val = school_id or member_school
+            cursor.execute(f"""
+                SELECT day_of_week, period, subject, grade, class_no, member_name
+                FROM timetable
+                WHERE {id_col} = %s AND member_id = %s
+                  AND day_of_week IN ('월','화','수','목','금')
+                ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
+            """, (id_val, query_member_id))
+        elif school_id:
             cursor.execute("""
                 SELECT day_of_week, period, subject, grade, class_no, member_name
-                FROM timetable_tea
+                FROM timetable
                 WHERE school_id = %s AND member_name = %s
                   AND day_of_week IN ('월','화','수','목','금')
                 ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
@@ -934,7 +955,7 @@ def get_teacher_week_timetable():
         else:
             cursor.execute("""
                 SELECT day_of_week, period, subject, grade, class_no, member_name
-                FROM timetable_tea
+                FROM timetable
                 WHERE member_school = %s AND member_name = %s
                   AND day_of_week IN ('월','화','수','목','금')
                 ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
@@ -991,22 +1012,20 @@ def get_class_week_timetable():
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
         cursor = conn.cursor()
 
-        # class_no가 "1, 2, 3"처럼 쉼표 구분 저장되므로 FIND_IN_SET 사용
+        # timetable 테이블에서 실제 시간표 조회 (class_no는 단일값으로 저장됨)
         if school_id:
             cursor.execute("""
                 SELECT day_of_week, period, subject, grade, class_no, member_name
-                FROM timetable_tea
-                WHERE school_id = %s AND grade = %s
-                  AND FIND_IN_SET(%s, REPLACE(class_no, ' ', ''))
+                FROM timetable
+                WHERE school_id = %s AND grade = %s AND class_no = %s
                   AND day_of_week IN ('월','화','수','목','금')
                 ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
             """, (school_id, grade, class_no))
         else:
             cursor.execute("""
                 SELECT day_of_week, period, subject, grade, class_no, member_name
-                FROM timetable_tea
-                WHERE member_school = %s AND grade = %s
-                  AND FIND_IN_SET(%s, REPLACE(class_no, ' ', ''))
+                FROM timetable
+                WHERE member_school = %s AND grade = %s AND class_no = %s
                   AND day_of_week IN ('월','화','수','목','금')
                 ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
             """, (member_school, grade, class_no))
@@ -1035,6 +1054,143 @@ def get_class_week_timetable():
 
     except Exception as e:
         print(f"학급 주간 시간표 조회 오류: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 학교 전체 시간표 조회 API (출력용)
+# ============================================
+@timetable_bp.route('/api/timetable/school/all', methods=['GET'])
+def get_school_all_timetable():
+    conn = None
+    cursor = None
+    try:
+        school_id = sanitize_input(request.args.get('school_id'), 50)
+        if not school_id:
+            return jsonify({'success': False, 'message': 'school_id가 필요합니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT day_of_week, period, subject, grade, class_no, member_name, member_id
+            FROM timetable
+            WHERE school_id = %s AND day_of_week IN ('월','화','수','목','금')
+            ORDER BY grade, class_no, FIELD(day_of_week,'월','화','수','목','금'), period
+        """, (school_id,))
+        timetable = cursor.fetchall()
+
+        # 교사 목록 (부서 포함)
+        cursor.execute("""
+            SELECT member_id, member_name, department
+            FROM tea_all WHERE school_id = %s
+        """, (school_id,))
+        teachers = cursor.fetchall()
+
+        return jsonify({
+            'success': True,
+            'timetable': timetable,
+            'teachers': teachers,
+            'count': len(timetable)
+        })
+
+    except Exception as e:
+        print(f"학교 전체 시간표 조회 오류: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 교사별 제약조건 조회 API
+# ============================================
+@timetable_bp.route('/api/timetable-constraint/list', methods=['GET'])
+def get_timetable_constraints():
+    conn = None
+    cursor = None
+    try:
+        school_id = sanitize_input(request.args.get('school_id'), 50)
+        if not school_id:
+            return jsonify({'success': False, 'message': 'school_id가 필요합니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT id, member_id, member_name, constraint_type, day_of_week, period, reason
+            FROM timetable_constraint
+            WHERE school_id = %s
+            ORDER BY member_name, day_of_week, period
+        """, (school_id,))
+        data = cursor.fetchall()
+
+        return jsonify({'success': True, 'data': data})
+
+    except Exception as e:
+        print(f"제약조건 조회 오류: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 교사별 제약조건 저장 API
+# ============================================
+@timetable_bp.route('/api/timetable-constraint/save', methods=['POST'])
+def save_timetable_constraints():
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json()
+        school_id = sanitize_input(data.get('school_id'), 50)
+        constraints = data.get('constraints', [])
+
+        if not school_id:
+            return jsonify({'success': False, 'message': 'school_id가 필요합니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        # 기존 제약 전체 삭제
+        cursor.execute("DELETE FROM timetable_constraint WHERE school_id = %s", (school_id,))
+
+        # 새로 INSERT
+        if constraints:
+            insert_sql = """
+                INSERT INTO timetable_constraint
+                (school_id, member_id, member_name, constraint_type, day_of_week, period, reason)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            rows = []
+            for c in constraints:
+                rows.append((
+                    school_id,
+                    sanitize_input(c.get('member_id'), 100),
+                    sanitize_input(c.get('member_name'), 100),
+                    c.get('constraint_type', 'period_off'),
+                    sanitize_input(c.get('day_of_week'), 10),
+                    c.get('period') if c.get('period') is not None else None,
+                    sanitize_input(c.get('reason', ''), 200)
+                ))
+            cursor.executemany(insert_sql, rows)
+
+        conn.commit()
+        return jsonify({'success': True, 'message': f'{len(constraints)}건 저장 완료'})
+
+    except Exception as e:
+        if conn: conn.rollback()
+        print(f"제약조건 저장 오류: {e}")
         return jsonify({'success': False, 'message': str(e)})
     finally:
         if cursor: cursor.close()
@@ -1248,6 +1404,110 @@ def save_class_timetable_manual():
 # ============================================
 # 교사 시간표 수동 저장 API (교과업무용)
 # ============================================
+# ============================================
+# 시간표 스케줄 저장 API (timetablemaker용)
+# ============================================
+@timetable_bp.route('/api/timetable/schedule/save', methods=['POST'])
+def save_timetable_schedule():
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json()
+        school_id = sanitize_input(data.get('school_id'), 50)
+        member_school = sanitize_input(data.get('member_school'), 200)
+        entries = data.get('data', [])
+
+        if not school_id and not member_school:
+            return jsonify({'success': False, 'message': '학교 정보가 필요합니다.'})
+        if not entries:
+            return jsonify({'success': False, 'message': '저장할 시간표 데이터가 없습니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        # 기존 데이터 삭제
+        if school_id:
+            cursor.execute("DELETE FROM timetable WHERE school_id = %s", (school_id,))
+        else:
+            cursor.execute("DELETE FROM timetable WHERE member_school = %s", (member_school,))
+
+        inserted = 0
+        for item in entries:
+            grade = sanitize_input(str(item.get('grade', '')), 10)
+            class_no = sanitize_input(str(item.get('class_no', '')), 10)
+            day_of_week = sanitize_input(item.get('day_of_week', ''), 10)
+            period = item.get('period')
+            subject = sanitize_input(item.get('subject', ''), 100)
+            member_name = sanitize_input(item.get('member_name', ''), 100)
+            item_member_id = sanitize_input(item.get('member_id', ''), 100)
+
+            if not grade or not class_no or not day_of_week or not period or not subject:
+                continue
+
+            cursor.execute("""
+                INSERT INTO timetable
+                (school_id, member_id, member_school, grade, class_no, day_of_week, period, subject, member_name)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (school_id, item_member_id, member_school, grade, class_no, day_of_week, period, subject, member_name))
+            inserted += 1
+
+        conn.commit()
+        return jsonify({'success': True, 'message': f'시간표 저장 완료 ({inserted}건)', 'count': inserted})
+
+    except Exception as e:
+        if conn: conn.rollback()
+        print(f"시간표 스케줄 저장 오류: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 시간표 스케줄 불러오기 API (timetablemaker용)
+# ============================================
+@timetable_bp.route('/api/timetable/schedule/load', methods=['GET'])
+def load_timetable_schedule():
+    conn = None
+    cursor = None
+    try:
+        school_id = sanitize_input(request.args.get('school_id'), 50)
+        member_school = sanitize_input(request.args.get('member_school'), 200)
+
+        if not school_id and not member_school:
+            return jsonify({'success': False, 'message': '학교 정보가 필요합니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        if school_id:
+            cursor.execute("""
+                SELECT grade, class_no, day_of_week, period, subject, member_name, member_id
+                FROM timetable WHERE school_id = %s
+                ORDER BY grade, class_no, FIELD(day_of_week,'월','화','수','목','금'), period
+            """, (school_id,))
+        else:
+            cursor.execute("""
+                SELECT grade, class_no, day_of_week, period, subject, member_name, member_id
+                FROM timetable WHERE member_school = %s
+                ORDER BY grade, class_no, FIELD(day_of_week,'월','화','수','목','금'), period
+            """, (member_school,))
+
+        data = cursor.fetchall()
+        return jsonify({'success': True, 'data': data, 'count': len(data)})
+
+    except Exception as e:
+        print(f"시간표 스케줄 불러오기 오류: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
 @timetable_bp.route('/api/timetable/teacher/save-manual', methods=['POST'])
 def save_teacher_timetable_manual():
     conn = None
@@ -1304,6 +1564,365 @@ def save_teacher_timetable_manual():
     except Exception as e:
         if conn: conn.rollback()
         print(f"교사 시간표 수동 저장 오류: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 수업 교환 요청 생성 API
+# ============================================
+@timetable_bp.route('/api/timetable/exchange/create', methods=['POST'])
+def create_timetable_exchange():
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json()
+        school_id = sanitize_input(data.get('school_id'), 50)
+        member_school = sanitize_input(data.get('member_school'), 200)
+        exchange_date = sanitize_input(data.get('exchange_date'), 20)
+
+        requester_id = sanitize_input(data.get('requester_id'), 100)
+        requester_name = sanitize_input(data.get('requester_name'), 100)
+        requester_day = sanitize_input(data.get('requester_day'), 10)
+        requester_period = data.get('requester_period')
+        requester_subject = sanitize_input(data.get('requester_subject'), 100)
+        requester_grade = sanitize_input(data.get('requester_grade'), 10)
+        requester_class_no = sanitize_input(data.get('requester_class_no'), 10)
+
+        target_id = sanitize_input(data.get('target_id'), 100)
+        target_name = sanitize_input(data.get('target_name'), 100)
+        target_day = sanitize_input(data.get('target_day'), 10)
+        target_period = data.get('target_period')
+        target_subject = sanitize_input(data.get('target_subject'), 100)
+        target_grade = sanitize_input(data.get('target_grade'), 10)
+        target_class_no = sanitize_input(data.get('target_class_no'), 10)
+
+        reason = sanitize_input(data.get('reason', ''), 200)
+
+        if not school_id or not exchange_date or not requester_id or not target_id:
+            return jsonify({'success': False, 'message': '필수 항목이 누락되었습니다.'})
+        if not requester_day or requester_period is None or not target_day or target_period is None:
+            return jsonify({'success': False, 'message': '교환 교시 정보가 필요합니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        # 중복 검사: 같은 날짜+교시에 이미 pending 요청 있는지
+        cursor.execute("""
+            SELECT id FROM timetable_exchange
+            WHERE school_id = %s AND exchange_date = %s AND status = 'pending'
+              AND ((requester_id = %s AND requester_day = %s AND requester_period = %s)
+                OR (target_id = %s AND target_day = %s AND target_period = %s)
+                OR (requester_id = %s AND requester_day = %s AND requester_period = %s)
+                OR (target_id = %s AND target_day = %s AND target_period = %s))
+        """, (school_id, exchange_date,
+              requester_id, requester_day, requester_period,
+              requester_id, requester_day, requester_period,
+              target_id, target_day, target_period,
+              target_id, target_day, target_period))
+        if cursor.fetchone():
+            return jsonify({'success': False, 'message': '해당 교시에 이미 대기 중인 교환 요청이 있습니다.'})
+
+        cursor.execute("""
+            INSERT INTO timetable_exchange
+            (school_id, member_school, exchange_date,
+             requester_id, requester_name, requester_day, requester_period,
+             requester_subject, requester_grade, requester_class_no,
+             target_id, target_name, target_day, target_period,
+             target_subject, target_grade, target_class_no,
+             reason, status)
+            VALUES (%s,%s,%s, %s,%s,%s,%s, %s,%s,%s, %s,%s,%s,%s, %s,%s,%s, %s,'pending')
+        """, (school_id, member_school, exchange_date,
+              requester_id, requester_name, requester_day, requester_period,
+              requester_subject, requester_grade, requester_class_no,
+              target_id, target_name, target_day, target_period,
+              target_subject, target_grade, target_class_no,
+              reason))
+
+        conn.commit()
+        return jsonify({'success': True, 'message': '교환 요청이 등록되었습니다.', 'id': cursor.lastrowid})
+
+    except Exception as e:
+        if conn: conn.rollback()
+        print(f"교환 요청 생성 오류: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 수업 교환 요청 목록 조회 API
+# ============================================
+@timetable_bp.route('/api/timetable/exchange/list', methods=['GET'])
+def list_timetable_exchange():
+    conn = None
+    cursor = None
+    try:
+        school_id = sanitize_input(request.args.get('school_id'), 50)
+        member_id = sanitize_input(request.args.get('member_id'), 100)
+        status_filter = sanitize_input(request.args.get('status'), 20)
+        exchange_date = sanitize_input(request.args.get('exchange_date'), 20)
+
+        if not school_id:
+            return jsonify({'success': False, 'message': 'school_id가 필요합니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        q = "SELECT * FROM timetable_exchange WHERE school_id = %s"
+        params = [school_id]
+
+        if member_id:
+            q += " AND (requester_id = %s OR target_id = %s)"
+            params.extend([member_id, member_id])
+        if status_filter and status_filter != 'all':
+            q += " AND status = %s"
+            params.append(status_filter)
+        if exchange_date:
+            q += " AND exchange_date = %s"
+            params.append(exchange_date)
+
+        q += " ORDER BY created_at DESC"
+        cursor.execute(q, params)
+        rows = cursor.fetchall()
+
+        for r in rows:
+            if r.get('exchange_date'):
+                r['exchange_date'] = str(r['exchange_date'])
+            if r.get('created_at'):
+                r['created_at'] = str(r['created_at'])
+            if r.get('updated_at'):
+                r['updated_at'] = str(r['updated_at'])
+
+        return jsonify({'success': True, 'data': rows, 'count': len(rows)})
+
+    except Exception as e:
+        print(f"교환 요청 목록 조회 오류: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 수업 교환 요청 응답 (승인/거절) API
+# ============================================
+@timetable_bp.route('/api/timetable/exchange/respond', methods=['POST'])
+def respond_timetable_exchange():
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json()
+        exchange_id = data.get('exchange_id')
+        school_id = sanitize_input(data.get('school_id'), 50)
+        action = sanitize_input(data.get('action'), 20)
+        reject_reason = sanitize_input(data.get('reject_reason', ''), 200)
+
+        if not exchange_id or not school_id or action not in ('approve', 'reject'):
+            return jsonify({'success': False, 'message': '필수 항목이 누락되었습니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM timetable_exchange WHERE id = %s AND school_id = %s",
+                        (exchange_id, school_id))
+        ex = cursor.fetchone()
+        if not ex:
+            return jsonify({'success': False, 'message': '교환 요청을 찾을 수 없습니다.'})
+        if ex['status'] != 'pending':
+            return jsonify({'success': False, 'message': '이미 처리된 요청입니다.'})
+
+        if action == 'reject':
+            cursor.execute("""UPDATE timetable_exchange SET status='rejected', reject_reason=%s
+                            WHERE id=%s""", (reject_reason, exchange_id))
+            conn.commit()
+            return jsonify({'success': True, 'message': '교환 요청이 거절되었습니다.'})
+
+        # approve: timetable_changes에 2개 레코드 생성
+        # 레코드1: 요청자 슬롯 → 대상자가 가르침
+        cursor.execute("""
+            INSERT INTO timetable_changes
+            (school_id, member_school, change_date, day_of_week, period,
+             original_teacher, original_subject, original_grade, original_class_no,
+             new_teacher, new_subject, change_reason, changed_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (school_id, ex['member_school'], ex['exchange_date'],
+              ex['requester_day'], ex['requester_period'],
+              ex['requester_name'], ex['requester_subject'],
+              ex['requester_grade'], ex['requester_class_no'],
+              ex['target_name'], ex['requester_subject'],
+              '교환수업', ex['target_name']))
+        change_id_1 = cursor.lastrowid
+
+        # 레코드2: 대상자 슬롯 → 요청자가 가르침
+        cursor.execute("""
+            INSERT INTO timetable_changes
+            (school_id, member_school, change_date, day_of_week, period,
+             original_teacher, original_subject, original_grade, original_class_no,
+             new_teacher, new_subject, change_reason, changed_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (school_id, ex['member_school'], ex['exchange_date'],
+              ex['target_day'], ex['target_period'],
+              ex['target_name'], ex['target_subject'],
+              ex['target_grade'], ex['target_class_no'],
+              ex['requester_name'], ex['target_subject'],
+              '교환수업', ex['target_name']))
+        change_id_2 = cursor.lastrowid
+
+        cursor.execute("""UPDATE timetable_exchange
+            SET status='approved', change_id_1=%s, change_id_2=%s
+            WHERE id=%s""", (change_id_1, change_id_2, exchange_id))
+
+        conn.commit()
+        return jsonify({'success': True, 'message': '교환 요청이 승인되었습니다.'})
+
+    except Exception as e:
+        if conn: conn.rollback()
+        print(f"교환 요청 응답 오류: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 수업 교환 요청 취소 API
+# ============================================
+@timetable_bp.route('/api/timetable/exchange/cancel', methods=['POST'])
+def cancel_timetable_exchange():
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json()
+        exchange_id = data.get('exchange_id')
+        school_id = sanitize_input(data.get('school_id'), 50)
+
+        if not exchange_id or not school_id:
+            return jsonify({'success': False, 'message': '필수 항목이 누락되었습니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM timetable_exchange WHERE id = %s AND school_id = %s",
+                        (exchange_id, school_id))
+        ex = cursor.fetchone()
+        if not ex:
+            return jsonify({'success': False, 'message': '교환 요청을 찾을 수 없습니다.'})
+        if ex['status'] not in ('pending', 'approved'):
+            return jsonify({'success': False, 'message': '취소할 수 없는 상태입니다.'})
+
+        # approved 상태면 timetable_changes 레코드도 삭제
+        if ex['status'] == 'approved':
+            if ex.get('change_id_1'):
+                cursor.execute("DELETE FROM timetable_changes WHERE id = %s AND school_id = %s",
+                                (ex['change_id_1'], school_id))
+            if ex.get('change_id_2'):
+                cursor.execute("DELETE FROM timetable_changes WHERE id = %s AND school_id = %s",
+                                (ex['change_id_2'], school_id))
+
+        cursor.execute("UPDATE timetable_exchange SET status='cancelled' WHERE id=%s", (exchange_id,))
+        conn.commit()
+        return jsonify({'success': True, 'message': '교환 요청이 취소되었습니다.'})
+
+    except Exception as e:
+        if conn: conn.rollback()
+        print(f"교환 요청 취소 오류: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 특정교과 편성 조회 API
+# ============================================
+@timetable_bp.route('/api/timetable-fixed-subject/list', methods=['GET'])
+def get_fixed_subjects():
+    conn = None
+    cursor = None
+    try:
+        school_id = sanitize_input(request.args.get('school_id'), 50)
+        if not school_id:
+            return jsonify({'success': False, 'message': 'school_id가 필요합니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT id, grade, day_of_week, period_start, period_count, subject
+            FROM timetable_fixed_subject
+            WHERE school_id = %s
+            ORDER BY grade, FIELD(day_of_week,'월','화','수','목','금'), period_start
+        """, (school_id,))
+        data = cursor.fetchall()
+
+        return jsonify({'success': True, 'data': data})
+
+    except Exception as e:
+        print(f"특정교과 편성 조회 오류: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 특정교과 편성 저장 API
+# ============================================
+@timetable_bp.route('/api/timetable-fixed-subject/save', methods=['POST'])
+def save_fixed_subjects():
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json()
+        school_id = sanitize_input(data.get('school_id'), 50)
+        items = data.get('items', [])
+
+        if not school_id:
+            return jsonify({'success': False, 'message': 'school_id가 필요합니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        cursor.execute("DELETE FROM timetable_fixed_subject WHERE school_id = %s", (school_id,))
+
+        if items:
+            sql = """INSERT INTO timetable_fixed_subject
+                (school_id, grade, day_of_week, period_start, period_count, subject)
+                VALUES (%s, %s, %s, %s, %s, %s)"""
+            rows = []
+            for it in items:
+                rows.append((
+                    school_id,
+                    sanitize_input(it.get('grade', ''), 10),
+                    sanitize_input(it.get('day_of_week', ''), 10),
+                    it.get('period_start', 1),
+                    it.get('period_count', 1),
+                    sanitize_input(it.get('subject', ''), 100)
+                ))
+            cursor.executemany(sql, rows)
+
+        conn.commit()
+        return jsonify({'success': True, 'message': f'{len(items)}건 저장 완료'})
+
+    except Exception as e:
+        if conn: conn.rollback()
+        print(f"특정교과 편성 저장 오류: {e}")
         return jsonify({'success': False, 'message': str(e)})
     finally:
         if cursor: cursor.close()
