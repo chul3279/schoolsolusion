@@ -684,7 +684,16 @@ async function saveSubjectWrite(status) {
     } catch (e) { alert('저장 중 오류 발생'); }
 }
 
+// ===== 자유학기 옵션 토글 (중학교 1학년만) =====
+function toggleFreeSemesterOption() {
+    const grade = document.getElementById('sw-grade')?.value;
+    const el = document.getElementById('sw-free-semester-wrap');
+    if (el) el.classList.toggle('hidden', grade !== '1');
+    if (grade !== '1') { const cb = document.getElementById('sw-free-semester'); if (cb) cb.checked = false; }
+}
+
 async function onSubjectWriteFilterChange() {
+    toggleFreeSemesterOption();
     const subjectName = document.getElementById('sw-subject')?.value;
     const grade = document.getElementById('sw-grade')?.value; const classNo = document.getElementById('sw-class')?.value;
     const year = document.getElementById('sw-year')?.value; const semester = document.getElementById('sw-semester')?.value;
@@ -769,7 +778,7 @@ async function generateSubjectAI() {
     document.getElementById('sw-content').value = '⏳ AI가 생성 중입니다... 잠시만 기다려주세요.'; document.getElementById('sw-content').disabled = true;
     try {
         const res = await fetch('/api/subject/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ member_id: userInfo.member_id, school_id: userInfo.school_id, student_id: swSelectedStudent?.member_id, student_name: studentName, subject_name: subjectName, class_grade: grade, class_no: classNo, base_data: baseRef, common_activities: [], submission_data: '', byte_limit: byteLimit }) });
+            body: JSON.stringify({ member_id: userInfo.member_id, school_id: userInfo.school_id, student_id: swSelectedStudent?.member_id, student_name: studentName, subject_name: subjectName, class_grade: grade, class_no: classNo, base_data: baseRef, common_activities: [], submission_data: '', byte_limit: byteLimit, school_level: 'middle', free_semester: document.getElementById('sw-free-semester')?.checked || false }) });
         const data = await res.json();
         if (data.success) { document.getElementById('sw-content').value = data.content; updateSubjectWriteBytes(); if (data.new_point !== undefined) displayPoint(data.new_point); const pointMsg = data.new_point === 'free' ? '(Free 사용자)' : `차감: -${data.point_used}P → 잔여: ${typeof data.new_point === 'number' ? data.new_point.toLocaleString() : data.new_point}P`; alert(`✅ AI 과세특 생성 완료!\n\n생성 바이트: ${data.bytes}B / ${byteLimit}B\n포인트 ${pointMsg}\n\n내용을 확인하고 필요시 수정 후 저장하세요.`); }
         else { document.getElementById('sw-content').value = ''; alert(data.point_error ? data.message : 'AI 생성 실패: ' + data.message); if (!data.point_error && data.new_point !== undefined) displayPoint(data.new_point); }
@@ -790,7 +799,7 @@ async function generateClubAI() {
     document.getElementById('cw-content').value = '⏳ AI가 생성 중입니다... 잠시만 기다려주세요.'; document.getElementById('cw-content').disabled = true;
     try {
         const res = await fetch('/api/club/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ member_id: userInfo.member_id, school_id: userInfo.school_id, student_id: cwSelectedStudent?.member_id, student_name: studentName, club_name: clubName, class_grade: cwSelectedStudent?.class_grade || '', class_no: cwSelectedStudent?.class_no || '', base_data: baseRef, common_activities: [], file_data: '', byte_limit: byteLimit }) });
+            body: JSON.stringify({ member_id: userInfo.member_id, school_id: userInfo.school_id, student_id: cwSelectedStudent?.member_id, student_name: studentName, club_name: clubName, class_grade: cwSelectedStudent?.class_grade || '', class_no: cwSelectedStudent?.class_no || '', base_data: baseRef, common_activities: [], file_data: '', byte_limit: byteLimit, school_level: 'middle' }) });
         const data = await res.json();
         if (data.success) { document.getElementById('cw-content').value = data.content; updateClubWriteBytes(); if (data.new_point !== undefined) displayPoint(data.new_point); const pointMsg = data.new_point === 'free' ? '(Free 사용자)' : `차감: -${data.point_used}P → 잔여: ${typeof data.new_point === 'number' ? data.new_point.toLocaleString() : data.new_point}P`; alert(`✅ AI 동아리 기록 생성 완료!\n\n생성 바이트: ${data.bytes}B / ${byteLimit}B\n포인트 ${pointMsg}\n\n내용을 확인하고 필요시 수정 후 저장하세요.`); }
         else { document.getElementById('cw-content').value = ''; alert(data.point_error ? data.message : 'AI 생성 실패: ' + data.message); if (!data.point_error && data.new_point !== undefined) displayPoint(data.new_point); }

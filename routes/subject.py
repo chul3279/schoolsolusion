@@ -16,7 +16,7 @@ from routes.subject_utils import (
     allowed_file,
     call_gemini, resummarize, calc_neis_bytes, byte_instruction,
     check_and_deduct_point,
-    SUBJECT_WRITING_RULES, AI_POINT_COST
+    SUBJECT_WRITING_RULES, MIDDLE_SUBJECT_WRITING_RULES, AI_POINT_COST
 )
 
 subject_bp = Blueprint('subject', __name__)
@@ -886,6 +886,8 @@ def generate_subject_record():
         submission_data = sanitize_html(data.get('submission_data', ''))
         byte_limit = int(data.get('byte_limit', 1500))
         school_id = sanitize_input(data.get('school_id'), 50)
+        school_level = data.get('school_level', 'high')
+        free_semester = data.get('free_semester', False)
 
         if not all([member_id, student_name, subject_name]):
             return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
@@ -1052,13 +1054,8 @@ def generate_subject_record():
 
         char_inst = byte_instruction(byte_limit)
 
-        prompt = f"""당신은 대한민국 고등학교에서 20년 이상 근무한 베테랑 교과 담당 교사입니다.
-학생부종합전형에서 높은 평가를 받는 '교과학습발달상황 - 세부능력 및 특기사항(과세특)'을 작성하는 전문가입니다.
-아래 학생의 기초자료와 과목 공통사항을 바탕으로 과세특을 작성해주세요.
-
-{SUBJECT_WRITING_RULES}
-
-[학생 정보]
+        # 공통 학생정보/자료 블록
+        common_info_block = f"""[학생 정보]
 - 이름: {student_name} (작성 시 이름 및 지칭어 사용 금지, 주어 생략하고 바로 서술)
 - 학년/반: {class_grade}학년 {class_no}반
 - 과목: {subject_name}
@@ -1076,7 +1073,44 @@ def generate_subject_record():
 {teacher_file_text if teacher_file_text else '(첨부 파일 없음)'}
 
 [작성 분량]
-{char_inst}
+{char_inst}"""
+
+        if school_level == 'middle':
+            free_semester_instruction = ''
+            if free_semester:
+                free_semester_instruction = """
+[자유학기 특별 지시]
+- 이 학생은 자유학기제 적용 대상입니다.
+- 반드시 작성 내용 맨 앞에 "(자유학기)" 접두사를 붙여 시작하세요.
+- 성취도(A~E)를 언급하지 마세요. 과정 중심 평가만 서술합니다.
+- 학생의 참여도, 흥미, 태도 변화, 성장 과정에 초점을 두어 서술하세요.
+"""
+            prompt = f"""당신은 대한민국 중학교에서 20년 이상 근무한 베테랑 교과 담당 교사입니다.
+중학생의 성장과 발전 가능성을 잘 포착하여 '교과학습발달상황 - 세부능력 및 특기사항(과세특)'을 작성하는 전문가입니다.
+아래 학생의 기초자료와 과목 공통사항을 바탕으로 과세특을 작성해주세요.
+
+{MIDDLE_SUBJECT_WRITING_RULES}
+
+{common_info_block}
+{free_semester_instruction}
+위 정보를 바탕으로 '{subject_name}' 과목의 세부능력 및 특기사항을 작성해주세요.
+기초자료, 공통활동, 제출 과제, 교사 첨부파일을 모두 참고하여 종합적으로 서술하세요.
+태그 없이 본문만 출력하세요. 절대 학생 이름이나 지칭어를 포함하지 마세요.
+
+[서술 방법]
+- 수업 내 관심/참여 → 탐구/활동 과정 → 성장/변화 → 잠재력/태도 평가 흐름으로 작성
+- 교과 내용을 일상생활이나 다른 과목과 연결하여 통합적 사고를 보여줄 것
+- 학습 과정에서의 시행착오와 이를 극복한 경험을 긍정적으로 서술
+- 학습 의욕, 성실성, 협동심, 자기주도 학습 역량, 잠재력 등이 구체적 행동으로 드러나도록 작성
+- 또래와의 협력, 소통, 배려 등 공동체 역량을 자연스럽게 포함"""
+        else:
+            prompt = f"""당신은 대한민국 고등학교에서 20년 이상 근무한 베테랑 교과 담당 교사입니다.
+학생부종합전형에서 높은 평가를 받는 '교과학습발달상황 - 세부능력 및 특기사항(과세특)'을 작성하는 전문가입니다.
+아래 학생의 기초자료와 과목 공통사항을 바탕으로 과세특을 작성해주세요.
+
+{SUBJECT_WRITING_RULES}
+
+{common_info_block}
 
 위 정보를 바탕으로 '{subject_name}' 과목의 세부능력 및 특기사항을 작성해주세요.
 기초자료, 공통활동, 제출 과제, 교사 첨부파일을 모두 참고하여 종합적으로 서술하세요.

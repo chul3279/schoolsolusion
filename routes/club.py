@@ -15,7 +15,7 @@ from routes.subject_utils import (
     allowed_file,
     call_gemini, resummarize, calc_neis_bytes, byte_instruction,
     check_and_deduct_point,
-    SUBJECT_WRITING_RULES, AI_POINT_COST
+    SUBJECT_WRITING_RULES, MIDDLE_SUBJECT_WRITING_RULES, AI_POINT_COST
 )
 
 club_bp = Blueprint('club', __name__)
@@ -931,6 +931,7 @@ def generate_club_record():
         common_activities = data.get('common_activities', [])
         byte_limit = int(data.get('byte_limit', 1500))
         school_id = sanitize_input(data.get('school_id'), 50)
+        school_level = data.get('school_level', 'high')
 
         if not all([member_id, student_name, club_name]):
             return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
@@ -1023,13 +1024,8 @@ def generate_club_record():
 
         char_inst = byte_instruction(byte_limit)
 
-        prompt = f"""당신은 대한민국 고등학교에서 20년 이상 근무한 베테랑 동아리 지도 교사입니다.
-학생부종합전형에서 높은 평가를 받는 '창의적 체험활동 - 동아리활동' 기록을 작성하는 전문가입니다.
-아래 학생의 기초자료와 동아리 공통사항을 바탕으로 동아리 활동 기록을 작성해주세요.
-
-{SUBJECT_WRITING_RULES}
-
-[학생 정보]
+        # 공통 정보 블록
+        common_info_block = f"""[학생 정보]
 - 이름: {student_name} (작성 시 이름 및 지칭어 사용 금지, 주어 생략하고 바로 서술)
 - 학년/반: {class_grade}학년 {class_no}반
 - 동아리: {club_name}
@@ -1044,7 +1040,41 @@ def generate_club_record():
 {file_text if file_text else '(첨부 파일 없음)'}
 
 [작성 분량]
-{char_inst}
+{char_inst}"""
+
+        if school_level == 'middle':
+            prompt = f"""당신은 대한민국 중학교에서 20년 이상 근무한 베테랑 동아리 지도 교사입니다.
+중학생의 성장과 변화를 잘 포착하여 '창의적 체험활동 - 동아리활동' 기록을 작성하는 전문가입니다.
+아래 학생의 기초자료와 동아리 공통사항을 바탕으로 동아리 활동 기록을 작성해주세요.
+
+{MIDDLE_SUBJECT_WRITING_RULES}
+
+{common_info_block}
+
+위 정보를 바탕으로 '{club_name}' 동아리 활동 기록을 작성해주세요.
+기초자료, 공통활동, 첨부 자료를 모두 참고하여 종합적으로 서술하세요.
+태그 없이 본문만 출력하세요. 절대 학생 이름이나 지칭어를 포함하지 마세요.
+
+[포함 요소]
+- 동아리 내에서의 역할과 참여 태도
+- 구체적인 활동 사례와 에피소드
+- 활동을 통한 성장과 변화
+- 또래와의 협력, 소통, 배려
+- 동아리 활동을 통해 발견한 흥미와 잠재력
+
+[서술 방법]
+- 동아리 활동 참여 계기 → 구체적 역할·참여 과정 → 성장/변화 → 잠재력·태도 평가 흐름으로 작성
+- 활동 과정에서의 시행착오와 이를 극복한 경험을 긍정적으로 서술
+- 또래와의 협력, 소통, 배려 등 공동체 역량이 구체적 행동 사례로 드러나도록 작성
+- 학생의 흥미, 적극성, 성실성, 성장 가능성이 자연스럽게 드러나도록 서술"""
+        else:
+            prompt = f"""당신은 대한민국 고등학교에서 20년 이상 근무한 베테랑 동아리 지도 교사입니다.
+학생부종합전형에서 높은 평가를 받는 '창의적 체험활동 - 동아리활동' 기록을 작성하는 전문가입니다.
+아래 학생의 기초자료와 동아리 공통사항을 바탕으로 동아리 활동 기록을 작성해주세요.
+
+{SUBJECT_WRITING_RULES}
+
+{common_info_block}
 
 위 정보를 바탕으로 '{club_name}' 동아리 활동 기록을 작성해주세요.
 기초자료, 공통활동, 첨부 자료를 모두 참고하여 종합적으로 서술하세요.
