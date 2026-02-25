@@ -462,19 +462,33 @@ def respond_survey():
         """, (survey_id, user_id, user_role))
         response_id = cursor.lastrowid
 
+        saved_count = 0
         for ans in answers:
             question_id = sanitize_input(str(ans.get('question_id', '')), 20)
-            answer_value = sanitize_html(str(ans.get('answer_value', '')), 2000)
+            answer_value = sanitize_html(str(ans.get('answer_value', '') or ''), 2000)
             if not question_id:
                 continue
             # question_id가 유효한 DB ID가 아니면 question_order로 매핑 시도
             if question_id not in valid_qids:
-                question_id = order_to_id.get(question_id, question_id)
+                mapped = order_to_id.get(question_id, question_id)
+                if mapped != question_id:
+                    question_id = mapped
+                else:
+                    # 순서 기반 매핑도 실패 → 인덱스로 시도 (1-based)
+                    idx_based = order_to_id.get(str(answers.index(ans) + 1))
+                    if idx_based:
+                        question_id = idx_based
             if question_id in valid_qids:
                 cursor.execute("""
                     INSERT INTO survey_answer (response_id, question_id, answer_value)
                     VALUES (%s, %s, %s)
                 """, (response_id, question_id, answer_value))
+                saved_count += 1
+            else:
+                print(f"[survey] 응답 저장 건너뜀: question_id={question_id}, valid={valid_qids}, order_map={order_to_id}")
+
+        if saved_count == 0 and len(answers) > 0:
+            print(f"[survey] 경고: {len(answers)}개 답변 중 0개 저장됨! survey_id={survey_id}, response_id={response_id}")
 
         conn.commit()
         return jsonify({'success': True, 'message': '응답이 제출되었습니다.'})

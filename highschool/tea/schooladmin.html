@@ -140,6 +140,9 @@
                     <button onclick="switchTab('afterschool')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200" id="tab-afterschool">
                         <i class="fas fa-book-reader mr-2"></i>방과후학교
                     </button>
+                    <button onclick="switchTab('letter')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200" id="tab-letter">
+                        <i class="fas fa-envelope-open-text mr-2"></i>가정통신문
+                    </button>
                 </div>
 
                 <!-- ===================== 대시보드 탭 ===================== -->
@@ -361,6 +364,26 @@
                     </div>
                 </div>
 
+                <!-- ===================== 가정통신문 탭 ===================== -->
+                <div id="panel-letter" class="tab-panel">
+                    <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                        <div class="bg-gradient-to-r from-rose-500 to-pink-600 p-5 text-white">
+                            <div class="flex justify-between items-center flex-wrap gap-3">
+                                <div>
+                                    <h3 class="font-bold text-lg"><i class="fas fa-envelope-open-text mr-2"></i>가정통신문</h3>
+                                    <p class="text-sm text-white/80">학부모에게 전달할 가정통신문을 작성합니다.</p>
+                                </div>
+                                <button onclick="openLetterCreateModal()" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold transition">
+                                    <i class="fas fa-plus mr-1"></i>새 통신문
+                                </button>
+                            </div>
+                        </div>
+                        <div id="letter-list-teacher" class="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
+                            <div class="text-center py-8 text-slate-300"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><p class="text-xs">로딩 중...</p></div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </main>
@@ -427,6 +450,60 @@
             </div>
             <div class="p-4 bg-slate-50 border-t flex-shrink-0">
                 <button onclick="saveMealData()" class="w-full bg-gradient-to-r from-pink-500 to-rose-600 text-white font-black py-4 rounded-xl shadow-lg hover:shadow-xl transition"><i class="fas fa-save mr-2"></i>저장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 가정통신문 작성 모달 -->
+    <div id="letter-create-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeLetterCreateModal()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="bg-gradient-to-r from-rose-500 to-pink-600 p-5 text-white flex-shrink-0">
+                <button onclick="closeLetterCreateModal()" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <h3 class="font-bold text-lg"><i class="fas fa-pen mr-2"></i>가정통신문 작성</h3>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">제목 <span class="text-red-500">*</span></label>
+                    <input type="text" id="letter-title" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-rose-500 outline-none" placeholder="통신문 제목">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">내용 <span class="text-red-500">*</span></label>
+                    <textarea id="letter-content" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-rose-500 outline-none resize-none" rows="6" placeholder="통신문 내용을 입력하세요"></textarea>
+                </div>
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="letter-require-consent" class="w-4 h-4 text-rose-500 rounded" onchange="toggleConsentDeadline()">
+                        <span class="text-sm font-medium text-slate-700">동의서 필요</span>
+                    </label>
+                    <input type="date" id="letter-consent-deadline" class="px-3 py-2 border-2 border-slate-200 rounded-xl text-sm hidden" placeholder="마감일">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">첨부파일</label>
+                    <input type="file" id="letter-file" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100">
+                </div>
+                <button onclick="submitLetter()" class="w-full py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-xl font-bold hover:opacity-90 transition">
+                    <i class="fas fa-paper-plane mr-2"></i>발송하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 동의현황 모달 -->
+    <div id="consent-status-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeConsentModal()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="bg-gradient-to-r from-rose-500 to-pink-600 p-5 text-white flex-shrink-0">
+                <button onclick="closeConsentModal()" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <h3 class="font-bold text-lg"><i class="fas fa-poll mr-2"></i>동의현황</h3>
+                <div id="consent-summary" class="text-sm text-white/80 mt-1"></div>
+            </div>
+            <div class="p-4 flex justify-end">
+                <button onclick="exportConsentCSV()" class="px-4 py-2 bg-emerald-500 text-white rounded-xl text-sm font-bold hover:bg-emerald-600 transition">
+                    <i class="fas fa-file-csv mr-1"></i>CSV 내보내기
+                </button>
+            </div>
+            <div id="consent-list" class="p-4 pt-0 overflow-y-auto flex-1 space-y-2">
             </div>
         </div>
     </div>
@@ -527,6 +604,7 @@
 
             if (tabName === 'survey') loadSurveys();
             if (tabName === 'afterschool') loadPrograms();
+            if (tabName === 'letter') loadTeacherLetters();
         }
 
         // ==========================================
@@ -1315,6 +1393,152 @@
                     document.getElementById('panel-afterschool').classList.remove('print-target');
                 }, 200);
             } catch(e) { alert('출석부 조회 오류'); }
+        }
+
+        // ==========================================
+        // 가정통신문
+        // ==========================================
+        let currentConsentLetterId = null;
+
+        async function loadTeacherLetters() {
+            const container = document.getElementById('letter-list-teacher');
+            try {
+                const params = getSchoolParams();
+                const response = await fetch(`/api/letter/list?${params.toString()}`);
+                const data = await response.json();
+
+                if (data.success && data.letters?.length > 0) {
+                    container.innerHTML = data.letters.map(l => {
+                        let badges = '';
+                        if (l.require_consent) badges += '<span class="px-2 py-0.5 bg-rose-100 text-rose-600 rounded-full text-xs font-medium">동의필요</span> ';
+                        if (l.has_file) badges += '<span class="px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-full text-xs"><i class="fas fa-paperclip"></i></span>';
+                        return `
+                        <div class="p-4 hover:bg-slate-50 transition">
+                            <div class="flex items-start gap-3">
+                                <span class="w-8 h-8 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas fa-envelope text-sm"></i></span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-slate-800 truncate">${l.title}</p>
+                                    <p class="text-xs text-slate-500 mt-1">${l.created_at} ${badges}</p>
+                                </div>
+                                <div class="flex gap-1 flex-shrink-0">
+                                    ${l.require_consent ? `<button onclick="openConsentStatus(${l.id})" class="px-3 py-1.5 bg-purple-100 text-purple-600 rounded-lg text-xs font-medium hover:bg-purple-200 transition"><i class="fas fa-poll mr-1"></i>현황</button>` : ''}
+                                    <button onclick="deleteLetter(${l.id})" class="px-2 py-1.5 bg-red-50 text-red-400 rounded-lg text-xs hover:bg-red-100 transition"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-envelope-open text-2xl mb-2"></i><p class="text-xs">가정통신문이 없습니다.</p></div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-xs">목록을 불러올 수 없습니다.</p></div>';
+            }
+        }
+
+        function openLetterCreateModal() {
+            document.getElementById('letter-title').value = '';
+            document.getElementById('letter-content').value = '';
+            document.getElementById('letter-require-consent').checked = false;
+            document.getElementById('letter-consent-deadline').classList.add('hidden');
+            document.getElementById('letter-consent-deadline').value = '';
+            document.getElementById('letter-file').value = '';
+            document.getElementById('letter-create-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLetterCreateModal() {
+            document.getElementById('letter-create-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function toggleConsentDeadline() {
+            const dl = document.getElementById('letter-consent-deadline');
+            dl.classList.toggle('hidden', !document.getElementById('letter-require-consent').checked);
+        }
+
+        async function submitLetter() {
+            const title = document.getElementById('letter-title').value.trim();
+            const content = document.getElementById('letter-content').value.trim();
+            if (!title || !content) { alert('제목과 내용을 입력해주세요.'); return; }
+
+            const formData = new FormData();
+            formData.append('school_id', currentUser.school_id);
+            formData.append('title', title);
+            formData.append('content', content);
+            formData.append('require_consent', document.getElementById('letter-require-consent').checked ? '1' : '0');
+            formData.append('consent_deadline', document.getElementById('letter-consent-deadline').value || '');
+
+            const fileInput = document.getElementById('letter-file');
+            if (fileInput.files.length > 0) {
+                formData.append('file', fileInput.files[0]);
+            }
+
+            try {
+                const response = await fetch('/api/letter/create', { method: 'POST', body: formData });
+                const data = await response.json();
+                if (data.success) {
+                    alert(data.message);
+                    closeLetterCreateModal();
+                    loadTeacherLetters();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) { alert('발송 중 오류가 발생했습니다.'); }
+        }
+
+        async function deleteLetter(id) {
+            if (!confirm('이 가정통신문을 삭제하시겠습니까?')) return;
+            try {
+                const response = await fetch('/api/letter/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id})
+                });
+                const data = await response.json();
+                if (data.success) { loadTeacherLetters(); } else { alert(data.message); }
+            } catch (error) { alert('삭제 중 오류가 발생했습니다.'); }
+        }
+
+        async function openConsentStatus(letterId) {
+            currentConsentLetterId = letterId;
+            try {
+                const response = await fetch(`/api/letter/consent-status?id=${letterId}`);
+                const data = await response.json();
+                if (!data.success) { alert(data.message); return; }
+
+                const s = data.summary;
+                document.getElementById('consent-summary').textContent = `동의 ${s.agreed} / 미동의 ${s.disagreed} / 미응답 ${s.no_reply} (총 ${s.total}명)`;
+
+                const statusColors = {agreed:'emerald', disagreed:'red', no_reply:'slate'};
+                const statusNames = {agreed:'동의', disagreed:'미동의', no_reply:'미응답'};
+
+                document.getElementById('consent-list').innerHTML = data.consent_list.map(c => `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                        <div>
+                            <span class="text-sm font-bold text-slate-800">${c.class_num || '-'}번 ${c.student_name}</span>
+                            <span class="text-xs text-slate-500 ml-2">(${c.parent_name})</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${c.reply_memo ? `<span class="text-xs text-slate-400">${c.reply_memo}</span>` : ''}
+                            <span class="px-2 py-0.5 bg-${statusColors[c.consent_status]}-100 text-${statusColors[c.consent_status]}-600 rounded-full text-xs font-medium">${statusNames[c.consent_status]}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('consent-status-modal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } catch (error) { alert('동의현황을 불러올 수 없습니다.'); }
+        }
+
+        function closeConsentModal() {
+            document.getElementById('consent-status-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function exportConsentCSV() {
+            if (currentConsentLetterId) {
+                window.open(`/api/letter/export?id=${currentConsentLetterId}`, '_blank');
+            }
         }
 
         // ==========================================

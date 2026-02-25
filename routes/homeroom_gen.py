@@ -234,6 +234,48 @@ def _resummarize(original_text, max_bytes, tag_name):
     return original_text
 
 
+# ============================================
+# 생기부 삭제 API
+# ============================================
+@homeroom_gen_bp.route('/api/homeroom/school-record-gen/delete', methods=['POST'])
+def delete_school_record_gen():
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json()
+        school_id = sanitize_input(data.get('school_id'), 50)
+        student_id = sanitize_input(data.get('student_id'), 50)
+        record_year = sanitize_input(str(data.get('record_year', '')), 10)
+        record_semester = sanitize_input(str(data.get('record_semester', '')), 5)
+
+        if not school_id or not student_id or not record_year:
+            return jsonify({'success': False, 'message': '필수 파라미터가 누락되었습니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+
+        cursor = conn.cursor()
+        cursor.execute("""
+            DELETE FROM school_record_generated
+            WHERE school_id = %s AND student_id = %s AND record_year = %s AND record_semester = %s
+        """, (school_id, student_id, record_year, record_semester))
+        conn.commit()
+
+        if cursor.rowcount > 0:
+            return jsonify({'success': True, 'message': '생기부 데이터가 삭제되었습니다.'})
+        else:
+            return jsonify({'success': False, 'message': '삭제할 데이터가 없습니다.'})
+
+    except Exception as e:
+        if conn: conn.rollback()
+        print(f"생기부 삭제 오류: {e}")
+        return jsonify({'success': False, 'message': '생기부 삭제 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
 WRITING_RULES = """
 [필수 작성 규칙 - 교육부 학교생활기록부 기재요령 준수]
 
@@ -438,8 +480,10 @@ def generate_school_record():
 
 {WRITING_RULES}
 
-아래 4가지 항목을 각각 작성해주세요. 반드시 해당 XML 태그로 감싸서 응답하세요.
+아래 4가지 항목을 모두 빠짐없이 작성해주세요. 반드시 해당 XML 태그로 감싸서 응답하세요.
 태그 외의 설명이나 부연은 절대 작성하지 마세요.
+[중요] 4개 항목 전부 작성 필수입니다. 봉사활동 포함 어떤 항목도 생략하지 마세요.
+[중요] 2015 교육과정 태그명을 정확히 사용하세요: 자율활동 (자율자치활동 X)
 
 <행동특성및종합의견>
 [역할] 담임교사가 수시로 관찰한 누가기록을 바탕으로, 학생을 총체적으로 이해할 수 있는 추천서 성격의 종합의견 작성
@@ -465,8 +509,9 @@ def generate_school_record():
 <봉사활동>
 [역할] 봉사활동 참여 내역과 태도 서술 (독립 영역)
 [포함 요소] 학교교육계획 봉사활동, 태도·역할·책임감, 인식 변화나 성장, 나눔과 배려 사례
-[서술 방법] 단순 참여 나열이 아닌, 봉사 과정에서의 태도 변화와 인식 성장을 구체적 에피소드로 서술할 것
+[서술 방법] 단순 참여 나열이 아닌, 봉사 과정에서의 태도 변화와 인식 성장을 구체적 에피소드로 서술할 것. 봉사활동 관련 기초자료가 부족하더라도 학교교육계획에 따른 교내 봉사활동 참여를 기본으로 반드시 작성할 것
 [글자 수] {volunteer_inst}
+[중요] 이 영역은 반드시 작성해야 합니다. 비워두지 마세요.
 </봉사활동>
 """
             tag_list = ['행동특성및종합의견', '자율활동', '진로활동', '봉사활동']
@@ -540,10 +585,22 @@ def generate_school_record():
             match = re.search(pattern, text, re.DOTALL)
             return match.group(1).strip() if match else ''
 
+        # 태그 별칭: Gemini가 2015/2022 태그를 혼용하는 경우 폴백
+        TAG_ALIASES = {
+            '자율활동': ['자율자치활동', '자율·자치활동'],
+            '자율자치활동': ['자율활동', '자율·자치활동'],
+        }
+
         parsed_result = {}
         has_any = False
         for tag in tag_list:
             content = extract_tag(ai_text, tag)
+            if not content and tag in TAG_ALIASES:
+                for alias in TAG_ALIASES[tag]:
+                    content = extract_tag(ai_text, alias)
+                    if content:
+                        print(f"[생기부 AI] 태그 폴백: <{tag}> → <{alias}>")
+                        break
             tag_byte_limit = byte_limits.get(tag, 1500)
             if content and _calc_neis_bytes(content) > tag_byte_limit:
                 print(f"바이트 초과 감지 [{tag}]: {_calc_neis_bytes(content)}B > {tag_byte_limit}B → 재요약 요청")

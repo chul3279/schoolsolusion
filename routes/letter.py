@@ -33,6 +33,24 @@ def get_letter_list():
         class_no = sanitize_input(request.args.get('class_no'), 10)
         keyword = sanitize_input(request.args.get('keyword'), 100)
 
+        # class_grade/class_no 미전달 시 tea_all에서 조회
+        teacher_id = session.get('user_id')
+        if teacher_id and (not class_grade or not class_no):
+            t_conn = get_db_connection()
+            if t_conn:
+                try:
+                    t_cur = t_conn.cursor()
+                    t_cur.execute("SELECT class_grade, class_no FROM tea_all WHERE member_id = %s", (teacher_id,))
+                    t_row = t_cur.fetchone()
+                    if t_row:
+                        if not class_grade:
+                            class_grade = str(t_row['class_grade']) if t_row['class_grade'] else None
+                        if not class_no:
+                            class_no = str(t_row['class_no']) if t_row['class_no'] else None
+                    t_cur.close()
+                finally:
+                    t_conn.close()
+
         if not all([school_id, class_grade, class_no]):
             return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
 
@@ -94,6 +112,23 @@ def create_letter():
         content = sanitize_html(request.form.get('content', ''), 10000)
         require_consent = request.form.get('require_consent', '0') == '1'
         consent_deadline = sanitize_input(request.form.get('consent_deadline'), 10) or None
+
+        # class_grade/class_no 미전달 시 tea_all에서 조회
+        if teacher_id and (not class_grade or not class_no):
+            t_conn = get_db_connection()
+            if t_conn:
+                try:
+                    t_cur = t_conn.cursor()
+                    t_cur.execute("SELECT class_grade, class_no FROM tea_all WHERE member_id = %s", (teacher_id,))
+                    t_row = t_cur.fetchone()
+                    if t_row:
+                        if not class_grade:
+                            class_grade = str(t_row['class_grade']) if t_row['class_grade'] else None
+                        if not class_no:
+                            class_no = str(t_row['class_no']) if t_row['class_no'] else None
+                    t_cur.close()
+                finally:
+                    t_conn.close()
 
         if not school_id or not class_grade or not class_no:
             return jsonify({'success': False, 'message': '반 정보가 누락되었습니다. 담임 선생님만 가정통신문을 작성할 수 있습니다.'})
