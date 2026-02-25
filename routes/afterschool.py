@@ -226,7 +226,7 @@ def update_program():
     cursor = None
     try:
         data = request.get_json()
-        program_id = sanitize_input(data.get('id'), 20)
+        program_id = sanitize_input(data.get('program_id') or data.get('id'), 20)
         program_name = sanitize_html(data.get('program_name') or data.get('name') or '', 200)
         description = sanitize_html(data.get('description', ''), 2000)
         instructor_name = sanitize_input(data.get('instructor_name') or data.get('teacher_name') or '', 100)
@@ -284,7 +284,7 @@ def delete_program():
     cursor = None
     try:
         data = request.get_json()
-        program_id = sanitize_input(data.get('id'), 20)
+        program_id = sanitize_input(data.get('program_id') or data.get('id'), 20)
 
         if not program_id:
             return jsonify({'success': False, 'message': '프로그램 ID가 필요합니다.'})
@@ -368,7 +368,7 @@ def start_program():
     cursor = None
     try:
         data = request.get_json()
-        program_id = sanitize_input(data.get('id'), 20)
+        program_id = sanitize_input(data.get('program_id') or data.get('id'), 20)
 
         if not program_id:
             return jsonify({'success': False, 'message': '프로그램 ID가 필요합니다.'})
@@ -405,7 +405,7 @@ def complete_program():
     cursor = None
     try:
         data = request.get_json()
-        program_id = sanitize_input(data.get('id'), 20)
+        program_id = sanitize_input(data.get('program_id') or data.get('id'), 20)
         create_survey = data.get('create_survey', False)
 
         if not program_id:

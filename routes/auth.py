@@ -552,14 +552,33 @@ def login_process():
                     }
                 })
             
-            # 교사: 기본 응답
+            # 교사: tea_all에서 학급 정보 조회 후 세션 설정
             else:
+                tea_class_grade = ''
+                tea_class_no = ''
+                tea_department = ''
+                try:
+                    cursor.execute("""
+                        SELECT class_grade, class_no, department
+                        FROM tea_all WHERE member_id = %s AND school_id = %s
+                    """, (login_id, school_id))
+                    tea_info = cursor.fetchone()
+                    if tea_info:
+                        tea_class_grade = tea_info.get('class_grade') or ''
+                        tea_class_no = tea_info.get('class_no') or ''
+                        tea_department = tea_info.get('department') or ''
+                except:
+                    pass
+
                 session['user_id'] = user['member_id']
                 session['user_name'] = user['member_name']
                 session['user_role'] = role
                 session['user_school'] = user.get('member_school', '')
                 session['school_id'] = school_id
-                
+                session['class_grade'] = tea_class_grade
+                session['class_no'] = tea_class_no
+                session['department'] = tea_department
+
                 return jsonify({
                     'success': True,
                     'user': {
@@ -568,7 +587,10 @@ def login_process():
                         'member_roll': role,
                         'member_school': user.get('member_school', ''),
                         'school_id': school_id,
-                        'school_folder': school_folder
+                        'school_folder': school_folder,
+                        'class_grade': tea_class_grade,
+                        'class_no': tea_class_no,
+                        'department': tea_department
                     }
                 })
         
@@ -634,15 +656,34 @@ def select_role():
         school_id = user.get('school_id', '')
         
         if selected_role == 'teacher':
+            tea_class_grade = ''
+            tea_class_no = ''
+            tea_department = ''
+            try:
+                cursor.execute("""
+                    SELECT class_grade, class_no, department
+                    FROM tea_all WHERE member_id = %s AND school_id = %s
+                """, (authenticated_user_id, school_id))
+                tea_info = cursor.fetchone()
+                if tea_info:
+                    tea_class_grade = tea_info.get('class_grade') or ''
+                    tea_class_no = tea_info.get('class_no') or ''
+                    tea_department = tea_info.get('department') or ''
+            except:
+                pass
+
             session['user_id'] = user['member_id']
             session['user_name'] = user['member_name']
             session['user_role'] = 'teacher'
             session['user_school'] = user.get('member_school', '')
             session['school_id'] = school_id
-            
+            session['class_grade'] = tea_class_grade
+            session['class_no'] = tea_class_no
+            session['department'] = tea_department
+
             session.pop('authenticated_user_id', None)
             session.pop('authenticated_user_name', None)
-            
+
             return jsonify({
                 'success': True,
                 'user': {
@@ -651,7 +692,10 @@ def select_role():
                     'member_roll': 'teacher',
                     'member_school': user.get('member_school', ''),
                     'school_id': school_id,
-                    'school_folder': school_folder
+                    'school_folder': school_folder,
+                    'class_grade': tea_class_grade,
+                    'class_no': tea_class_no,
+                    'department': tea_department
                 }
             })
         
@@ -1225,7 +1269,7 @@ def change_member_password():
     conn = None
     cursor = None
     try:
-        member_id = session.get('member_id')
+        member_id = session.get('user_id') or session.get('member_id')
         if not member_id:
             return jsonify({'success': False, 'message': '로그인이 필요합니다.'})
 

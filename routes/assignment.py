@@ -318,20 +318,27 @@ def get_student_assignments():
 # 학생 과제 제출
 # ============================================
 @assignment_bp.route('/api/subject/submission/upload', methods=['POST'])
+@assignment_bp.route('/api/subject/submission/submit', methods=['POST'])
+@assignment_bp.route('/api/subject/submission/create', methods=['POST'])
 def submit_assignment():
     conn = None
     cursor = None
     try:
-        assignment_id = sanitize_input(request.form.get('assignment_id'), 20)
-        student_id = sanitize_input(request.form.get('student_id'), 50)
-        student_name = sanitize_input(request.form.get('student_name'), 100)
-        comment = request.form.get('comment', '').strip()
+        # form-data와 JSON body 모두 지원
+        json_data = request.get_json(silent=True) or {}
+        def _f(key, default=''):
+            return request.form.get(key) or json_data.get(key, default)
+
+        assignment_id = sanitize_input(_f('assignment_id') or _f('id'), 20)
+        student_id = sanitize_input(_f('student_id') or _f('member_id') or session.get('user_id'), 50)
+        student_name = sanitize_input(_f('student_name') or _f('member_name') or session.get('user_name', ''), 100)
+        comment = (_f('comment') or _f('content') or _f('submission_text', '')).strip()
 
         if not all([assignment_id, student_id]):
             return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
 
         if 'file' not in request.files:
-            return jsonify({'success': False, 'message': '파일이 없습니다.'})
+            return jsonify({'success': False, 'message': '파일이 없습니다. multipart/form-data 형식으로 file 필드를 포함해주세요.'})
 
         file = request.files['file']
         if not file or not file.filename:

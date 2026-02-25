@@ -725,11 +725,12 @@ def upload_club_file():
         student_id = sanitize_input(request.form.get('student_id'), 50)
         student_name = sanitize_input(request.form.get('student_name'), 100)
         club_name = sanitize_input(request.form.get('club_name'), 100)
-        record_year = sanitize_input(request.form.get('record_year'), 4)
-        record_semester = sanitize_input(request.form.get('record_semester'), 1)
+        from datetime import datetime as dt_cls
+        record_year = sanitize_input(request.form.get('record_year'), 4) or str(dt_cls.now().year)
+        record_semester = sanitize_input(request.form.get('record_semester'), 1) or ('1' if dt_cls.now().month <= 7 else '2')
 
-        if not all([school_id, student_id, club_name]):
-            return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
+        if not all([school_id, club_name]):
+            return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다. (school_id, club_name 필수)'})
 
         if 'file' not in request.files:
             return jsonify({'success': False, 'message': '파일이 없습니다.'})

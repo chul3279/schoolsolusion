@@ -914,7 +914,7 @@ def create_counsel_log():
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
             (school_id, member_school, class_grade, class_no, teacher_id, teacher_name, student_id, student_name, class_num, counsel_date, counsel_type, content, result, next_plan))
         conn.commit()
-        return jsonify({'success': True, 'message': '상담 일지가 등록되었습니다.'})
+        return jsonify({'success': True, 'message': '상담 일지가 등록되었습니다.', 'id': cursor.lastrowid})
 
     except Exception as e:
         print(f"상담 일지 등록 오류: {e}")

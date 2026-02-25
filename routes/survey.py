@@ -158,7 +158,7 @@ def get_survey_detail():
     conn = None
     cursor = None
     try:
-        survey_id = sanitize_input(request.args.get('id'), 20)
+        survey_id = sanitize_input(request.args.get('id') or request.args.get('survey_id'), 20)
         if not survey_id:
             return jsonify({'success': False, 'message': '설문 ID가 필요합니다.'})
 
@@ -221,7 +221,7 @@ def update_survey():
     cursor = None
     try:
         data = request.get_json()
-        survey_id = sanitize_input(data.get('id'), 20)
+        survey_id = sanitize_input(data.get('id') or data.get('survey_id'), 20)
         title = sanitize_html(data.get('title', ''), 200)
         description = sanitize_html(data.get('description', ''), 2000)
         target_role = sanitize_input(data.get('target_role', 'student'), 20)
@@ -291,7 +291,7 @@ def delete_survey():
     cursor = None
     try:
         data = request.get_json()
-        survey_id = sanitize_input(data.get('id'), 20)
+        survey_id = sanitize_input(data.get('id') or data.get('survey_id'), 20)
 
         if not survey_id:
             return jsonify({'success': False, 'message': '설문 ID가 필요합니다.'})
@@ -329,7 +329,7 @@ def start_survey():
     cursor = None
     try:
         data = request.get_json()
-        survey_id = sanitize_input(data.get('id'), 20)
+        survey_id = sanitize_input(data.get('id') or data.get('survey_id'), 20)
 
         if not survey_id:
             return jsonify({'success': False, 'message': '설문 ID가 필요합니다.'})
@@ -367,7 +367,7 @@ def close_survey():
     cursor = None
     try:
         data = request.get_json()
-        survey_id = sanitize_input(data.get('id'), 20)
+        survey_id = sanitize_input(data.get('id') or data.get('survey_id'), 20)
 
         if not survey_id:
             return jsonify({'success': False, 'message': '설문 ID가 필요합니다.'})
@@ -405,8 +405,14 @@ def respond_survey():
     cursor = None
     try:
         data = request.get_json()
-        survey_id = sanitize_input(data.get('survey_id'), 20)
-        answers = data.get('answers', [])
+        survey_id = sanitize_input(data.get('survey_id') or data.get('id'), 20)
+        answers = data.get('answers') or data.get('responses') or data.get('data') or []
+
+        # 플랫 형태 지원: {"question_id": X, "answer": Y} → [{"question_id": X, "answer": Y}]
+        if not answers and data.get('question_id'):
+            answers = [{'question_id': data.get('question_id'),
+                        'answer_value': data.get('answer_value') or data.get('answer') or ''}]
+
         user_id = session.get('user_id')
         user_role = session.get('user_role')
 
@@ -465,7 +471,7 @@ def respond_survey():
         saved_count = 0
         for ans in answers:
             question_id = sanitize_input(str(ans.get('question_id', '')), 20)
-            answer_value = sanitize_html(str(ans.get('answer_value', '') or ''), 2000)
+            answer_value = sanitize_html(str(ans.get('answer_value') or ans.get('answer') or ''), 2000)
             if not question_id:
                 continue
             # question_id가 유효한 DB ID가 아니면 question_order로 매핑 시도
@@ -569,7 +575,7 @@ def survey_stats():
     conn = None
     cursor = None
     try:
-        survey_id = sanitize_input(request.args.get('id'), 20)
+        survey_id = sanitize_input(request.args.get('id') or request.args.get('survey_id'), 20)
         if not survey_id:
             return jsonify({'success': False, 'message': '설문 ID가 필요합니다.'})
 
@@ -643,23 +649,31 @@ def survey_stats():
 
             if q['question_type'] in ('single', 'multiple') and opts:
                 option_list = opts if isinstance(opts, list) else []
+                # 옵션 텍스트 → 인덱스 매핑 (텍스트 값으로 응답한 경우 대응)
+                text_to_idx = {str(opt).strip(): i for i, opt in enumerate(option_list)}
                 counts = [0] * len(option_list)
                 for ans in raw_answers:
                     if q['question_type'] == 'single':
+                        # 인덱스(숫자) 또는 텍스트 값 모두 지원
                         try:
                             idx = int(ans)
                             if 0 <= idx < len(option_list):
                                 counts[idx] += 1
                         except (ValueError, TypeError):
-                            pass
+                            idx = text_to_idx.get(ans.strip())
+                            if idx is not None:
+                                counts[idx] += 1
                     else:  # multiple
                         for part in ans.split(','):
+                            part = part.strip()
                             try:
-                                idx = int(part.strip())
+                                idx = int(part)
                                 if 0 <= idx < len(option_list):
                                     counts[idx] += 1
                             except (ValueError, TypeError):
-                                pass
+                                idx = text_to_idx.get(part)
+                                if idx is not None:
+                                    counts[idx] += 1
                 stat['option_counts'] = counts
 
             elif q['question_type'] == 'rating':

@@ -69,8 +69,8 @@
             @page { size: landscape; margin: 10mm; }
             body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; height: auto !important; overflow: visible !important; }
             main, .flex-1, .h-screen, .max-w-7xl, .h-\[600px\], .h-\[700px\], .min-h-\[700px\] { height: auto !important; overflow: visible !important; width: 100% !important; max-width: none !important; }
-            #step-4 { display: block !important; }
-            #step-4 > .flex.justify-between { display: none !important; }
+            #step-6 { display: block !important; }
+            #step-6 > .flex.justify-between { display: none !important; }
             .tt-grid { border: 2px solid #333 !important; }
             .tt-head { background: #f0f0f0 !important; border: 1px solid #333 !important; font-weight: bold !important; }
             .tt-cell { border: 1px solid #999 !important; }
@@ -214,11 +214,12 @@
 
         <div class="bg-white border-b px-8 z-20">
             <div class="flex space-x-8">
-                <button onclick="goStep(1)" id="btn-step-1" class="step-btn active py-4 text-sm">1. 기본 정보 (교사/과목)</button>
-                <button onclick="goStep(2)" id="btn-step-2" class="step-btn py-4 text-sm">2. 수업 묶음 (Block)</button>
-                <button onclick="goStep(3)" id="btn-step-3" class="step-btn py-4 text-sm">3. 특이사항</button>
-                <button onclick="goStep(4)" id="btn-step-4" class="step-btn py-4 text-sm">4. 특정교과 편성</button>
-                <button onclick="goStep(5)" id="btn-step-5" class="step-btn py-4 text-sm">5. 시간표 만들기</button>
+                <button onclick="goStep(1)" id="btn-step-1" class="step-btn active py-4 text-sm">1. 기본 정보</button>
+                <button onclick="goStep(2)" id="btn-step-2" class="step-btn py-4 text-sm">2. 시간표 기본</button>
+                <button onclick="goStep(3)" id="btn-step-3" class="step-btn py-4 text-sm">3. 수업 묶음</button>
+                <button onclick="goStep(4)" id="btn-step-4" class="step-btn py-4 text-sm">4. 특이사항</button>
+                <button onclick="goStep(5)" id="btn-step-5" class="step-btn py-4 text-sm">5. 특정교과</button>
+                <button onclick="goStep(6)" id="btn-step-6" class="step-btn py-4 text-sm">6. 시간표 만들기</button>
             </div>
         </div>
 
@@ -459,8 +460,70 @@
                     </div>
                 </div>
 
-                <!-- ========== STEP 2: 수업 묶음 (Block) ========== -->
+                <!-- ========== STEP 2: 시간표 기본 (요일별 교시 설정) ========== -->
                 <div id="step-2" class="hidden fade-in space-y-6">
+                    <div class="border-b pb-4">
+                        <h2 class="text-xl font-bold text-slate-800">시간표 기본 설정</h2>
+                        <p class="text-slate-500 text-sm mt-1">요일별 수업 교시 수를 설정합니다. 설정한 교시까지만 시간표가 편성됩니다.</p>
+                    </div>
+
+                    <!-- 요일별 교시 설정 -->
+                    <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                        <h4 class="font-bold text-slate-700 text-sm mb-4"><i class="fas fa-clock mr-1 text-indigo-500"></i>요일별 최대 교시 설정</h4>
+                        <div class="flex gap-4 justify-center flex-wrap">
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-lg px-4 py-1">월요일</span>
+                                <select id="dayPeriod_0" onchange="updateDayMaxPeriods()" class="form-input w-24 text-center font-bold text-lg">
+                                    <option value="4">4교시</option><option value="5">5교시</option><option value="6">6교시</option><option value="7" selected>7교시</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-lg px-4 py-1">화요일</span>
+                                <select id="dayPeriod_1" onchange="updateDayMaxPeriods()" class="form-input w-24 text-center font-bold text-lg">
+                                    <option value="4">4교시</option><option value="5">5교시</option><option value="6">6교시</option><option value="7" selected>7교시</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-lg px-4 py-1">수요일</span>
+                                <select id="dayPeriod_2" onchange="updateDayMaxPeriods()" class="form-input w-24 text-center font-bold text-lg">
+                                    <option value="4">4교시</option><option value="5">5교시</option><option value="6">6교시</option><option value="7" selected>7교시</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-lg px-4 py-1">목요일</span>
+                                <select id="dayPeriod_3" onchange="updateDayMaxPeriods()" class="form-input w-24 text-center font-bold text-lg">
+                                    <option value="4">4교시</option><option value="5">5교시</option><option value="6">6교시</option><option value="7" selected>7교시</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-lg px-4 py-1">금요일</span>
+                                <select id="dayPeriod_4" onchange="updateDayMaxPeriods()" class="form-input w-24 text-center font-bold text-lg">
+                                    <option value="4">4교시</option><option value="5">5교시</option><option value="6">6교시</option><option value="7" selected>7교시</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 미리보기 격자 -->
+                    <div class="bg-white p-6 rounded-xl border border-slate-200">
+                        <h4 class="font-bold text-slate-700 text-sm mb-4"><i class="fas fa-th mr-1 text-green-500"></i>시간표 구조 미리보기</h4>
+                        <div id="dayPeriodsPreview" class="flex justify-center gap-1"></div>
+                    </div>
+
+                    <!-- 총 수업 시수 요약 -->
+                    <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-bold text-indigo-700"><i class="fas fa-calculator mr-1"></i>주간 총 수업 가능 시수</span>
+                            <span id="totalPeriodsDisplay" class="text-2xl font-black text-indigo-600">35교시</span>
+                        </div>
+                        <p class="text-xs text-indigo-500 mt-1">전체 학급이 해당 시수만큼 수업을 편성할 수 있습니다.</p>
+                    </div>
+
+                    <p class="text-xs text-slate-400"><i class="fas fa-info-circle mr-1"></i>설정한 교시 수는 시간표 자동 생성, 드래그 배치, 특정교과 편성 등 모든 기능에 적용됩니다. 설정값은 자동 저장됩니다.</p>
+                </div>
+
+                <!-- ========== STEP 3: 수업 묶음 (Block) ========== -->
+                <div id="step-3" class="hidden fade-in space-y-6">
                     <div class="border-b pb-4">
                         <h2 class="text-xl font-bold text-slate-800">수업 묶음(Block) 생성</h2>
                         <p class="text-slate-500 text-sm mt-1">같은 시간에 배치할 교사/과목을 하나의 블록으로 묶습니다. 블록 배치 시 해당 교사들이 동시에 수업합니다.</p>
@@ -538,8 +601,8 @@
                     </div>
                 </div>
 
-                <!-- ========== STEP 3: 특이사항 (교사별 배치 고려사항) ========== -->
-                <div id="step-3" class="hidden fade-in space-y-6">
+                <!-- ========== STEP 4: 특이사항 (교사별 배치 고려사항) ========== -->
+                <div id="step-4" class="hidden fade-in space-y-6">
                     <div class="border-b pb-4">
                         <div class="flex justify-between items-center">
                             <div>
@@ -578,8 +641,8 @@
                     <p class="text-xs text-slate-400"><i class="fas fa-info-circle mr-1"></i>요일 체크 해제 = 해당 요일 전체 수업 불가. 제외 교시 = 특정 요일의 특정 교시만 제외.</p>
                 </div>
 
-                <!-- ========== STEP 4: 특정교과 편성 ========== -->
-                <div id="step-4" class="hidden fade-in space-y-6">
+                <!-- ========== STEP 5: 특정교과 편성 ========== -->
+                <div id="step-5" class="hidden fade-in space-y-6">
                     <div class="border-b pb-4">
                         <div class="flex justify-between items-center">
                             <div>
@@ -612,7 +675,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 mb-1">요일</label>
-                                <select id="fixedDay" class="form-input h-9 w-24 text-sm">
+                                <select id="fixedDay" class="form-input h-9 w-24 text-sm" onchange="updateFixedPeriodOptions()">
                                     <option value="월">월</option>
                                     <option value="화">화</option>
                                     <option value="수">수</option>
@@ -623,13 +686,6 @@
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 mb-1">시작 교시</label>
                                 <select id="fixedPeriod" class="form-input h-9 w-24 text-sm">
-                                    <option value="1">1교시</option>
-                                    <option value="2">2교시</option>
-                                    <option value="3">3교시</option>
-                                    <option value="4">4교시</option>
-                                    <option value="5">5교시</option>
-                                    <option value="6">6교시</option>
-                                    <option value="7">7교시</option>
                                 </select>
                             </div>
                             <div>
@@ -664,8 +720,8 @@
                     <p class="text-xs text-slate-400"><i class="fas fa-info-circle mr-1"></i>고정 편성된 교과는 시간표 자동 생성 시 해당 학년 전체 학급에 먼저 배치되며, 다른 수업이 그 교시에 배치되지 않습니다.</p>
                 </div>
 
-                <!-- ========== STEP 5: 시간표 만들기 ========== -->
-                <div id="step-5" class="hidden fade-in space-y-4">
+                <!-- ========== STEP 6: 시간표 만들기 ========== -->
+                <div id="step-6" class="hidden fade-in space-y-4">
                     <div class="print-title hidden text-center mb-4">
                         <h2 class="text-2xl font-bold" id="printTitle"></h2>
                         <p class="text-sm text-slate-500" id="printDate"></p>
@@ -688,6 +744,9 @@
                             </button>
                             <button onclick="saveScheduleToDB()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold transition">
                                 <i class="fas fa-cloud-upload-alt mr-1"></i> DB 저장
+                            </button>
+                            <button onclick="exportToExcel()" class="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-bold transition">
+                                <i class="fas fa-file-excel mr-1"></i> 엑셀
                             </button>
                             <button onclick="printTimetable()" class="text-xs bg-slate-600 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg font-bold transition">
                                 <i class="fas fa-print mr-1"></i> 인쇄
@@ -781,6 +840,7 @@
         let teacherBusy = {};   // "teacherName" -> Set of "day_period"
         let teacherConstraints = {};  // "memberId|name" -> [{day, period}]  (period=null이면 요일전체)
         let fixedSubjects = [];      // [{id, grade, day, periodStart, periodCount, subject}]
+        let dayMaxPeriods = [7, 7, 7, 7, 7]; // [월, 화, 수, 목, 금] 요일별 최대 교시
         let currentGrade = '1';
         let currentClass = '1';
         let standardSubjects = [];
@@ -820,6 +880,7 @@
 
             await loadUserPoint();
             await checkVerification();
+            loadDayMaxPeriodsFromStorage();
         }
 
         async function loadUserPoint() {
@@ -847,9 +908,9 @@
 
         async function checkVerification() {
             try {
-                let url = '/api/verification/check?';
-                if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
-                else url += `member_id=${encodeURIComponent(currentUser.member_id)}`;
+                let url = '/api/payment/check-verification?feature=timetable';
+                if (currentUser.member_id) url += `&member_id=${encodeURIComponent(currentUser.member_id)}`;
+                if (currentUser.school_id) url += `&school_id=${encodeURIComponent(currentUser.school_id)}`;
 
                 const response = await fetch(url);
                 const data = await response.json();
@@ -888,9 +949,9 @@
 
         async function processPayment() {
             try {
-                const response = await fetch('/api/verification/pay', {
+                const response = await fetch('/api/payment/pay-for-verification', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ school_id: currentUser.school_id || null, member_id: currentUser.member_id, member_school: currentUser.member_school })
+                    body: JSON.stringify({ school_id: currentUser.school_id || null, member_id: currentUser.member_id, member_school: currentUser.member_school, feature: 'timetable' })
                 });
                 const data = await response.json();
                 if (data.success) {
@@ -1072,16 +1133,77 @@
             if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
             document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`btn-step-${n}`).classList.add('active');
-            for (let i = 1; i <= 5; i++) document.getElementById(`step-${i}`).classList.add('hidden');
+            for (let i = 1; i <= 6; i++) document.getElementById(`step-${i}`).classList.add('hidden');
             document.getElementById(`step-${n}`).classList.remove('hidden');
-            if (n === 2) updateBlockTeacherSelect();
-            if (n === 3) renderConstraintTable();
-            if (n === 4) renderFixedSubjectList();
-            if (n === 5) { updateGradeClassUI(); renderClassGrid(); renderDraggablePalette(); updateStatInfo(); }
+            if (n === 2) renderDayPeriodsPreview();
+            if (n === 3) updateBlockTeacherSelect();
+            if (n === 4) renderConstraintTable();
+            if (n === 5) { renderFixedSubjectList(); updateFixedPeriodOptions(); }
+            if (n === 6) { updateGradeClassUI(); renderClassGrid(); renderDraggablePalette(); updateStatInfo(); }
         }
 
         // ==========================================
-        // Step 3: 특이사항 (교사별 제약조건)
+        // STEP 2: 시간표 기본 (요일별 교시 설정)
+        // ==========================================
+        function updateDayMaxPeriods() {
+            for (let d = 0; d < 5; d++) {
+                dayMaxPeriods[d] = parseInt(document.getElementById(`dayPeriod_${d}`).value) || 7;
+            }
+            renderDayPeriodsPreview();
+            saveDayMaxPeriodsToStorage();
+        }
+
+        function renderDayPeriodsPreview() {
+            const con = document.getElementById('dayPeriodsPreview');
+            if (!con) return;
+            const maxP = Math.max(...dayMaxPeriods);
+            const dayNames = ['월', '화', '수', '목', '금'];
+            const colors = ['bg-blue-400', 'bg-green-400', 'bg-yellow-400', 'bg-purple-400', 'bg-pink-400'];
+            let html = '';
+            for (let d = 0; d < 5; d++) {
+                html += `<div class="flex flex-col items-center gap-0.5">`;
+                html += `<div class="text-xs font-bold text-slate-600 mb-1">${dayNames[d]}</div>`;
+                for (let p = 1; p <= maxP; p++) {
+                    if (p <= dayMaxPeriods[d]) {
+                        html += `<div class="${colors[d]} text-white text-[10px] font-bold w-12 h-7 flex items-center justify-center rounded">${p}</div>`;
+                    } else {
+                        html += `<div class="bg-slate-200 text-slate-400 text-[10px] w-12 h-7 flex items-center justify-center rounded line-through">-</div>`;
+                    }
+                }
+                html += `</div>`;
+            }
+            con.innerHTML = html;
+            // 총 시수 업데이트
+            const total = dayMaxPeriods.reduce((s, v) => s + v, 0);
+            const el = document.getElementById('totalPeriodsDisplay');
+            if (el) el.textContent = `${total}교시`;
+        }
+
+        function saveDayMaxPeriodsToStorage() {
+            const key = `timetable_dayMaxPeriods_${currentUser?.school_id || 'default'}`;
+            localStorage.setItem(key, JSON.stringify(dayMaxPeriods));
+        }
+
+        function loadDayMaxPeriodsFromStorage() {
+            const key = `timetable_dayMaxPeriods_${currentUser?.school_id || 'default'}`;
+            const saved = localStorage.getItem(key);
+            if (saved) {
+                try {
+                    const arr = JSON.parse(saved);
+                    if (Array.isArray(arr) && arr.length === 5) {
+                        dayMaxPeriods = arr.map(v => Math.max(4, Math.min(7, parseInt(v) || 7)));
+                        // 드롭다운 UI 동기화
+                        for (let d = 0; d < 5; d++) {
+                            const el = document.getElementById(`dayPeriod_${d}`);
+                            if (el) el.value = String(dayMaxPeriods[d]);
+                        }
+                    }
+                } catch (e) { console.warn('dayMaxPeriods 로드 실패:', e); }
+            }
+        }
+
+        // ==========================================
+        // Step 4: 특이사항 (교사별 제약조건)
         // ==========================================
         const DAYS = ['월', '화', '수', '목', '금'];
         const DAY_IDX = {'월':0, '화':1, '수':2, '목':3, '금':4};
@@ -1194,12 +1316,14 @@
             DAYS.forEach(d => { html += `<div class="${dayOffs.has(d) ? 'text-slate-300' : 'text-slate-700'}">${d}</div>`; });
             html += '</div>';
 
-            for (let p = 1; p <= 7; p++) {
+            const maxP = Math.max(...dayMaxPeriods);
+            for (let p = 1; p <= maxP; p++) {
                 html += `<div class="grid grid-cols-6 gap-1 text-center mb-1">
                     <div class="text-xs font-bold text-slate-500 py-1">${p}교시</div>`;
-                DAYS.forEach(d => {
-                    const disabled = dayOffs.has(d);
-                    const checked = periodOffs.some(po => po.day === d && po.period === p);
+                DAYS.forEach((d, di) => {
+                    const overLimit = p > dayMaxPeriods[di];
+                    const disabled = dayOffs.has(d) || overLimit;
+                    const checked = !overLimit && periodOffs.some(po => po.day === d && po.period === p);
                     html += `<div>
                         <input type="checkbox" ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''}
                             data-day="${d}" data-period="${p}"
@@ -1275,6 +1399,11 @@
         async function loadConstraintsFromDB() {
             if (!currentUser?.school_id) { alert('학교 정보가 없습니다.'); return; }
             try {
+                // 교사 목록이 비어있으면 먼저 timetable_tea에서 자동 로드
+                if (teachers.length === 0) {
+                    await _autoLoadTeachers();
+                }
+
                 const res = await fetch(`/api/timetable-constraint/list?school_id=${encodeURIComponent(currentUser.school_id)}`);
                 const data = await res.json();
                 if (!data.success) { alert('불러오기 실패: ' + data.message); return; }
@@ -1293,6 +1422,56 @@
                 renderConstraintTable();
                 alert(`${(data.data || []).length}건 불러오기 완료`);
             } catch (e) { alert('불러오기 오류: ' + e.message); }
+        }
+
+        // 교사 목록 자동 로드 (timetable_tea 우선, 없으면 tea_all)
+        async function _autoLoadTeachers() {
+            try {
+                let url = '/api/timetable-tea/list?';
+                if (currentUser.school_id) url += `school_id=${encodeURIComponent(currentUser.school_id)}`;
+                else if (currentUser.member_school) url += `member_school=${encodeURIComponent(currentUser.member_school)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.success && data.data && data.data.length > 0) {
+                    teachers = [];
+                    data.data.forEach(t => {
+                        const classCount = t.class_conut || 0;
+                        const unitHours = t.hours || 4;
+                        teachers.push({
+                            id: t.id || Date.now() + Math.random(), memberId: t.member_id || '',
+                            name: t.member_name || '', subject: t.subject || '',
+                            grade: t.grade || '', classes: t.class_no || '',
+                            classCount: classCount, unitHours: unitHours,
+                            totalHours: classCount * unitHours,
+                            department: t.department || ''
+                        });
+                    });
+                    sortTeachers();
+                    renderTeacherList();
+                    return;
+                }
+                // timetable_tea에 없으면 tea_all에서
+                let url2 = '/api/teachers/list?';
+                if (currentUser.school_id) url2 += `school_id=${encodeURIComponent(currentUser.school_id)}`;
+                else if (currentUser.member_school) url2 += `member_school=${encodeURIComponent(currentUser.member_school)}`;
+                const response2 = await fetch(url2);
+                const data2 = await response2.json();
+                if (data2.success && data2.data) {
+                    teachers = [];
+                    data2.data.forEach(t => {
+                        teachers.push({
+                            id: t.id || Date.now() + Math.random(), memberId: t.member_id || '',
+                            name: t.member_name || '', subject: '',
+                            grade: t.class_grade || '', classes: t.class_no || '',
+                            classCount: t.class_no ? String(t.class_no).split(/[, ]+/).filter(x => x.trim()).length : 0,
+                            unitHours: 4, totalHours: 0, department: t.department || ''
+                        });
+                    });
+                    teachers.forEach(t => { t.totalHours = (parseInt(t.classCount) || 0) * (parseInt(t.unitHours) || 0); });
+                    sortTeachers();
+                    renderTeacherList();
+                }
+            } catch (e) { console.warn('교사 자동 로드 실패:', e); }
         }
 
         function autoCalcClassCount(val, targetId) { if (!val) return; const count = val.split(/[, ]+/).filter(x => x.trim() !== '').length; if (count > 0) document.getElementById(targetId).value = count; }
@@ -1513,7 +1692,7 @@
         }
 
         // ==========================================
-        // STEP 2: 수업 묶음 (Block) 관리
+        // STEP 3: 수업 묶음 (Block) 관리
         // ==========================================
         function updateBlockTeacherSelect() {
             const grade = document.getElementById('blockGrade').value;
@@ -1530,7 +1709,10 @@
 
         async function autoGenerateBlocks() {
             if (!isVerified) { alert('결제가 필요합니다.'); showPaymentModal(); return; }
-            if (teachers.length === 0) { alert('먼저 교사 데이터를 불러오세요.'); return; }
+            if (teachers.length === 0) {
+                await _autoLoadTeachers();
+                if (teachers.length === 0) { alert('먼저 교사 데이터를 불러오세요.'); return; }
+            }
 
             // 1) timetable_data에서 subject_type 정보 로드
             let subjectTypeMap = {};  // "grade_subject" → subject_type
@@ -1945,94 +2127,113 @@
             });
 
             const results = [];
-            let totalPlaced = 0, totalNeeded = 0;
+            let totalPlaced = 0, totalNeeded = 0, totalConsecWarnings = 0;
 
             for (const block of targetBlocks) {
                 let placed = 0;
                 const needed = block.hoursPerWeek;
                 totalNeeded += needed;
 
-                // 가능한 시간대 목록 (분산 배치)
+                // 가능한 시간대 목록 (분산 배치, 요일별 교시 제한 반영)
                 const slots = [];
                 for (let d = 0; d < 5; d++) {
-                    for (let p = 1; p <= 7; p++) slots.push([d, p]);
+                    for (let p = 1; p <= dayMaxPeriods[d]; p++) slots.push([d, p]);
                 }
                 // 요일별 분산을 위해 순서 섞기 (요일 순환)
                 const shuffled = [];
-                for (let p = 1; p <= 7; p++) {
-                    for (let d = 0; d < 5; d++) shuffled.push([d, p]);
+                const _maxP = Math.max(...dayMaxPeriods);
+                for (let p = 1; p <= _maxP; p++) {
+                    for (let d = 0; d < 5; d++) {
+                        if (p <= dayMaxPeriods[d]) shuffled.push([d, p]);
+                    }
                 }
 
                 const dayCount = {};
                 const maxPerDay = avoidConsecutive ? 2 : 7;
+                let consecWarnings = 0;
 
-                for (const [d, p] of shuffled) {
-                    if (placed >= needed) break;
-                    if ((dayCount[d] || 0) >= maxPerDay) continue;
+                // ★ 2-pass 연속수업 제한: 1차=최대 2연속, 2차=최대 3연속(부득이한 경우)
+                for (let _pass = 1; _pass <= 2; _pass++) {
+                    const maxConsecutiveLimit = (_pass === 1) ? 2 : 3;
+                    for (const [d, p] of shuffled) {
+                        if (placed >= needed) break;
+                        if ((dayCount[d] || 0) >= maxPerDay) continue;
 
-                    // 연속시수 확인
-                    const linked = respectLinked ? block.linkedPeriods : 1;
-                    if (p + linked - 1 > 7) continue;
+                        // 연속시수 확인
+                        const linked = respectLinked ? block.linkedPeriods : 1;
+                        if (p + linked - 1 > dayMaxPeriods[d]) continue;
 
-                    // 배치 가능 여부 확인
-                    let canPlace = true;
-                    for (let lp = 0; lp < linked; lp++) {
-                        const cellId = `${d}_${p + lp}`;
-                        if (block.isElective) {
-                            const classCnt = getGradeCount(block.grade);
-                            for (let c = 1; c <= classCnt; c++) {
-                                if (allSchedule[`${block.grade}_${c}`]?.[cellId]) { canPlace = false; break; }
-                            }
-                        } else {
-                            for (const entry of block.entries) {
-                                for (const cls of entry.classes) {
-                                    if (allSchedule[`${block.grade}_${cls}`]?.[cellId]) { canPlace = false; break; }
+                        // 배치 가능 여부 확인
+                        let canPlace = true;
+                        for (let lp = 0; lp < linked; lp++) {
+                            const cellId = `${d}_${p + lp}`;
+                            if (block.isElective) {
+                                const classCnt = getGradeCount(block.grade);
+                                for (let c = 1; c <= classCnt; c++) {
+                                    if (allSchedule[`${block.grade}_${c}`]?.[cellId]) { canPlace = false; break; }
                                 }
-                                if (!canPlace) break;
-                            }
-                        }
-                        if (!canPlace) break;
-                        // 교사 충돌
-                        for (const entry of block.entries) {
-                            const tk = teacherKey(entry);
-                            if (teacherBusy[tk]?.has(cellId)) { canPlace = false; break; }
-                        }
-                        if (!canPlace) break;
-                        // 교사 제약조건 (특이사항)
-                        for (const entry of block.entries) {
-                            const tk = teacherKey(entry);
-                            const cons = teacherConstraints[tk];
-                            if (cons) {
-                                const dayName = DAYS[d];
-                                const prd = p + lp;
-                                for (const c of cons) {
-                                    if (c.day === dayName && (c.period === null || c.period === prd)) {
-                                        canPlace = false; break;
+                            } else {
+                                for (const entry of block.entries) {
+                                    for (const cls of entry.classes) {
+                                        if (allSchedule[`${block.grade}_${cls}`]?.[cellId]) { canPlace = false; break; }
                                     }
+                                    if (!canPlace) break;
                                 }
                             }
                             if (!canPlace) break;
+                            // 교사 충돌
+                            for (const entry of block.entries) {
+                                const tk = teacherKey(entry);
+                                if (teacherBusy[tk]?.has(cellId)) { canPlace = false; break; }
+                            }
+                            if (!canPlace) break;
+                            // 교사 제약조건 (특이사항)
+                            for (const entry of block.entries) {
+                                const tk = teacherKey(entry);
+                                const cons = teacherConstraints[tk];
+                                if (cons) {
+                                    const dayName = DAYS[d];
+                                    const prd = p + lp;
+                                    for (const c of cons) {
+                                        if (c.day === dayName && (c.period === null || c.period === prd)) {
+                                            canPlace = false; break;
+                                        }
+                                    }
+                                }
+                                if (!canPlace) break;
+                            }
+                            if (!canPlace) break;
                         }
-                        if (!canPlace) break;
-                    }
 
-                    if (canPlace) {
-                        placeBlock(block, d, p);
-                        placed += linked;
-                        dayCount[d] = (dayCount[d] || 0) + linked;
+                        // ★ 연속 수업 제한: 동일 교과 연속 시수 체크
+                        if (canPlace) {
+                            const linked2 = respectLinked ? block.linkedPeriods : 1;
+                            const maxConsec = getMaxConsecutiveAfterPlace(block, d, p, linked2);
+                            if (maxConsec > maxConsecutiveLimit) canPlace = false;
+                        }
+
+                        if (canPlace) {
+                            placeBlock(block, d, p);
+                            placed += linked;
+                            dayCount[d] = (dayCount[d] || 0) + linked;
+                            if (_pass === 2) consecWarnings += linked;
+                        }
                     }
+                    if (placed >= needed) break;
                 }
 
                 totalPlaced += placed;
-                results.push({ name: block.name, isElective: block.isElective, needed, placed, ok: placed >= needed });
+                totalConsecWarnings += consecWarnings;
+                results.push({ name: block.name, isElective: block.isElective, needed, placed, ok: placed >= needed, consecWarnings });
             }
 
             // 결과 표시
             const resultHtml = results.map(r => {
                 const icon = r.ok ? '<i class="fas fa-check-circle text-green-500"></i>' : '<i class="fas fa-exclamation-circle text-amber-500"></i>';
                 const badge = r.isElective ? '<span class="bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded text-[10px] font-bold">선택</span>' : '';
+                const consecBadge = r.consecWarnings > 0 ? `<span class="bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded text-[10px] font-bold">3연속${r.consecWarnings}h</span>` : '';
                 return `<div class="flex items-center justify-between py-1.5 border-b border-slate-100">
-                    <div class="flex items-center gap-2">${icon} <span class="font-medium text-slate-700">${r.name}</span> ${badge}</div>
+                    <div class="flex items-center gap-2">${icon} <span class="font-medium text-slate-700">${r.name}</span> ${badge} ${consecBadge}</div>
                     <span class="text-xs font-bold ${r.ok ? 'text-green-600' : 'text-amber-600'}">${r.placed}/${r.needed}h</span>
                 </div>`;
             }).join('');
@@ -2044,11 +2245,14 @@
             const fixedNote = fixedPlacedCount > 0
                 ? `<p class="mt-1 text-xs text-purple-600"><i class="fas fa-thumbtack mr-1"></i>고정 교과 ${fixedPlacedCount}건 선배치됨</p>`
                 : '';
+            const consecNote = totalConsecWarnings > 0
+                ? `<p class="mt-1 text-xs text-amber-600"><i class="fas fa-exclamation-triangle mr-1"></i>3연속 배치 ${totalConsecWarnings}시간 (부득이한 경우)</p>`
+                : '';
             const summaryColor = totalPlaced >= totalNeeded ? 'text-green-600 bg-green-50' : 'text-amber-600 bg-amber-50';
             document.getElementById('genResultArea').innerHTML = `
                 <div class="mb-3 p-3 rounded-lg ${summaryColor} font-bold text-sm">
                     전체: ${totalPlaced}/${totalNeeded}h 배치 (${Math.round(totalPlaced/totalNeeded*100)}%)
-                    ${constraintNote}${fixedNote}
+                    ${constraintNote}${fixedNote}${consecNote}
                 </div>
                 <div class="max-h-[400px] overflow-y-auto">${resultHtml}</div>
                 <div class="mt-3 text-xs text-slate-400">
@@ -2062,8 +2266,21 @@
         }
 
         // ==========================================
-        // STEP 4: 특정교과 편성
+        // STEP 5: 특정교과 편성
         // ==========================================
+        function updateFixedPeriodOptions() {
+            const day = document.getElementById('fixedDay').value;
+            const di = DAY_IDX[day];
+            const maxP = dayMaxPeriods[di] || 7;
+            const sel = document.getElementById('fixedPeriod');
+            const curVal = sel.value;
+            sel.innerHTML = '';
+            for (let p = 1; p <= maxP; p++) {
+                sel.innerHTML += `<option value="${p}">${p}교시</option>`;
+            }
+            if (parseInt(curVal) <= maxP) sel.value = curVal;
+        }
+
         function addFixedSubject() {
             const grade = document.getElementById('fixedGrade').value;
             const day = document.getElementById('fixedDay').value;
@@ -2072,7 +2289,9 @@
             const subject = document.getElementById('fixedSubjectName').value.trim();
 
             if (!subject) { alert('교과명을 입력하세요.'); return; }
-            if (periodStart + periodCount - 1 > 7) { alert('7교시를 초과할 수 없습니다.'); return; }
+            const dayIdx = DAY_IDX[day];
+            const dayMax = dayMaxPeriods[dayIdx] || 7;
+            if (periodStart + periodCount - 1 > dayMax) { alert(`${day}요일은 ${dayMax}교시까지입니다. 초과할 수 없습니다.`); return; }
 
             // 중복 체크
             const grades = grade === 'all' ? ['1', '2', '3'] : [grade];
@@ -2181,7 +2400,7 @@
         }
 
         // ==========================================
-        // STEP 5: 시간표 만들기
+        // STEP 6: 시간표 만들기
         // ==========================================
         function selectGrade(grade) {
             currentGrade = String(grade);
@@ -2230,13 +2449,15 @@
             const classKey = `${currentGrade}_${currentClass}`;
             const classSchedule = allSchedule[classKey] || {};
 
-            for (let p = 1; p <= 7; p++) {
+            const maxPeriod = Math.max(...dayMaxPeriods);
+            for (let p = 1; p <= maxPeriod; p++) {
                 con.innerHTML += `<div class="tt-cell period-badge">${p}</div>`;
                 for (let d = 0; d < 5; d++) {
                     const cellId = `${d}_${p}`;
-                    const entry = classSchedule[cellId];
+                    const isOverLimit = p > dayMaxPeriods[d];
+                    const entry = isOverLimit ? null : (classSchedule[cellId] || null);
                     let content = '';
-                    let extraClass = 'bg-white';
+                    let extraClass = isOverLimit ? 'bg-slate-200 opacity-50' : 'bg-white';
 
                     if (entry) {
                         const block = blocks.find(b => b.id === entry.blockId);
@@ -2258,10 +2479,14 @@
                         </div>`;
                     }
 
-                    con.innerHTML += `<div id="cell_${cellId}" class="tt-cell ${extraClass} transition hover:bg-indigo-50/50 cursor-pointer"
-                        ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
-                        onclick="handleCellClick('${cellId}')"
-                        data-day="${d}" data-period="${p}">${content}</div>`;
+                    if (isOverLimit) {
+                        con.innerHTML += `<div class="tt-cell ${extraClass} cursor-not-allowed" data-day="${d}" data-period="${p}"></div>`;
+                    } else {
+                        con.innerHTML += `<div id="cell_${cellId}" class="tt-cell ${extraClass} transition hover:bg-indigo-50/50 cursor-pointer"
+                            ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+                            onclick="handleCellClick('${cellId}')"
+                            data-day="${d}" data-period="${p}">${content}</div>`;
+                    }
                 }
             }
         }
@@ -2329,10 +2554,10 @@
             const day = parseInt(target.dataset.day);
             const period = parseInt(target.dataset.period);
 
-            // 연속시수 공간 확인
+            // 연속시수 공간 확인 + 요일별 교시 제한
             for (let p = 0; p < block.linkedPeriods; p++) {
-                if (period + p > 7) {
-                    alert(`${block.linkedPeriods}연속 시수를 배치할 공간이 부족합니다. (${period}교시 시작 불가)`);
+                if (period + p > dayMaxPeriods[day]) {
+                    alert(`${DAYS[day]}요일은 ${dayMaxPeriods[day]}교시까지입니다. ${block.linkedPeriods}연속 시수를 배치할 수 없습니다.`);
                     return;
                 }
             }
@@ -2379,6 +2604,15 @@
             }
             if (constraintWarns.length > 0) {
                 if (!confirm(`⚠ 교사 제약조건 위반:\n${constraintWarns.join('\n')}\n\n그래도 배치하시겠습니까?`)) return;
+            }
+
+            // ★ 연속 수업 제한 경고
+            const maxConsec = getMaxConsecutiveAfterPlace(block, day, period, block.linkedPeriods);
+            if (maxConsec > 3) {
+                alert(`동일 교과 ${maxConsec}시간 연속 배치는 허용되지 않습니다.\n(최대 2시간 권장, 부득이한 경우만 3시간 허용)`);
+                return;
+            } else if (maxConsec > 2) {
+                if (!confirm(`⚠ 동일 교과 "${block.entries[0]?.subject || block.name}" ${maxConsec}시간 연속 배치입니다.\n(최대 2시간 권장, 부득이한 경우만 3시간 허용)\n\n그래도 배치하시겠습니까?`)) return;
             }
 
             // 배치
@@ -2471,6 +2705,31 @@
         function isTeacherInBlock(blockId, tk) {
             const b = blocks.find(x => x.id === blockId);
             return b?.entries.some(e => teacherKey(e) === tk);
+        }
+
+        // ★ 연속 수업 제한: 블록 배치 시 해당 학급의 최대 동일교과 연속 시수 계산
+        function getMaxConsecutiveAfterPlace(block, day, startPeriod, linked) {
+            let maxConsec = 0;
+            let affectedClasses;
+            if (block.isElective) {
+                const classCnt = getGradeCount(block.grade);
+                affectedClasses = Array.from({length: classCnt}, (_, i) => String(i + 1));
+            } else {
+                affectedClasses = [...new Set(block.entries.flatMap(e => e.classes))];
+            }
+            for (const cls of affectedClasses) {
+                const classKey = `${block.grade}_${cls}`;
+                const schedule = allSchedule[classKey] || {};
+                const entry = block.entries.find(e => e.classes.includes(cls));
+                const subj = entry ? entry.subject : (block.entries[0]?.subject || block.name);
+                let lo = startPeriod, hi = startPeriod + linked - 1;
+                let p = startPeriod - 1;
+                while (p >= 1 && schedule[`${day}_${p}`]?.subject === subj) { lo = p; p--; }
+                p = startPeriod + linked;
+                while (p <= (dayMaxPeriods[day] || 7) && schedule[`${day}_${p}`]?.subject === subj) { hi = p; p++; }
+                maxConsec = Math.max(maxConsec, hi - lo + 1);
+            }
+            return maxConsec;
         }
 
         function rebuildTeacherBusy() {

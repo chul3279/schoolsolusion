@@ -420,7 +420,12 @@ def create_room():
     member_id, school_id, role = info
 
     data = request.get_json(silent=True) or {}
-    room_type = sanitize_input(data.get('room_type', 'direct'), 20)
+    raw_room_type = data.get('room_type', 'direct')
+    if raw_room_type == 'individual':
+        raw_room_type = 'direct'
+    room_type = sanitize_input(raw_room_type, 20)
+    if room_type not in ('direct', 'class', 'grade', 'school', 'group'):
+        return jsonify({'success': False, 'message': '유효하지 않은 방 타입입니다.'})
     room_title = sanitize_input(data.get('room_title', ''), 100)
     target_ids = data.get('target_ids', [])  # list of member_id
     announcement_only = 1 if data.get('announcement_only') else 0

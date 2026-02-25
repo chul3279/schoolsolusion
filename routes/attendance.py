@@ -19,6 +19,8 @@ attendance_bp = Blueprint('attendance', __name__)
 # 출석부 조회 (교사용)
 # ============================================
 @attendance_bp.route('/api/attendance/sheet', methods=['GET'])
+@attendance_bp.route('/api/homeroom/attendance/list', methods=['GET'])
+@attendance_bp.route('/api/attendance/list', methods=['GET'])
 def get_attendance_sheet():
     conn = None
     cursor = None
@@ -71,6 +73,7 @@ def get_attendance_sheet():
 # 출결 일괄 저장 (교사용)
 # ============================================
 @attendance_bp.route('/api/attendance/save', methods=['POST'])
+@attendance_bp.route('/api/homeroom/attendance/save', methods=['POST'])
 def save_attendance():
     conn = None
     cursor = None
@@ -80,7 +83,7 @@ def save_attendance():
         class_grade = sanitize_input(data.get('class_grade'), 10)
         class_no = sanitize_input(data.get('class_no'), 10)
         att_date = sanitize_input(data.get('date'), 10)
-        records = data.get('records', [])
+        records = data.get('records') or data.get('attendance') or data.get('students') or data.get('data') or []
         teacher_id = session.get('user_id')
 
         if not all([school_id, class_grade, class_no, att_date]):
@@ -89,6 +92,12 @@ def save_attendance():
         if not records:
             return jsonify({'success': False, 'message': '출결 상태를 선택한 후 저장해주세요.'})
 
+        # 한국어 → 영문 상태 매핑
+        status_alias = {
+            '출석': 'present', '결석': 'absent', '지각': 'late',
+            '조퇴': 'early_leave', '병결': 'sick',
+            'P': 'present', 'A': 'absent', 'L': 'late',
+        }
         valid_statuses = {'present', 'absent', 'late', 'early_leave', 'sick'}
 
         conn = get_db_connection()
@@ -102,8 +111,9 @@ def save_attendance():
         saved = 0
         absent_students = []
         for rec in records:
-            student_id = sanitize_input(rec.get('student_id'), 50)
-            status = rec.get('status', 'present')
+            student_id = sanitize_input(rec.get('student_id') or rec.get('member_id'), 50)
+            raw_status = rec.get('status', 'present')
+            status = status_alias.get(raw_status, raw_status)
             memo = sanitize_input(rec.get('memo', ''), 200)
 
             if not student_id or status not in valid_statuses:

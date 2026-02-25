@@ -425,8 +425,9 @@ def create_subject_common():
         subject_name = sanitize_input(data.get('subject_name'), 100)
         class_grade = sanitize_input(data.get('class_grade'), 10)
         class_no = sanitize_input(data.get('class_no'), 10)
-        record_year = sanitize_input(data.get('record_year'), 4)
-        record_semester = sanitize_input(data.get('record_semester'), 1)
+        from datetime import datetime as dt_cls
+        record_year = sanitize_input(data.get('record_year'), 4) or str(dt_cls.now().year)
+        record_semester = sanitize_input(data.get('record_semester'), 1) or ('1' if dt_cls.now().month <= 7 else '2')
         activity_type = sanitize_input(data.get('activity_type'), 50) or '수업활동'
         title = sanitize_html(data.get('title', ''), 200)
         content = sanitize_html(data.get('content', ''))
@@ -438,6 +439,21 @@ def create_subject_common():
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+
+        # class_grade/class_no 미전달 시 tea_all에서 조회
+        if teacher_id and (not class_grade or not class_no):
+            try:
+                t_cur = conn.cursor()
+                t_cur.execute("SELECT class_grade, class_no FROM tea_all WHERE member_id = %s", (teacher_id,))
+                t_row = t_cur.fetchone()
+                if t_row:
+                    if not class_grade:
+                        class_grade = str(t_row['class_grade']) if t_row['class_grade'] else ''
+                    if not class_no:
+                        class_no = str(t_row['class_no']) if t_row['class_no'] else ''
+                t_cur.close()
+            except Exception:
+                pass
 
         cursor = conn.cursor()
         cursor.execute("""
@@ -514,11 +530,12 @@ def upload_subject_file():
         student_id = sanitize_input(request.form.get('student_id'), 50)
         student_name = sanitize_input(request.form.get('student_name'), 100)
         subject_name = sanitize_input(request.form.get('subject_name'), 100)
-        record_year = sanitize_input(request.form.get('record_year'), 4)
-        record_semester = sanitize_input(request.form.get('record_semester'), 1)
+        from datetime import datetime as dt_cls
+        record_year = sanitize_input(request.form.get('record_year'), 4) or str(dt_cls.now().year)
+        record_semester = sanitize_input(request.form.get('record_semester'), 1) or ('1' if dt_cls.now().month <= 7 else '2')
 
-        if not all([school_id, student_id, subject_name]):
-            return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
+        if not all([school_id, subject_name]):
+            return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다. (school_id, subject_name 필수)'})
 
         if 'file' not in request.files:
             return jsonify({'success': False, 'message': '파일이 없습니다.'})
@@ -721,6 +738,7 @@ def delete_subject_file():
 # 학교별 과목 목록 (timetable_data → cours_subject 순으로 조회)
 # ============================================
 @subject_bp.route('/api/subject/options', methods=['GET'])
+@subject_bp.route('/api/subject/list', methods=['GET'])
 def get_subject_options():
     conn = None
     cursor = None

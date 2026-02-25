@@ -104,14 +104,19 @@ def create_letter():
     conn = None
     cursor = None
     try:
-        school_id = session.get('school_id') or sanitize_input(request.form.get('school_id'), 50)
-        class_grade = sanitize_input(request.form.get('class_grade'), 10)
-        class_no = sanitize_input(request.form.get('class_no'), 10)
+        # JSON body와 form data 모두 지원
+        data = request.get_json(silent=True) or {}
+        def _get(key, default=''):
+            return request.form.get(key, data.get(key, default))
+
+        school_id = session.get('school_id') or sanitize_input(_get('school_id'), 50)
+        class_grade = sanitize_input(_get('class_grade'), 10)
+        class_no = sanitize_input(_get('class_no'), 10)
         teacher_id = session.get('user_id')
-        title = sanitize_html(request.form.get('title', ''), 200)
-        content = sanitize_html(request.form.get('content', ''), 10000)
-        require_consent = request.form.get('require_consent', '0') == '1'
-        consent_deadline = sanitize_input(request.form.get('consent_deadline'), 10) or None
+        title = sanitize_html(_get('title', ''), 200)
+        content = sanitize_html(_get('content', ''), 10000)
+        require_consent = _get('require_consent', '0') == '1' or _get('require_consent', False) is True
+        consent_deadline = sanitize_input(_get('consent_deadline'), 10) or None
 
         # class_grade/class_no 미전달 시 tea_all에서 조회
         if teacher_id and (not class_grade or not class_no):
