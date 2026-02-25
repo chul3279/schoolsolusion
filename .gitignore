@@ -18,6 +18,7 @@ utils/db.py
 routes/subject_utils.py
 routes/homeroom_record.py
 routes/admission.py
+templates/charge.html
 
 # OS
 .DS_Store
