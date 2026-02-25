@@ -2085,6 +2085,10 @@
         }
 
         async function submitLetter() {
+            if (!homeroomInfo) {
+                alert('담임 반 정보가 없습니다. 담임 선생님만 가정통신문을 작성할 수 있습니다.');
+                return;
+            }
             const title = document.getElementById('letter-title').value.trim();
             const content = document.getElementById('letter-content').value.trim();
             if (!title || !content) { alert('제목과 내용을 입력해주세요.'); return; }

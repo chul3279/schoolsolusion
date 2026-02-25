@@ -15,12 +15,26 @@
         .dashboard-card { transition: all 0.2s; }
         .dashboard-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .meal-input { min-height: 60px; }
+        .tab-btn { transition: all 0.2s; }
+        .tab-btn.active { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+        .glass-card { background: white; border: 1px solid #e2e8f0; }
+        .status-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; }
+        .status-draft { background: #f1f5f9; color: #64748b; }
+        .status-active { background: #dcfce7; color: #16a34a; }
+        .status-closed { background: #dbeafe; color: #2563eb; }
+        .status-recruiting { background: #dcfce7; color: #16a34a; }
+        .status-confirmed { background: #dbeafe; color: #2563eb; }
+        .status-ongoing { background: #fff7ed; color: #ea580c; }
+        .status-completed { background: #f1f5f9; color: #64748b; }
+        .bar-chart-bar { height: 24px; border-radius: 4px; background: linear-gradient(90deg, #3b82f6, #6366f1); transition: width 0.5s ease; }
+        .q-card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
 
         #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
         #mobile-overlay.active { display: block; }
         #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
 
-        /* 모바일 큰 글씨 대응: 터치 영역 확대 + 사이드바 전체 스크롤 */
         @media (max-width: 767px) {
             #sidebar.mobile-open { overflow-y: auto !important; }
             #sidebar.mobile-open .nav-wrap { flex: none !important; min-height: auto !important; }
@@ -30,8 +44,18 @@
             #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
             .tab-btn { min-height: 48px; padding: 12px 16px !important; font-size: 14px !important; white-space: nowrap; }
         }
+
+        @media print {
+            aside, header, .no-print, .tab-btn, .flex.gap-2.mb-6 { display: none !important; }
+            @page { margin: 10mm; }
+            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            main { overflow: visible !important; height: auto !important; }
+            .tab-panel { display: none !important; }
+            .tab-panel.print-target { display: block !important; }
+            .print-area { break-inside: avoid; page-break-inside: avoid; }
+            .glass-card { box-shadow: none !important; border: 1px solid #ccc !important; }
+        }
     </style>
-    <!-- Google Analytics (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -67,18 +91,15 @@
             <ul class="space-y-1">
                 <li><a href="../tea.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-desktop w-6 mr-3"></i> 나의 대시보드</a></li>
                 <li class="px-6 pt-6 pb-2 text-xs font-bold uppercase text-slate-500">ADMINISTRATIVE TASKS</li>
-                
                 <li><a href="#" onclick="openNoticeModal(); return false;" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-bullhorn w-6 mr-3"></i> 공지사항 등록</a></li>
-                
                 <li><a href="#" onclick="openMealModal(); return false;" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-utensils w-6 mr-3"></i> 월간 급식 등록</a></li>
-                
                 <li><a href="timetablechange.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-calendar-alt w-6 mr-3"></i> 시간표 조회/변경</a></li>
-
                 <li><a href="classtime_maker_base.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-database w-6 mr-3"></i> 기초데이터 관리</a></li>
-                
                 <li><a href="timetablemaker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-edit w-6 mr-3"></i> 시간표 작성</a></li>
-                
                 <li><a href="class_maker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-layer-group w-6 mr-3"></i> 반편성</a></li>
+                <li class="px-6 pt-6 pb-2 text-xs font-bold uppercase text-slate-500">MANAGEMENT</li>
+                <li><a href="#" onclick="switchTab('survey'); closeMobileSidebar(); return false;" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-poll w-6 mr-3"></i> 설문조사 관리</a></li>
+                <li><a href="#" onclick="switchTab('afterschool'); closeMobileSidebar(); return false;" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-book-reader w-6 mr-3"></i> 방과후학교 관리</a></li>
             </ul>
         </nav>
         <div class="p-4 border-t border-slate-700">
@@ -87,10 +108,10 @@
     </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="bg-white h-16 border-b flex items-center justify-between px-8 shadow-sm">
+        <header class="bg-white h-16 border-b flex items-center justify-between px-8 shadow-sm no-print">
             <div class="flex items-center gap-4">
                 <button id="sidebar-toggle" onclick="toggleMobileSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars text-xl"></i></button>
-                <h2 class="text-xl font-bold text-slate-800">행정 업무 대시보드</h2>
+                <h2 class="text-xl font-bold text-slate-800">행정 업무</h2>
                 <span id="userSchoolBadge" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold"></span>
             </div>
             <div class="flex items-center space-x-4">
@@ -107,75 +128,237 @@
         </header>
 
         <div class="flex-1 overflow-y-auto p-8">
-            <div class="max-w-6xl mx-auto fade-in">
-                
-                <div class="mb-8">
-                    <h3 id="welcomeMessage" class="text-2xl font-bold text-slate-800 mb-2">안녕하세요! 👋</h3>
-                    <p class="text-slate-500">오늘 처리해야 할 주요 행정 업무를 확인하세요.</p>
+            <div class="max-w-6xl mx-auto">
+                <!-- Tab Navigation -->
+                <div class="flex gap-2 mb-6 flex-wrap no-print">
+                    <button onclick="switchTab('dashboard')" class="tab-btn active px-5 py-2.5 rounded-xl font-bold text-sm" id="tab-dashboard">
+                        <i class="fas fa-tachometer-alt mr-2"></i>대시보드
+                    </button>
+                    <button onclick="switchTab('survey')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200" id="tab-survey">
+                        <i class="fas fa-poll mr-2"></i>설문조사
+                    </button>
+                    <button onclick="switchTab('afterschool')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200" id="tab-afterschool">
+                        <i class="fas fa-book-reader mr-2"></i>방과후학교
+                    </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    
-                    <a href="#" onclick="openNoticeModal(); return false;" class="block group">
-                        <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-yellow-300">
-                            <div class="w-12 h-12 rounded-lg bg-yellow-100 text-yellow-600 flex items-center justify-center mb-4 text-xl">
-                                <i class="fas fa-bullhorn"></i>
+                <!-- ===================== 대시보드 탭 ===================== -->
+                <div id="panel-dashboard" class="tab-panel active fade-in">
+                    <div class="mb-8">
+                        <h3 id="welcomeMessage" class="text-2xl font-bold text-slate-800 mb-2">안녕하세요!</h3>
+                        <p class="text-slate-500">오늘 처리해야 할 주요 행정 업무를 확인하세요.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <a href="#" onclick="openNoticeModal(); return false;" class="block group">
+                            <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-yellow-300">
+                                <div class="w-12 h-12 rounded-lg bg-yellow-100 text-yellow-600 flex items-center justify-center mb-4 text-xl"><i class="fas fa-bullhorn"></i></div>
+                                <h4 class="text-lg font-bold text-slate-800 mb-2">공지사항 등록하기</h4>
+                                <p class="text-sm text-slate-500">학교 전체 공지사항을 등록하고 관리합니다.</p>
                             </div>
-                            <h4 class="text-lg font-bold text-slate-800 mb-2">공지사항 등록하기</h4>
-                            <p class="text-sm text-slate-500">학교 전체 공지사항 및 가정통신문을 등록하고 관리합니다.</p>
-                        </div>
-                    </a>
-
-                    <a href="#" onclick="openMealModal(); return false;" class="block group">
-                        <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-pink-300">
-                            <div class="w-12 h-12 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center mb-4 text-xl">
-                                <i class="fas fa-utensils"></i>
+                        </a>
+                        <a href="#" onclick="openMealModal(); return false;" class="block group">
+                            <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-pink-300">
+                                <div class="w-12 h-12 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center mb-4 text-xl"><i class="fas fa-utensils"></i></div>
+                                <h4 class="text-lg font-bold text-slate-800 mb-2">월간 급식 등록하기</h4>
+                                <p class="text-sm text-slate-500">월별 급식 식단표 데이터를 관리합니다.</p>
                             </div>
-                            <h4 class="text-lg font-bold text-slate-800 mb-2">월간 급식 등록하기</h4>
-                            <p class="text-sm text-slate-500">월별 급식 식단표 데이터를 업로드하고 관리합니다.</p>
-                        </div>
-                    </a>
-
-                    <a href="timetablechange.html" class="block group">
-                        <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-blue-300">
-                            <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-4 text-xl">
-                                <i class="fas fa-calendar-alt"></i>
+                        </a>
+                        <a href="timetablechange.html" class="block group">
+                            <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-blue-300">
+                                <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-4 text-xl"><i class="fas fa-calendar-alt"></i></div>
+                                <h4 class="text-lg font-bold text-slate-800 mb-2">시간표 조회 및 변경</h4>
+                                <p class="text-sm text-slate-500">시간표 조회 및 교환을 관리합니다.</p>
                             </div>
-                            <h4 class="text-lg font-bold text-slate-800 mb-2">시간표 조회 및 변경</h4>
-                            <p class="text-sm text-slate-500">전체 학급의 시간표를 조회하고 임시 시간표를 배정합니다.</p>
-                        </div>
-                    </a>
-
-                    <a href="classtime_maker_base.html" class="block group">
-                        <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-green-300">
-                            <div class="w-12 h-12 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4 text-xl">
-                                <i class="fas fa-database"></i>
+                        </a>
+                        <a href="#" onclick="switchTab('survey'); return false;" class="block group">
+                            <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-indigo-300">
+                                <div class="w-12 h-12 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4 text-xl"><i class="fas fa-poll"></i></div>
+                                <h4 class="text-lg font-bold text-slate-800 mb-2">설문조사 관리</h4>
+                                <p class="text-sm text-slate-500">설문을 생성하고 통계를 확인합니다.</p>
                             </div>
-                            <h4 class="text-lg font-bold text-slate-800 mb-2">반편성/시간표 기초데이터</h4>
-                            <p class="text-sm text-slate-500">반편성 및 시간표 작성에 필요한 기초 데이터를 관리합니다.</p>
-                        </div>
-                    </a>
-
-                    <a href="timetablemaker.html" class="block group">
-                        <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-indigo-300">
-                            <div class="w-12 h-12 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4 text-xl">
-                                <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="#" onclick="switchTab('afterschool'); return false;" class="block group">
+                            <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-emerald-300">
+                                <div class="w-12 h-12 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4 text-xl"><i class="fas fa-book-reader"></i></div>
+                                <h4 class="text-lg font-bold text-slate-800 mb-2">방과후학교 관리</h4>
+                                <p class="text-sm text-slate-500">방과후 프로그램 개설 및 수강 관리합니다.</p>
                             </div>
-                            <h4 class="text-lg font-bold text-slate-800 mb-2">시간표 작성</h4>
-                            <p class="text-sm text-slate-500">기초 데이터를 바탕으로 학교 전체 시간표를 자동으로 생성합니다.</p>
-                        </div>
-                    </a>
-
-                    <a href="class_maker.html" class="block group">
-                        <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-purple-300">
-                            <div class="w-12 h-12 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mb-4 text-xl">
-                                <i class="fas fa-layer-group"></i>
+                        </a>
+                        <a href="class_maker.html" class="block group">
+                            <div class="bg-white h-full p-6 rounded-xl border border-slate-200 shadow-sm dashboard-card group-hover:border-purple-300">
+                                <div class="w-12 h-12 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mb-4 text-xl"><i class="fas fa-layer-group"></i></div>
+                                <h4 class="text-lg font-bold text-slate-800 mb-2">반편성</h4>
+                                <p class="text-sm text-slate-500">학생 데이터를 기반으로 학급을 편성합니다.</p>
                             </div>
-                            <h4 class="text-lg font-bold text-slate-800 mb-2">반편성</h4>
-                            <p class="text-sm text-slate-500">학생 데이터를 기반으로 학급을 편성하고 관리합니다.</p>
-                        </div>
-                    </a>
+                        </a>
+                    </div>
+                </div>
 
+                <!-- ===================== 설문조사 탭 ===================== -->
+                <div id="panel-survey" class="tab-panel">
+                    <!-- 설문 목록 뷰 -->
+                    <div id="survey-list-view">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold"><i class="fas fa-poll mr-2 text-indigo-500"></i>설문조사 관리</h3>
+                            <button onclick="openSurveyEditor()" class="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-bold text-sm shadow hover:opacity-90 transition">
+                                <i class="fas fa-plus mr-2"></i>새 설문 만들기
+                            </button>
+                        </div>
+                        <div class="glass-card rounded-2xl overflow-hidden shadow-sm">
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-slate-50 border-b">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">제목</th>
+                                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">대상</th>
+                                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">상태</th>
+                                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">문항</th>
+                                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">응답</th>
+                                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">생성일</th>
+                                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">액션</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="survey-list-body" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                            <div id="survey-empty" class="hidden p-12 text-center text-slate-400">
+                                <i class="fas fa-clipboard-list text-4xl mb-3"></i>
+                                <p class="font-medium">등록된 설문이 없습니다</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 설문 편집 뷰 -->
+                    <div id="survey-editor-view" class="hidden">
+                        <div class="flex items-center gap-4 mb-6">
+                            <button onclick="closeSurveyEditor()" class="w-10 h-10 bg-slate-200 hover:bg-slate-300 rounded-xl flex items-center justify-center transition"><i class="fas fa-arrow-left"></i></button>
+                            <h3 class="text-xl font-bold" id="survey-editor-title">새 설문 만들기</h3>
+                        </div>
+                        <div class="glass-card rounded-2xl p-6 shadow-sm mb-6">
+                            <input type="hidden" id="sv-edit-id" value="">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-2">설문 제목 *</label>
+                                    <input type="text" id="sv-title" placeholder="설문 제목을 입력하세요" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none font-medium">
+                                </div>
+                                <div class="flex gap-4">
+                                    <div class="flex-1">
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">대상</label>
+                                        <select id="sv-target-role" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none font-medium">
+                                            <option value="student">학생</option>
+                                            <option value="parent">학부모</option>
+                                            <option value="both">학생+학부모</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex-1">
+                                        <label class="block text-xs font-bold text-slate-500 mb-2">대상 학년</label>
+                                        <select id="sv-target-grades" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none font-medium">
+                                            <option value="all">전체</option>
+                                            <option value="1">1학년</option>
+                                            <option value="2">2학년</option>
+                                            <option value="3">3학년</option>
+                                            <option value="1,2">1,2학년</option>
+                                            <option value="1,3">1,3학년</option>
+                                            <option value="2,3">2,3학년</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-slate-500 mb-2">설명 (선택)</label>
+                                <textarea id="sv-description" rows="2" placeholder="설문에 대한 간단한 설명" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none font-medium resize-none"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- 문항 영역 -->
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-lg font-bold"><i class="fas fa-list-ol mr-2 text-indigo-400"></i>문항 구성</h4>
+                            <button onclick="addQuestion()" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg font-bold text-sm hover:bg-indigo-200 transition">
+                                <i class="fas fa-plus mr-1"></i>문항 추가
+                            </button>
+                        </div>
+                        <div id="sv-questions-container"></div>
+
+                        <div class="flex gap-3 mt-6">
+                            <button onclick="saveSurvey()" class="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-bold shadow hover:opacity-90 transition">
+                                <i class="fas fa-save mr-2"></i>임시 저장
+                            </button>
+                            <button onclick="saveSurveyAndStart()" class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-bold shadow hover:opacity-90 transition">
+                                <i class="fas fa-play mr-2"></i>저장 후 개시
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 설문 통계 뷰 -->
+                    <div id="survey-stats-view" class="hidden">
+                        <div class="flex items-center gap-4 mb-6 no-print">
+                            <button onclick="closeSurveyStats()" class="w-10 h-10 bg-slate-200 hover:bg-slate-300 rounded-xl flex items-center justify-center transition"><i class="fas fa-arrow-left"></i></button>
+                            <h3 class="text-xl font-bold" id="stats-title">설문 통계</h3>
+                            <div class="ml-auto flex gap-2">
+                                <button onclick="printSurveyStats()" class="px-4 py-2 bg-slate-600 text-white rounded-lg font-bold text-sm hover:bg-slate-700 transition">
+                                    <i class="fas fa-print mr-1"></i>인쇄
+                                </button>
+                            </div>
+                        </div>
+                        <div id="stats-content"></div>
+                    </div>
+                </div>
+
+                <!-- ===================== 방과후학교 탭 ===================== -->
+                <div id="panel-afterschool" class="tab-panel">
+                    <!-- 프로그램 목록 뷰 -->
+                    <div id="as-list-view">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold"><i class="fas fa-book-reader mr-2 text-emerald-500"></i>방과후학교 관리</h3>
+                            <button onclick="openProgramEditor()" class="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-bold text-sm shadow hover:opacity-90 transition">
+                                <i class="fas fa-plus mr-2"></i>새 프로그램 등록
+                            </button>
+                        </div>
+                        <div class="glass-card rounded-2xl overflow-hidden shadow-sm">
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-slate-50 border-b">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">프로그램명</th>
+                                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">강사</th>
+                                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">일정</th>
+                                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">상태</th>
+                                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">신청/정원</th>
+                                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">액션</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="as-list-body" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                            <div id="as-empty" class="hidden p-12 text-center text-slate-400">
+                                <i class="fas fa-book-open text-4xl mb-3"></i>
+                                <p class="font-medium">등록된 프로그램이 없습니다</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 프로그램 상세 뷰 -->
+                    <div id="as-detail-view" class="hidden">
+                        <div class="flex items-center gap-4 mb-6 no-print">
+                            <button onclick="closeAsDetail()" class="w-10 h-10 bg-slate-200 hover:bg-slate-300 rounded-xl flex items-center justify-center transition"><i class="fas fa-arrow-left"></i></button>
+                            <h3 class="text-xl font-bold" id="as-detail-title">프로그램 상세</h3>
+                        </div>
+                        <div id="as-detail-content"></div>
+                    </div>
+
+                    <!-- 출결 관리 뷰 -->
+                    <div id="as-attendance-view" class="hidden">
+                        <div class="flex items-center gap-4 mb-6 no-print">
+                            <button onclick="closeAsAttendance()" class="w-10 h-10 bg-slate-200 hover:bg-slate-300 rounded-xl flex items-center justify-center transition"><i class="fas fa-arrow-left"></i></button>
+                            <h3 class="text-xl font-bold" id="as-att-title">출결 관리</h3>
+                            <div class="ml-auto flex gap-2">
+                                <button onclick="printAttendanceFull()" class="px-4 py-2 bg-slate-600 text-white rounded-lg font-bold text-sm hover:bg-slate-700 transition">
+                                    <i class="fas fa-print mr-1"></i>출석부 인쇄
+                                </button>
+                            </div>
+                        </div>
+                        <div id="as-att-content"></div>
+                    </div>
                 </div>
 
             </div>
@@ -206,7 +389,7 @@
                     <label class="block text-xs font-bold text-slate-500 mb-2">수정/삭제 비밀번호 (4자리 이상)</label>
                     <input type="password" id="notice-correct-no" placeholder="비밀번호 입력" maxlength="20" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 outline-none font-medium">
                 </div>
-                <p class="text-xs text-slate-400 mb-4"><i class="fas fa-info-circle mr-1"></i>공지사항은 학교 전체(교사, 학생, 학부모)에게 공개됩니다.</p>
+                <p class="text-xs text-slate-400 mb-4"><i class="fas fa-info-circle mr-1"></i>공지사항은 학교 전체에게 공개됩니다.</p>
                 <button onclick="submitNotice()" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black py-4 rounded-xl shadow-lg hover:shadow-xl transition">등록하기</button>
             </div>
         </div>
@@ -223,48 +406,97 @@
                     <div><h2 class="text-xl font-black">월간 급식 등록</h2><p class="text-sm text-white/80">한 달 급식 메뉴를 입력하세요</p></div>
                 </div>
             </div>
-            
-            <!-- 년월 선택 -->
-            <div class="p-4 bg-slate-50 border-b flex items-center gap-4 flex-shrink-0">
+            <div class="p-4 bg-slate-50 border-b flex items-center gap-4 flex-shrink-0 flex-wrap">
                 <div class="flex items-center gap-2">
                     <label class="text-sm font-bold text-slate-600">년도</label>
-                    <select id="meal-year" onchange="loadMealData()" class="px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-pink-500 outline-none font-medium">
-                    </select>
+                    <select id="meal-year" onchange="loadMealData()" class="px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-pink-500 outline-none font-medium"></select>
                 </div>
                 <div class="flex items-center gap-2">
                     <label class="text-sm font-bold text-slate-600">월</label>
                     <select id="meal-month" onchange="loadMealData()" class="px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-pink-500 outline-none font-medium">
-                        <option value="1">1월</option>
-                        <option value="2">2월</option>
-                        <option value="3">3월</option>
-                        <option value="4">4월</option>
-                        <option value="5">5월</option>
-                        <option value="6">6월</option>
-                        <option value="7">7월</option>
-                        <option value="8">8월</option>
-                        <option value="9">9월</option>
-                        <option value="10">10월</option>
-                        <option value="11">11월</option>
-                        <option value="12">12월</option>
+                        <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option>
+                        <option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option>
+                        <option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
                     </select>
                 </div>
-                <button onclick="loadMealData()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-xl text-sm font-bold transition">
-                    <i class="fas fa-sync-alt mr-1"></i>불러오기
-                </button>
+                <button onclick="loadMealData()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-xl text-sm font-bold transition"><i class="fas fa-sync-alt mr-1"></i>불러오기</button>
                 <span id="meal-status" class="text-sm text-slate-500"></span>
             </div>
-            
-            <!-- 급식 입력 그리드 -->
             <div class="flex-1 overflow-y-auto p-6">
-                <div id="meal-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- JS로 생성 -->
+                <div id="meal-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+            <div class="p-4 bg-slate-50 border-t flex-shrink-0">
+                <button onclick="saveMealData()" class="w-full bg-gradient-to-r from-pink-500 to-rose-600 text-white font-black py-4 rounded-xl shadow-lg hover:shadow-xl transition"><i class="fas fa-save mr-2"></i>저장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 프로그램 편집 모달 -->
+    <div id="as-editor-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeProgramEditor()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div class="bg-gradient-to-r from-emerald-500 to-green-600 p-6 text-white">
+                <button onclick="closeProgramEditor()" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center"><i class="fas fa-book-reader text-2xl"></i></div>
+                    <div><h2 class="text-xl font-black" id="as-editor-modal-title">프로그램 등록</h2><p class="text-sm text-white/80">방과후 프로그램 정보를 입력하세요</p></div>
                 </div>
             </div>
-            
-            <!-- 저장 버튼 -->
-            <div class="p-4 bg-slate-50 border-t flex-shrink-0">
-                <button onclick="saveMealData()" class="w-full bg-gradient-to-r from-pink-500 to-rose-600 text-white font-black py-4 rounded-xl shadow-lg hover:shadow-xl transition">
-                    <i class="fas fa-save mr-2"></i>저장하기
+            <div class="p-6">
+                <input type="hidden" id="as-edit-id" value="">
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">프로그램명 *</label>
+                    <input type="text" id="as-name" placeholder="예: 코딩반, 축구교실" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-500 mb-2">설명</label>
+                    <textarea id="as-desc" rows="2" placeholder="프로그램 소개" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium resize-none"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">강사명</label>
+                        <input type="text" id="as-instructor" placeholder="강사 이름" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">대상 학년</label>
+                        <select id="as-grades" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium">
+                            <option value="all">전체</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option>
+                            <option value="1,2">1,2학년</option><option value="2,3">2,3학년</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">정원</label>
+                        <input type="number" id="as-max" value="30" min="1" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">총 수업 회차</label>
+                        <input type="number" id="as-sessions" value="10" min="1" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">수업 요일</label>
+                        <input type="text" id="as-dow" placeholder="예: 월,수" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">수업 시간</label>
+                        <input type="text" id="as-time" placeholder="예: 15:00~16:30" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">시작일 *</label>
+                        <input type="date" id="as-start" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-2">종료일 *</label>
+                        <input type="date" id="as-end" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium">
+                    </div>
+                </div>
+                <button onclick="saveProgram()" class="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-black py-4 rounded-xl shadow-lg hover:shadow-xl transition">
+                    <i class="fas fa-save mr-2"></i>저장
                 </button>
             </div>
         </div>
@@ -272,70 +504,65 @@
 
     <script>
         let currentUser = null;
+        let surveyQuestionIndex = 0;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initUserInfo();
-        });
+        document.addEventListener('DOMContentLoaded', () => { initUserInfo(); });
 
+        // ==========================================
+        // 탭 전환
+        // ==========================================
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('bg-white', 'border-2', 'border-slate-200');
+            });
+            const activeBtn = document.getElementById('tab-' + tabName);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.classList.remove('bg-white', 'border-2', 'border-slate-200');
+            }
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            const panel = document.getElementById('panel-' + tabName);
+            if (panel) panel.classList.add('active');
+
+            if (tabName === 'survey') loadSurveys();
+            if (tabName === 'afterschool') loadPrograms();
+        }
+
+        // ==========================================
+        // 사용자 초기화 (기존 유지)
+        // ==========================================
         function initUserInfo() {
             const userStr = localStorage.getItem('schoolus_user');
-            if (!userStr) {
-                alert('로그인이 필요합니다.');
-                window.location.href = '/';
-                return;
-            }
-            
+            if (!userStr) { alert('로그인이 필요합니다.'); window.location.href = '/'; return; }
             currentUser = JSON.parse(userStr);
-            
             const schoolBadge = document.getElementById('userSchoolBadge');
-            if (currentUser.member_school) {
-                schoolBadge.textContent = currentUser.member_school;
-            } else {
-                schoolBadge.textContent = '학교 미설정';
-                schoolBadge.className = 'bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold';
-            }
-            
+            if (currentUser.member_school) { schoolBadge.textContent = currentUser.member_school; }
+            else { schoolBadge.textContent = '학교 미설정'; schoolBadge.className = 'bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold'; }
             const userName = document.getElementById('userName');
             const userAvatar = document.getElementById('userAvatar');
             const welcomeMessage = document.getElementById('welcomeMessage');
-            
             if (currentUser.member_name) {
                 if (userName) userName.textContent = currentUser.member_name + ' 선생님';
                 if (userAvatar) userAvatar.textContent = currentUser.member_name.charAt(0);
-                if (welcomeMessage) welcomeMessage.textContent = `${currentUser.member_name} 선생님, 안녕하세요! 👋`;
+                if (welcomeMessage) welcomeMessage.textContent = `${currentUser.member_name} 선생님, 안녕하세요!`;
             }
-            
             loadUserPoint();
         }
-        
         async function loadUserPoint() {
             try {
-                const url = `/api/teacher/info?member_id=${encodeURIComponent(currentUser.member_id)}`;
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (data.success && data.teacher) {
-                    displayPoint(data.teacher.point);
-                }
-            } catch (error) {
-                console.error('포인트 로드 오류:', error);
-            }
+                const r = await fetch(`/api/teacher/info?member_id=${encodeURIComponent(currentUser.member_id)}`);
+                const d = await r.json();
+                if (d.success && d.teacher) displayPoint(d.teacher.point);
+            } catch(e) { console.error('포인트 로드 오류:', e); }
         }
-        
         function displayPoint(point) {
             const el = document.getElementById('userPoint');
             if (!el) return;
-            
-            if (point === 'free' || point === 'Free') {
-                el.textContent = 'Free';
-            } else if (point === null || point === undefined || point === '') {
-                el.textContent = '0';
-            } else {
-                const num = parseInt(point);
-                el.textContent = isNaN(num) ? '0' : num.toLocaleString();
-            }
+            if (point === 'free' || point === 'Free') el.textContent = 'Free';
+            else if (point === null || point === undefined || point === '') el.textContent = '0';
+            else { const num = parseInt(point); el.textContent = isNaN(num) ? '0' : num.toLocaleString(); }
         }
-
         function getSchoolParams() {
             const params = new URLSearchParams();
             if (currentUser.school_id) params.append('school_id', currentUser.school_id);
@@ -344,7 +571,7 @@
         }
 
         // ==========================================
-        // 공지사항 모달
+        // 공지사항 모달 (기존 유지)
         // ==========================================
         function openNoticeModal() {
             document.getElementById('notice-title').value = '';
@@ -353,198 +580,755 @@
             document.getElementById('notice-modal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
-
-        function closeNoticeModal() {
-            document.getElementById('notice-modal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
+        function closeNoticeModal() { document.getElementById('notice-modal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
         async function submitNotice() {
             const title = document.getElementById('notice-title').value.trim();
             const message = document.getElementById('notice-message').value.trim();
             const correct_no = document.getElementById('notice-correct-no').value.trim();
-            
             if (!title || !message) return alert('제목과 내용을 모두 입력해주세요.');
-            if (!correct_no || correct_no.length < 4) return alert('수정/삭제용 비밀번호를 4자리 이상 입력해주세요.');
-            
+            if (!correct_no || correct_no.length < 4) return alert('비밀번호를 4자리 이상 입력해주세요.');
             try {
-                const response = await fetch('/api/notice/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        member_name: currentUser.member_name,
-                        member_school: currentUser.member_school,
-                        school_id: currentUser.school_id,
-                        title, message, correct_no
-                    })
+                const r = await fetch('/api/notice/create', { method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ member_name: currentUser.member_name, member_school: currentUser.member_school, school_id: currentUser.school_id, title, message, correct_no })
                 });
-                const data = await response.json();
-                if (data.success) {
-                    alert(data.message);
-                    closeNoticeModal();
-                } else {
-                    alert(data.message);
-                }
-            } catch (error) {
-                alert('공지사항 등록 중 오류가 발생했습니다.');
-            }
+                const d = await r.json();
+                alert(d.message); if (d.success) closeNoticeModal();
+            } catch(e) { alert('공지사항 등록 중 오류가 발생했습니다.'); }
         }
 
         // ==========================================
-        // 월간 급식 모달
+        // 월간 급식 모달 (기존 유지)
         // ==========================================
         function openMealModal() {
-            // 년도 옵션 생성
             const yearSelect = document.getElementById('meal-year');
-            const currentYear = new Date().getFullYear();
-            yearSelect.innerHTML = '';
-            for (let y = currentYear - 1; y <= currentYear + 1; y++) {
-                const option = document.createElement('option');
-                option.value = y;
-                option.textContent = y + '년';
-                if (y === currentYear) option.selected = true;
-                yearSelect.appendChild(option);
+            const cy = new Date().getFullYear(); yearSelect.innerHTML = '';
+            for (let y = cy-1; y <= cy+1; y++) { const o = document.createElement('option'); o.value = y; o.textContent = y+'년'; if(y===cy) o.selected=true; yearSelect.appendChild(o); }
+            document.getElementById('meal-month').value = new Date().getMonth()+1;
+            generateMealGrid(); loadMealData();
+            document.getElementById('meal-modal').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+        }
+        function closeMealModal() { document.getElementById('meal-modal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
+        function generateMealGrid() {
+            const year = parseInt(document.getElementById('meal-year').value), month = parseInt(document.getElementById('meal-month').value);
+            const dim = new Date(year, month, 0).getDate(), grid = document.getElementById('meal-grid'); grid.innerHTML = '';
+            for (let d=1; d<=dim; d++) {
+                const dt = new Date(year, month-1, d), dw = ['일','월','화','수','목','금','토'][dt.getDay()], isWe = dt.getDay()===0||dt.getDay()===6;
+                const c = document.createElement('div');
+                c.className = `p-3 rounded-xl border-2 ${isWe?'border-slate-100 bg-slate-50':'border-slate-200 bg-white'}`;
+                c.innerHTML = `<div class="flex items-center justify-between mb-2"><span class="font-bold text-slate-800">${d}일</span><span class="text-xs px-2 py-0.5 rounded-full ${dt.getDay()===0?'bg-red-100 text-red-600':dt.getDay()===6?'bg-blue-100 text-blue-600':'bg-slate-100 text-slate-600'}">${dw}</span></div><textarea id="meal-day-${d}" rows="3" placeholder="${isWe?'주말':'메뉴 입력'}" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-pink-400 outline-none resize-none meal-input ${isWe?'bg-slate-100':''}"></textarea>`;
+                grid.appendChild(c);
             }
-            
-            // 현재 월 선택
-            document.getElementById('meal-month').value = new Date().getMonth() + 1;
-            
-            // 그리드 생성 및 데이터 로드
-            generateMealGrid();
-            loadMealData();
-            
-            document.getElementById('meal-modal').classList.remove('hidden');
+        }
+        async function loadMealData() {
+            const year=document.getElementById('meal-year').value, month=document.getElementById('meal-month').value, st=document.getElementById('meal-status');
+            generateMealGrid(); st.innerHTML='<i class="fas fa-spinner fa-spin mr-1"></i>불러오는 중...';
+            try {
+                const p=getSchoolParams(); p.append('year',year); p.append('month',month);
+                const r=await fetch(`/api/meal/month?${p.toString()}`), d=await r.json();
+                if(d.success&&d.meals){const mc=Object.keys(d.meals).length; for(const[day,mi] of Object.entries(d.meals)){const ta=document.getElementById(`meal-day-${day}`); if(ta)ta.value=mi.menu||'';} st.innerHTML=mc>0?`<i class="fas fa-check-circle text-green-500 mr-1"></i>${mc}일분 로드됨`:'<i class="fas fa-info-circle text-slate-400 mr-1"></i>데이터 없음';}
+                else st.innerHTML='<i class="fas fa-info-circle text-slate-400 mr-1"></i>데이터 없음';
+            } catch(e){st.innerHTML='<i class="fas fa-exclamation-circle text-red-500 mr-1"></i>로드 실패';}
+        }
+        async function saveMealData() {
+            const year=document.getElementById('meal-year').value, month=document.getElementById('meal-month').value;
+            const dim=new Date(parseInt(year),parseInt(month),0).getDate(), meals={}; let fc=0;
+            for(let d=1;d<=dim;d++){const ta=document.getElementById(`meal-day-${d}`); if(ta&&ta.value.trim()){meals[d]=ta.value.trim();fc++;}}
+            if(fc===0&&!confirm('입력된 메뉴가 없습니다. 기존 데이터를 삭제하시겠습니까?')) return;
+            try {
+                const r=await fetch('/api/meal/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({school_id:currentUser.school_id,member_school:currentUser.member_school,year,month,meals})});
+                const d=await r.json(); alert(d.message); if(d.success)document.getElementById('meal-status').innerHTML='<i class="fas fa-check-circle text-green-500 mr-1"></i>저장 완료';
+            } catch(e){alert('저장 중 오류가 발생했습니다.');}
+        }
+
+        // ==========================================
+        // 설문조사 기능
+        // ==========================================
+        async function loadSurveys() {
+            try {
+                const r = await fetch(`/api/survey/list?school_id=${currentUser.school_id}`);
+                const d = await r.json();
+                if (!d.success) return;
+
+                const body = document.getElementById('survey-list-body');
+                const empty = document.getElementById('survey-empty');
+
+                if (!d.surveys || d.surveys.length === 0) {
+                    body.innerHTML = ''; empty.classList.remove('hidden'); return;
+                }
+                empty.classList.add('hidden');
+
+                const roleMap = {student:'학생', parent:'학부모', both:'학생+학부모'};
+                const statusMap = {draft:'임시저장', active:'진행중', closed:'종료'};
+
+                body.innerHTML = d.surveys.map(s => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 font-medium text-slate-800">${s.title}</td>
+                        <td class="px-4 py-3 text-center text-sm">${roleMap[s.target_role]||s.target_role} ${s.target_grades==='all'?'전체':s.target_grades+'학년'}</td>
+                        <td class="px-4 py-3 text-center"><span class="status-badge status-${s.status}">${statusMap[s.status]||s.status}</span></td>
+                        <td class="px-4 py-3 text-center text-sm">${s.question_count}문항</td>
+                        <td class="px-4 py-3 text-center text-sm font-bold">${s.response_count}명</td>
+                        <td class="px-4 py-3 text-center text-sm text-slate-500">${s.created_at}</td>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex gap-1 justify-center flex-wrap">
+                                ${s.status==='draft'?`<button onclick="editSurvey(${s.id})" class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-bold hover:bg-indigo-200">수정</button><button onclick="startSurvey(${s.id})" class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold hover:bg-green-200">개시</button><button onclick="deleteSurvey(${s.id})" class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold hover:bg-red-200">삭제</button>`:''}
+                                ${s.status==='active'?`<button onclick="closeSurvey(${s.id})" class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold hover:bg-orange-200">종료</button>`:''}
+                                ${s.status!=='draft'?`<button onclick="loadSurveyStats(${s.id})" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold hover:bg-blue-200">통계</button>`:''}
+                                ${s.status==='closed'?`<button onclick="deleteSurvey(${s.id})" class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold hover:bg-red-200">삭제</button>`:''}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch(e) { console.error('설문 목록 오류:', e); }
+        }
+
+        function openSurveyEditor(id) {
+            document.getElementById('survey-list-view').classList.add('hidden');
+            document.getElementById('survey-stats-view').classList.add('hidden');
+            document.getElementById('survey-editor-view').classList.remove('hidden');
+            document.getElementById('sv-edit-id').value = id || '';
+            document.getElementById('survey-editor-title').textContent = id ? '설문 수정' : '새 설문 만들기';
+            if (!id) {
+                document.getElementById('sv-title').value = '';
+                document.getElementById('sv-description').value = '';
+                document.getElementById('sv-target-role').value = 'student';
+                document.getElementById('sv-target-grades').value = 'all';
+                document.getElementById('sv-questions-container').innerHTML = '';
+                surveyQuestionIndex = 0;
+                addQuestion(); // 기본 1문항
+            }
+        }
+
+        async function editSurvey(id) {
+            openSurveyEditor(id);
+            try {
+                const r = await fetch(`/api/survey/detail?id=${id}`);
+                const d = await r.json();
+                if (!d.success) return alert(d.message);
+                document.getElementById('sv-title').value = d.survey.title;
+                document.getElementById('sv-description').value = d.survey.description;
+                document.getElementById('sv-target-role').value = d.survey.target_role;
+                document.getElementById('sv-target-grades').value = d.survey.target_grades;
+                document.getElementById('sv-questions-container').innerHTML = '';
+                surveyQuestionIndex = 0;
+                d.questions.forEach(q => addQuestion(q));
+            } catch(e) { alert('설문 불러오기 오류'); }
+        }
+
+        function closeSurveyEditor() {
+            document.getElementById('survey-editor-view').classList.add('hidden');
+            document.getElementById('survey-list-view').classList.remove('hidden');
+            loadSurveys();
+        }
+
+        function addQuestion(data) {
+            const idx = surveyQuestionIndex++;
+            const container = document.getElementById('sv-questions-container');
+            const div = document.createElement('div');
+            div.className = 'q-card';
+            div.id = `q-card-${idx}`;
+
+            const qText = data ? data.question_text : '';
+            const qType = data ? data.question_type : 'single';
+            const qRequired = data ? data.required : true;
+            let optionsStr = '';
+            if (data && data.options) {
+                if (Array.isArray(data.options)) optionsStr = data.options.join('\n');
+                else if (data.options.max) optionsStr = data.options.max;
+            }
+
+            div.innerHTML = `
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-sm font-bold text-indigo-600">문항 ${idx+1}</span>
+                    <button onclick="removeQuestion(${idx})" class="text-red-400 hover:text-red-600 text-sm"><i class="fas fa-trash"></i></button>
+                </div>
+                <input type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg mb-3 font-medium q-text" placeholder="질문을 입력하세요" value="${qText}">
+                <div class="flex gap-3 items-center mb-3">
+                    <select class="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium q-type" onchange="onQTypeChange(${idx})">
+                        <option value="single" ${qType==='single'?'selected':''}>단일 선택</option>
+                        <option value="multiple" ${qType==='multiple'?'selected':''}>복수 선택</option>
+                        <option value="text" ${qType==='text'?'selected':''}>주관식</option>
+                        <option value="rating" ${qType==='rating'?'selected':''}>척도(1~5)</option>
+                    </select>
+                    <label class="flex items-center gap-1 text-sm text-slate-500">
+                        <input type="checkbox" class="q-required" ${qRequired?'checked':''}> 필수
+                    </label>
+                </div>
+                <div class="q-options-area" id="q-opts-${idx}">
+                    ${(qType==='single'||qType==='multiple') ? `<textarea class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none q-options" rows="4" placeholder="보기를 한 줄에 하나씩 입력하세요\n예:\n매우 만족\n만족\n보통\n불만">${optionsStr}</textarea>` : ''}
+                    ${qType==='rating' ? `<p class="text-sm text-slate-400">1~5점 척도로 자동 생성됩니다.</p>` : ''}
+                    ${qType==='text' ? `<p class="text-sm text-slate-400">자유 서술형 응답입니다.</p>` : ''}
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeQuestion(idx) {
+            const el = document.getElementById(`q-card-${idx}`);
+            if (el) el.remove();
+        }
+
+        function onQTypeChange(idx) {
+            const card = document.getElementById(`q-card-${idx}`);
+            const type = card.querySelector('.q-type').value;
+            const area = document.getElementById(`q-opts-${idx}`);
+            if (type === 'single' || type === 'multiple') {
+                area.innerHTML = `<textarea class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none q-options" rows="4" placeholder="보기를 한 줄에 하나씩 입력"></textarea>`;
+            } else if (type === 'rating') {
+                area.innerHTML = `<p class="text-sm text-slate-400">1~5점 척도로 자동 생성됩니다.</p>`;
+            } else {
+                area.innerHTML = `<p class="text-sm text-slate-400">자유 서술형 응답입니다.</p>`;
+            }
+        }
+
+        function collectQuestions() {
+            const cards = document.querySelectorAll('.q-card');
+            const questions = [];
+            cards.forEach(card => {
+                const text = card.querySelector('.q-text').value.trim();
+                const type = card.querySelector('.q-type').value;
+                const required = card.querySelector('.q-required').checked;
+                if (!text) return;
+                let options = null;
+                if (type === 'single' || type === 'multiple') {
+                    const textarea = card.querySelector('.q-options');
+                    if (textarea) options = textarea.value.split('\n').map(s=>s.trim()).filter(s=>s);
+                } else if (type === 'rating') {
+                    options = {min: 1, max: 5};
+                }
+                questions.push({ question_text: text, question_type: type, required, options });
+            });
+            return questions;
+        }
+
+        async function saveSurvey(andStart) {
+            const title = document.getElementById('sv-title').value.trim();
+            if (!title) return alert('제목을 입력해주세요.');
+            const questions = collectQuestions();
+            if (questions.length === 0) return alert('최소 1개 이상의 문항을 추가해주세요.');
+
+            const payload = {
+                school_id: currentUser.school_id,
+                title,
+                description: document.getElementById('sv-description').value.trim(),
+                target_role: document.getElementById('sv-target-role').value,
+                target_grades: document.getElementById('sv-target-grades').value,
+                questions
+            };
+
+            const editId = document.getElementById('sv-edit-id').value;
+            const url = editId ? '/api/survey/update' : '/api/survey/create';
+            if (editId) payload.id = editId;
+
+            try {
+                const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+                const d = await r.json();
+                if (!d.success) return alert(d.message);
+
+                if (andStart) {
+                    const sid = editId || d.survey_id;
+                    await fetch('/api/survey/start', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: sid})});
+                    alert('설문이 개시되었습니다.');
+                } else {
+                    alert(d.message);
+                }
+                closeSurveyEditor();
+            } catch(e) { alert('저장 중 오류가 발생했습니다.'); }
+        }
+
+        function saveSurveyAndStart() { saveSurvey(true); }
+
+        async function startSurvey(id) {
+            if (!confirm('설문을 개시하시겠습니까? 개시 후에는 수정할 수 없습니다.')) return;
+            try {
+                const r = await fetch('/api/survey/start', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+                const d = await r.json(); alert(d.message); loadSurveys();
+            } catch(e) { alert('개시 중 오류'); }
+        }
+
+        async function closeSurvey(id) {
+            if (!confirm('설문을 종료하시겠습니까?')) return;
+            try {
+                const r = await fetch('/api/survey/close', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+                const d = await r.json(); alert(d.message); loadSurveys();
+            } catch(e) { alert('종료 중 오류'); }
+        }
+
+        async function deleteSurvey(id) {
+            if (!confirm('설문을 삭제하시겠습니까?')) return;
+            try {
+                const r = await fetch('/api/survey/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+                const d = await r.json(); alert(d.message); loadSurveys();
+            } catch(e) { alert('삭제 중 오류'); }
+        }
+
+        // ==========================================
+        // 설문 통계
+        // ==========================================
+        async function loadSurveyStats(id) {
+            try {
+                const r = await fetch(`/api/survey/stats?id=${id}`);
+                const d = await r.json();
+                if (!d.success) return alert(d.message);
+
+                document.getElementById('survey-list-view').classList.add('hidden');
+                document.getElementById('survey-editor-view').classList.add('hidden');
+                document.getElementById('survey-stats-view').classList.remove('hidden');
+                document.getElementById('stats-title').textContent = d.survey.title + ' - 통계';
+
+                const rate = d.target_count > 0 ? Math.round(d.total_responses / d.target_count * 100) : 0;
+                let html = `
+                    <div class="glass-card rounded-2xl p-6 mb-6 shadow-sm print-area">
+                        <div class="flex flex-wrap gap-6 items-center">
+                            <div><span class="text-3xl font-black text-indigo-600">${d.total_responses}</span><span class="text-sm text-slate-500 ml-1">명 응답</span></div>
+                            <div><span class="text-3xl font-black text-slate-400">${d.target_count}</span><span class="text-sm text-slate-500 ml-1">명 대상</span></div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-32 h-3 bg-slate-200 rounded-full overflow-hidden"><div class="h-full bg-indigo-500 rounded-full" style="width:${rate}%"></div></div>
+                                <span class="text-sm font-bold text-indigo-600">${rate}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                d.question_stats.forEach((q, qi) => {
+                    html += `<div class="glass-card rounded-2xl p-6 mb-4 shadow-sm print-area">`;
+                    html += `<h4 class="font-bold text-slate-800 mb-4">Q${q.question_order}. ${q.question_text} <span class="text-sm text-slate-400 font-normal">(${q.answer_count}명 응답)</span></h4>`;
+
+                    if ((q.question_type === 'single' || q.question_type === 'multiple') && q.options && q.option_counts) {
+                        const maxCount = Math.max(...q.option_counts, 1);
+                        q.options.forEach((opt, oi) => {
+                            const cnt = q.option_counts[oi] || 0;
+                            const pct = q.answer_count > 0 ? Math.round(cnt / q.answer_count * 100) : 0;
+                            html += `<div class="flex items-center gap-3 mb-2">
+                                <span class="text-sm w-28 truncate text-slate-600">${opt}</span>
+                                <div class="flex-1 bg-slate-100 rounded h-6 overflow-hidden"><div class="bar-chart-bar" style="width:${maxCount>0?cnt/maxCount*100:0}%"></div></div>
+                                <span class="text-sm font-bold w-16 text-right">${cnt}명 (${pct}%)</span>
+                            </div>`;
+                        });
+                    } else if (q.question_type === 'rating') {
+                        html += `<div class="text-center mb-4"><span class="text-4xl font-black text-amber-500">${q.average}</span><span class="text-lg text-slate-400"> / 5</span></div>`;
+                        if (q.distribution) {
+                            const maxD = Math.max(...q.distribution, 1);
+                            for (let i = 0; i < q.distribution.length; i++) {
+                                const cnt = q.distribution[i];
+                                html += `<div class="flex items-center gap-3 mb-1">
+                                    <span class="text-sm w-12 text-slate-600">${i+1}점</span>
+                                    <div class="flex-1 bg-slate-100 rounded h-5 overflow-hidden"><div class="h-full rounded bg-amber-400" style="width:${maxD>0?cnt/maxD*100:0}%"></div></div>
+                                    <span class="text-sm font-bold w-12 text-right">${cnt}명</span>
+                                </div>`;
+                            }
+                        }
+                    } else if (q.question_type === 'text' && q.text_answers) {
+                        html += `<div class="max-h-48 overflow-y-auto border border-slate-200 rounded-lg p-3">`;
+                        q.text_answers.forEach(a => {
+                            if (a) html += `<p class="text-sm text-slate-700 py-1 border-b border-slate-100 last:border-0">${a}</p>`;
+                        });
+                        html += `</div>`;
+                    }
+                    html += `</div>`;
+                });
+
+                document.getElementById('stats-content').innerHTML = html;
+            } catch(e) { alert('통계 조회 오류'); console.error(e); }
+        }
+
+        function closeSurveyStats() {
+            document.getElementById('survey-stats-view').classList.add('hidden');
+            document.getElementById('survey-list-view').classList.remove('hidden');
+        }
+
+        function printSurveyStats() {
+            document.getElementById('panel-survey').classList.add('print-target');
+            setTimeout(() => { window.print(); document.getElementById('panel-survey').classList.remove('print-target'); }, 200);
+        }
+
+        // ==========================================
+        // 방과후학교 기능
+        // ==========================================
+        async function loadPrograms() {
+            try {
+                const r = await fetch(`/api/afterschool/list?school_id=${currentUser.school_id}`);
+                const d = await r.json();
+                if (!d.success) return;
+
+                const body = document.getElementById('as-list-body');
+                const empty = document.getElementById('as-empty');
+
+                if (!d.programs || d.programs.length === 0) {
+                    body.innerHTML = ''; empty.classList.remove('hidden'); return;
+                }
+                empty.classList.add('hidden');
+
+                const statusMap = {recruiting:'모집중', confirmed:'확정', ongoing:'진행중', completed:'완료'};
+
+                body.innerHTML = d.programs.map(p => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 font-medium text-slate-800">${p.program_name}</td>
+                        <td class="px-4 py-3 text-center text-sm">${p.instructor_name||'-'}</td>
+                        <td class="px-4 py-3 text-center text-sm">${p.day_of_week||''} ${p.time_slot||''}<br><span class="text-xs text-slate-400">${p.start_date}~${p.end_date}</span></td>
+                        <td class="px-4 py-3 text-center"><span class="status-badge status-${p.status}">${statusMap[p.status]||p.status}</span></td>
+                        <td class="px-4 py-3 text-center text-sm font-bold">${p.enrolled_count}/${p.max_students}</td>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex gap-1 justify-center flex-wrap">
+                                <button onclick="openAsDetail(${p.id})" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold hover:bg-blue-200">상세</button>
+                                ${p.status==='recruiting'?`<button onclick="openProgramEditor(${p.id})" class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-bold hover:bg-indigo-200">수정</button><button onclick="deleteProgram(${p.id})" class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold hover:bg-red-200">삭제</button>`:''}
+                                ${['confirmed','ongoing'].includes(p.status)?`<button onclick="openAsAttendance(${p.id})" class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold hover:bg-green-200">출결</button>`:''}
+                                ${p.status==='ongoing'?`<button onclick="completeProgram(${p.id})" class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold hover:bg-orange-200">완료</button>`:''}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch(e) { console.error('방과후 목록 오류:', e); }
+        }
+
+        function openProgramEditor(id) {
+            document.getElementById('as-edit-id').value = id || '';
+            document.getElementById('as-editor-modal-title').textContent = id ? '프로그램 수정' : '프로그램 등록';
+            if (!id) {
+                ['as-name','as-desc','as-instructor','as-dow','as-time'].forEach(x => document.getElementById(x).value = '');
+                document.getElementById('as-grades').value = 'all';
+                document.getElementById('as-max').value = 30;
+                document.getElementById('as-sessions').value = 10;
+                document.getElementById('as-start').value = '';
+                document.getElementById('as-end').value = '';
+            } else {
+                // 기존 데이터 로드
+                fetch(`/api/afterschool/detail?id=${id}`).then(r=>r.json()).then(d => {
+                    if (!d.success) return;
+                    const p = d.program;
+                    document.getElementById('as-name').value = p.program_name;
+                    document.getElementById('as-desc').value = p.description;
+                    document.getElementById('as-instructor').value = p.instructor_name;
+                    document.getElementById('as-grades').value = p.target_grades;
+                    document.getElementById('as-max').value = p.max_students;
+                    document.getElementById('as-sessions').value = p.total_sessions;
+                    document.getElementById('as-dow').value = p.day_of_week;
+                    document.getElementById('as-time').value = p.time_slot;
+                    document.getElementById('as-start').value = p.start_date;
+                    document.getElementById('as-end').value = p.end_date;
+                });
+            }
+            document.getElementById('as-editor-modal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
+        function closeProgramEditor() { document.getElementById('as-editor-modal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
 
-        function closeMealModal() {
-            document.getElementById('meal-modal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
+        async function saveProgram() {
+            const name = document.getElementById('as-name').value.trim();
+            const startDate = document.getElementById('as-start').value;
+            const endDate = document.getElementById('as-end').value;
+            if (!name || !startDate || !endDate) return alert('프로그램명, 시작일, 종료일을 입력해주세요.');
+
+            const payload = {
+                school_id: currentUser.school_id,
+                program_name: name,
+                description: document.getElementById('as-desc').value.trim(),
+                instructor_name: document.getElementById('as-instructor').value.trim(),
+                target_grades: document.getElementById('as-grades').value,
+                max_students: parseInt(document.getElementById('as-max').value) || 30,
+                total_sessions: parseInt(document.getElementById('as-sessions').value) || 10,
+                day_of_week: document.getElementById('as-dow').value.trim(),
+                time_slot: document.getElementById('as-time').value.trim(),
+                start_date: startDate,
+                end_date: endDate
+            };
+
+            const editId = document.getElementById('as-edit-id').value;
+            const url = editId ? '/api/afterschool/update' : '/api/afterschool/create';
+            if (editId) payload.id = editId;
+
+            try {
+                const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+                const d = await r.json(); alert(d.message);
+                if (d.success) { closeProgramEditor(); loadPrograms(); }
+            } catch(e) { alert('저장 중 오류'); }
         }
 
-        function generateMealGrid() {
-            const year = parseInt(document.getElementById('meal-year').value);
-            const month = parseInt(document.getElementById('meal-month').value);
-            const daysInMonth = new Date(year, month, 0).getDate();
-            
-            const grid = document.getElementById('meal-grid');
-            grid.innerHTML = '';
-            
-            for (let day = 1; day <= daysInMonth; day++) {
-                const date = new Date(year, month - 1, day);
-                const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
-                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                
-                const card = document.createElement('div');
-                card.className = `p-3 rounded-xl border-2 ${isWeekend ? 'border-slate-100 bg-slate-50' : 'border-slate-200 bg-white'}`;
-                card.innerHTML = `
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="font-bold text-slate-800">${day}일</span>
-                        <span class="text-xs px-2 py-0.5 rounded-full ${date.getDay() === 0 ? 'bg-red-100 text-red-600' : date.getDay() === 6 ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'}">${dayOfWeek}</span>
+        async function deleteProgram(id) {
+            if (!confirm('프로그램을 삭제하시겠습니까?')) return;
+            try {
+                const r = await fetch('/api/afterschool/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+                const d = await r.json(); alert(d.message); loadPrograms();
+            } catch(e) { alert('삭제 중 오류'); }
+        }
+
+        // 프로그램 상세 (수강생 관리)
+        let currentProgramId = null;
+        async function openAsDetail(id) {
+            currentProgramId = id;
+            document.getElementById('as-list-view').classList.add('hidden');
+            document.getElementById('as-detail-view').classList.remove('hidden');
+            try {
+                const r = await fetch(`/api/afterschool/detail?id=${id}`);
+                const d = await r.json();
+                if (!d.success) return alert(d.message);
+                const p = d.program;
+                const statusMap = {recruiting:'모집중', confirmed:'확정', ongoing:'진행중', completed:'완료'};
+
+                let html = `
+                    <div class="glass-card rounded-2xl p-6 mb-6 shadow-sm">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div><span class="text-slate-400">프로그램</span><p class="font-bold">${p.program_name}</p></div>
+                            <div><span class="text-slate-400">강사</span><p class="font-bold">${p.instructor_name||'-'}</p></div>
+                            <div><span class="text-slate-400">일정</span><p class="font-bold">${p.day_of_week||''} ${p.time_slot||''}</p></div>
+                            <div><span class="text-slate-400">상태</span><p><span class="status-badge status-${p.status}">${statusMap[p.status]}</span></p></div>
+                            <div><span class="text-slate-400">기간</span><p class="font-bold">${p.start_date} ~ ${p.end_date}</p></div>
+                            <div><span class="text-slate-400">정원</span><p class="font-bold">${p.max_students}명</p></div>
+                            <div><span class="text-slate-400">회차</span><p class="font-bold">${p.total_sessions}회</p></div>
+                            <div><span class="text-slate-400">대상</span><p class="font-bold">${p.target_grades==='all'?'전체':p.target_grades+'학년'}</p></div>
+                        </div>
                     </div>
-                    <textarea id="meal-day-${day}" rows="3" placeholder="${isWeekend ? '주말' : '메뉴 입력'}" 
-                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-pink-400 outline-none resize-none meal-input ${isWeekend ? 'bg-slate-100' : ''}"></textarea>
                 `;
-                grid.appendChild(card);
-            }
-        }
 
-        async function loadMealData() {
-            const year = document.getElementById('meal-year').value;
-            const month = document.getElementById('meal-month').value;
-            const status = document.getElementById('meal-status');
-            
-            // 그리드 재생성
-            generateMealGrid();
-            
-            status.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>불러오는 중...';
-            
-            try {
-                const params = getSchoolParams();
-                params.append('year', year);
-                params.append('month', month);
-                
-                const response = await fetch(`/api/meal/month?${params.toString()}`);
-                const data = await response.json();
-                
-                if (data.success && data.meals) {
-                    const mealCount = Object.keys(data.meals).length;
-                    
-                    // 각 날짜에 데이터 채우기
-                    for (const [day, mealInfo] of Object.entries(data.meals)) {
-                        const textarea = document.getElementById(`meal-day-${day}`);
-                        if (textarea) {
-                            textarea.value = mealInfo.menu || '';
-                        }
-                    }
-                    
-                    status.innerHTML = mealCount > 0 
-                        ? `<i class="fas fa-check-circle text-green-500 mr-1"></i>${mealCount}일분 데이터 로드됨`
-                        : `<i class="fas fa-info-circle text-slate-400 mr-1"></i>저장된 데이터 없음`;
-                } else {
-                    status.innerHTML = `<i class="fas fa-info-circle text-slate-400 mr-1"></i>저장된 데이터 없음`;
-                }
-            } catch (error) {
-                status.innerHTML = `<i class="fas fa-exclamation-circle text-red-500 mr-1"></i>로드 실패`;
-                console.error('급식 로드 오류:', error);
-            }
-        }
+                // 수강생 테이블
+                html += `<div class="glass-card rounded-2xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-50 border-b px-6 py-4 flex items-center justify-between">
+                        <h4 class="font-bold text-slate-700"><i class="fas fa-users mr-2"></i>수강생 목록 (${d.enrollments.length}명)</h4>
+                        ${p.status==='recruiting'?`<button onclick="approveAllEnrollments(${id})" class="px-4 py-2 bg-emerald-500 text-white rounded-lg font-bold text-sm hover:bg-emerald-600 transition"><i class="fas fa-check-double mr-1"></i>전체 승인 후 확정</button>`:''}
+                        ${p.status==='confirmed'?`<button onclick="startProgram(${id})" class="px-4 py-2 bg-blue-500 text-white rounded-lg font-bold text-sm hover:bg-blue-600 transition"><i class="fas fa-play mr-1"></i>프로그램 시작</button>`:''}
+                    </div>
+                    <div class="overflow-x-auto"><table class="w-full">
+                        <thead class="bg-slate-50 border-b">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">이름</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">학년반번</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">신청일</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">상태</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">`;
 
-        async function saveMealData() {
-            const year = document.getElementById('meal-year').value;
-            const month = document.getElementById('meal-month').value;
-            const daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
-            
-            // 모든 날짜의 메뉴 수집
-            const meals = {};
-            let filledCount = 0;
-            
-            for (let day = 1; day <= daysInMonth; day++) {
-                const textarea = document.getElementById(`meal-day-${day}`);
-                if (textarea && textarea.value.trim()) {
-                    meals[day] = textarea.value.trim();
-                    filledCount++;
-                }
-            }
-            
-            if (filledCount === 0) {
-                if (!confirm('입력된 메뉴가 없습니다. 기존 데이터를 모두 삭제하시겠습니까?')) {
-                    return;
-                }
-            }
-            
-            try {
-                const response = await fetch('/api/meal/save', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        school_id: currentUser.school_id,
-                        member_school: currentUser.member_school,
-                        year, month, meals
-                    })
+                const enrollStatusMap = {applied:'신청', approved:'승인', rejected:'거절', withdrawn:'취소'};
+                d.enrollments.forEach(e => {
+                    html += `<tr>
+                        <td class="px-4 py-3 font-medium">${e.student_name}</td>
+                        <td class="px-4 py-3 text-center text-sm">${e.class_grade}-${e.class_no}-${e.class_num}</td>
+                        <td class="px-4 py-3 text-center text-sm text-slate-500">${e.applied_at}</td>
+                        <td class="px-4 py-3 text-center"><span class="status-badge status-${e.status==='approved'?'confirmed':e.status==='rejected'?'completed':'recruiting'}">${enrollStatusMap[e.status]||e.status}</span></td>
+                    </tr>`;
                 });
-                const data = await response.json();
-                
-                if (data.success) {
-                    alert(data.message);
-                    document.getElementById('meal-status').innerHTML = `<i class="fas fa-check-circle text-green-500 mr-1"></i>저장 완료`;
-                } else {
-                    alert(data.message);
-                }
-            } catch (error) {
-                alert('저장 중 오류가 발생했습니다.');
-                console.error('급식 저장 오류:', error);
-            }
+                html += `</tbody></table></div></div>`;
+
+                document.getElementById('as-detail-title').textContent = p.program_name;
+                document.getElementById('as-detail-content').innerHTML = html;
+            } catch(e) { alert('상세 조회 오류'); }
         }
 
+        function closeAsDetail() {
+            document.getElementById('as-detail-view').classList.add('hidden');
+            document.getElementById('as-list-view').classList.remove('hidden');
+            loadPrograms();
+        }
+
+        async function approveAllEnrollments(programId) {
+            if (!confirm('모든 신청자를 승인하고 수강을 확정하시겠습니까?')) return;
+            try {
+                const dr = await fetch(`/api/afterschool/detail?id=${programId}`);
+                const dd = await dr.json();
+                const enrollments = dd.enrollments.filter(e => e.status === 'applied').map(e => ({enrollment_id: e.id, status: 'approved'}));
+                const r = await fetch('/api/afterschool/confirm', {method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({program_id: programId, enrollments})});
+                const d = await r.json(); alert(d.message);
+                openAsDetail(programId);
+            } catch(e) { alert('승인 중 오류'); }
+        }
+
+        async function startProgram(id) {
+            if (!confirm('프로그램을 시작하시겠습니까?')) return;
+            try {
+                const r = await fetch('/api/afterschool/start', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+                const d = await r.json(); alert(d.message); openAsDetail(id);
+            } catch(e) { alert('시작 중 오류'); }
+        }
+
+        async function completeProgram(id) {
+            const createSurvey = confirm('프로그램을 완료 처리하시겠습니까?\n\n[확인]을 누르면 만족도 설문이 자동 생성됩니다.');
+            try {
+                const r = await fetch('/api/afterschool/complete', {method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({id, create_survey: createSurvey})});
+                const d = await r.json(); alert(d.message); loadPrograms();
+            } catch(e) { alert('완료 처리 중 오류'); }
+        }
+
+        // 출결 관리
+        let currentAttProgramId = null;
+        let currentSessionNo = 1;
+
+        async function openAsAttendance(programId) {
+            currentAttProgramId = programId;
+            currentSessionNo = 1;
+            document.getElementById('as-list-view').classList.add('hidden');
+            document.getElementById('as-attendance-view').classList.remove('hidden');
+
+            const dr = await fetch(`/api/afterschool/detail?id=${programId}`);
+            const dd = await dr.json();
+            if (!dd.success) return;
+            const p = dd.program;
+            document.getElementById('as-att-title').textContent = p.program_name + ' - 출결 관리';
+
+            // 회차 선택 + 출결 테이블
+            let html = `<div class="glass-card rounded-2xl p-6 mb-4 shadow-sm">
+                <div class="flex items-center gap-4 flex-wrap mb-4">
+                    <label class="text-sm font-bold text-slate-600">회차 선택:</label>
+                    <div class="flex gap-1 flex-wrap" id="session-btns">`;
+            for (let i = 1; i <= p.total_sessions; i++) {
+                html += `<button onclick="loadSessionAtt(${i})" class="px-3 py-1.5 rounded-lg text-sm font-bold border ${i===1?'bg-indigo-500 text-white border-indigo-500':'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'}" id="sess-btn-${i}">${i}회</button>`;
+            }
+            html += `</div></div>
+                <div class="flex items-center gap-4 mb-4">
+                    <label class="text-sm font-bold text-slate-500">날짜:</label>
+                    <input type="date" id="att-session-date" class="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium">
+                    <label class="text-sm font-bold text-slate-500">주제:</label>
+                    <input type="text" id="att-session-topic" placeholder="수업 주제" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium">
+                </div>
+            </div>`;
+
+            html += `<div class="glass-card rounded-2xl overflow-hidden shadow-sm mb-4">
+                <div class="overflow-x-auto"><table class="w-full">
+                    <thead class="bg-slate-50 border-b">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">이름</th>
+                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">학년반번</th>
+                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">출석</th>
+                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">결석</th>
+                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">지각</th>
+                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">사유</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">메모</th>
+                        </tr>
+                    </thead>
+                    <tbody id="att-body" class="divide-y divide-slate-100"></tbody>
+                </table></div>
+            </div>`;
+
+            html += `<button onclick="saveAttendance()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-bold shadow hover:opacity-90 transition no-print">
+                <i class="fas fa-save mr-2"></i>출결 저장
+            </button>`;
+
+            // 인쇄 영역 (전체 출석부)
+            html += `<div id="att-print-area" class="hidden print-area"></div>`;
+
+            document.getElementById('as-att-content').innerHTML = html;
+            loadSessionAtt(1);
+        }
+
+        function closeAsAttendance() {
+            document.getElementById('as-attendance-view').classList.add('hidden');
+            document.getElementById('as-list-view').classList.remove('hidden');
+            loadPrograms();
+        }
+
+        async function loadSessionAtt(sessionNo) {
+            currentSessionNo = sessionNo;
+            // 버튼 스타일 업데이트
+            document.querySelectorAll('#session-btns button').forEach(b => {
+                b.className = 'px-3 py-1.5 rounded-lg text-sm font-bold border bg-white text-slate-600 border-slate-200 hover:bg-slate-100';
+            });
+            const activeBtn = document.getElementById(`sess-btn-${sessionNo}`);
+            if (activeBtn) activeBtn.className = 'px-3 py-1.5 rounded-lg text-sm font-bold border bg-indigo-500 text-white border-indigo-500';
+
+            try {
+                const r = await fetch(`/api/afterschool/attendance/sheet?program_id=${currentAttProgramId}&session_no=${sessionNo}`);
+                const d = await r.json();
+                if (!d.success) return;
+
+                document.getElementById('att-session-date').value = d.session_info.session_date || '';
+                document.getElementById('att-session-topic').value = d.session_info.topic || '';
+
+                const body = document.getElementById('att-body');
+                body.innerHTML = d.students.map(s => {
+                    const st = s.status || 'present';
+                    return `<tr data-eid="${s.enrollment_id}">
+                        <td class="px-4 py-2 font-medium text-sm">${s.student_name}</td>
+                        <td class="px-4 py-2 text-center text-sm">${s.class_grade}-${s.class_no}-${s.class_num}</td>
+                        <td class="px-4 py-2 text-center"><input type="radio" name="att-${s.enrollment_id}" value="present" ${st==='present'?'checked':''}></td>
+                        <td class="px-4 py-2 text-center"><input type="radio" name="att-${s.enrollment_id}" value="absent" ${st==='absent'?'checked':''}></td>
+                        <td class="px-4 py-2 text-center"><input type="radio" name="att-${s.enrollment_id}" value="late" ${st==='late'?'checked':''}></td>
+                        <td class="px-4 py-2 text-center"><input type="radio" name="att-${s.enrollment_id}" value="excused" ${st==='excused'?'checked':''}></td>
+                        <td class="px-4 py-2"><input type="text" class="att-memo w-full px-2 py-1 border border-slate-200 rounded text-sm" value="${s.memo||''}"></td>
+                    </tr>`;
+                }).join('');
+            } catch(e) { console.error('출결 로드 오류:', e); }
+        }
+
+        async function saveAttendance() {
+            const sessionDate = document.getElementById('att-session-date').value;
+            if (!sessionDate) return alert('날짜를 선택해주세요.');
+
+            const topic = document.getElementById('att-session-topic').value.trim();
+            // 회차 정보 저장
+            await fetch('/api/afterschool/session/save', {method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({program_id: currentAttProgramId, session_no: currentSessionNo, session_date: sessionDate, topic})});
+
+            const rows = document.querySelectorAll('#att-body tr');
+            const records = [];
+            rows.forEach(row => {
+                const eid = row.dataset.eid;
+                const checked = row.querySelector(`input[name="att-${eid}"]:checked`);
+                const memo = row.querySelector('.att-memo').value;
+                records.push({enrollment_id: eid, status: checked ? checked.value : 'present', memo});
+            });
+
+            try {
+                const r = await fetch('/api/afterschool/attendance/save', {method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({program_id: currentAttProgramId, session_no: currentSessionNo, session_date: sessionDate, records})});
+                const d = await r.json(); alert(d.message);
+            } catch(e) { alert('저장 중 오류'); }
+        }
+
+        async function printAttendanceFull() {
+            try {
+                const r = await fetch(`/api/afterschool/attendance/full?program_id=${currentAttProgramId}`);
+                const d = await r.json();
+                if (!d.success) return alert(d.message);
+
+                const p = d.program;
+                const symbolMap = {present:'O', absent:'X', late:'△', excused:'-', '':''};
+
+                let html = `<div style="padding:20px;">
+                    <h2 style="text-align:center;font-size:20px;font-weight:bold;margin-bottom:5px;">${p.program_name} 출석부</h2>
+                    <p style="text-align:center;font-size:13px;color:#666;margin-bottom:15px;">강사: ${p.instructor_name||'-'} | ${p.day_of_week||''} ${p.time_slot||''} | ${p.start_date} ~ ${p.end_date}</p>
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                        <thead><tr style="background:#f0f0f0;">
+                            <th style="border:1px solid #999;padding:6px;">이름</th>
+                            <th style="border:1px solid #999;padding:6px;">학년반번</th>`;
+                d.sessions.forEach(s => {
+                    html += `<th style="border:1px solid #999;padding:4px;font-size:11px;">${s.session_no}회<br><span style="font-weight:normal;font-size:10px;">${s.session_date?s.session_date.substring(5):''}</span></th>`;
+                });
+                html += `</tr></thead><tbody>`;
+                d.matrix.forEach(row => {
+                    html += `<tr><td style="border:1px solid #ccc;padding:4px;">${row.student_name}</td><td style="border:1px solid #ccc;padding:4px;text-align:center;">${row.class_info}</td>`;
+                    row.attendance.forEach(a => {
+                        html += `<td style="border:1px solid #ccc;padding:4px;text-align:center;">${symbolMap[a]||''}</td>`;
+                    });
+                    html += `</tr>`;
+                });
+                html += `</tbody></table>
+                    <p style="margin-top:10px;font-size:11px;color:#999;">O: 출석 | X: 결석 | △: 지각 | -: 사유</p>
+                </div>`;
+
+                const printArea = document.getElementById('att-print-area');
+                printArea.innerHTML = html;
+                printArea.classList.remove('hidden');
+                document.getElementById('panel-afterschool').classList.add('print-target');
+                setTimeout(() => {
+                    window.print();
+                    printArea.classList.add('hidden');
+                    document.getElementById('panel-afterschool').classList.remove('print-target');
+                }, 200);
+            } catch(e) { alert('출석부 조회 오류'); }
+        }
+
+        // ==========================================
+        // 모바일 사이드바
+        // ==========================================
         function toggleMobileSidebar() {
             document.getElementById('sidebar').classList.toggle('mobile-open');
             document.getElementById('mobile-overlay').classList.toggle('active');
         }
-        document.getElementById('mobile-overlay').onclick = function() {
+        function closeMobileSidebar() {
             document.getElementById('sidebar').classList.remove('mobile-open');
-            this.classList.remove('active');
-        };
+            document.getElementById('mobile-overlay').classList.remove('active');
+        }
+        document.getElementById('mobile-overlay').onclick = closeMobileSidebar;
     </script>
 </body>
 </html>

@@ -142,6 +142,25 @@ _TEACHER_ONLY_APIS = {
     '/api/letter/delete',
     '/api/letter/consent-status',
     '/api/letter/export',
+    # 설문조사
+    '/api/survey/create',
+    '/api/survey/update',
+    '/api/survey/delete',
+    '/api/survey/start',
+    '/api/survey/close',
+    '/api/survey/stats',
+    '/api/survey/results',
+    # 방과후학교
+    '/api/afterschool/create',
+    '/api/afterschool/update',
+    '/api/afterschool/delete',
+    '/api/afterschool/confirm',
+    '/api/afterschool/start',
+    '/api/afterschool/complete',
+    '/api/afterschool/session/save',
+    '/api/afterschool/attendance/save',
+    '/api/afterschool/attendance/sheet',
+    '/api/afterschool/attendance/full',
 }
 
 # ── 브루트포스 방어 설정 (DB 기반) ──
@@ -401,6 +420,8 @@ from routes.push import push_bp
 from routes.attendance import attendance_bp
 from routes.letter import letter_bp
 from routes.message import message_bp
+from routes.survey import survey_bp
+from routes.afterschool import afterschool_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(teacher_bp)
@@ -424,6 +445,8 @@ app.register_blueprint(push_bp)
 app.register_blueprint(attendance_bp)
 app.register_blueprint(letter_bp)
 app.register_blueprint(message_bp)
+app.register_blueprint(survey_bp)
+app.register_blueprint(afterschool_bp)
 
 
 # ============================================

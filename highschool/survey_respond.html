@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 설문조사</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background: #f8fafc; min-height: 100vh; }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; }
+        .radio-option { transition: all 0.2s; cursor: pointer; }
+        .radio-option:hover { border-color: #6366f1; background: #eef2ff; }
+        .radio-option.selected { border-color: #6366f1; background: #eef2ff; box-shadow: 0 0 0 2px rgba(99,102,241,0.3); }
+        .rating-star { cursor: pointer; transition: transform 0.15s; }
+        .rating-star:hover { transform: scale(1.2); }
+        .rating-star.active { color: #f59e0b; }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+</head>
+<body>
+    <div class="max-w-2xl mx-auto p-6">
+        <!-- 헤더 -->
+        <div class="flex items-center gap-4 mb-6">
+            <button onclick="goBack()" class="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center hover:bg-slate-50 transition">
+                <i class="fas fa-arrow-left text-slate-600"></i>
+            </button>
+            <h1 class="text-xl font-bold text-slate-800"><i class="fas fa-poll mr-2 text-indigo-500"></i>설문조사</h1>
+        </div>
+
+        <!-- 설문 목록 뷰 -->
+        <div id="survey-list" class="fade-in">
+            <div id="survey-cards"></div>
+            <div id="no-surveys" class="hidden glass-card p-12 text-center text-slate-400">
+                <i class="fas fa-clipboard-check text-5xl mb-4"></i>
+                <p class="font-bold text-lg mb-1">현재 진행중인 설문이 없습니다</p>
+                <p class="text-sm">새로운 설문이 등록되면 여기에 표시됩니다.</p>
+            </div>
+        </div>
+
+        <!-- 설문 응답 뷰 -->
+        <div id="survey-respond" class="hidden fade-in">
+            <div id="respond-content"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const userStr = localStorage.getItem('schoolus_user');
+            if (!userStr) { alert('로그인이 필요합니다.'); window.location.href = '/'; return; }
+            currentUser = JSON.parse(userStr);
+            loadMySurveys();
+        });
+
+        function goBack() {
+            if (!document.getElementById('survey-respond').classList.contains('hidden')) {
+                document.getElementById('survey-respond').classList.add('hidden');
+                document.getElementById('survey-list').classList.remove('hidden');
+                return;
+            }
+            history.back();
+        }
+
+        async function loadMySurveys() {
+            try {
+                const r = await fetch('/api/survey/my-surveys');
+                const d = await r.json();
+                if (!d.success) return;
+
+                const container = document.getElementById('survey-cards');
+                const noSurveys = document.getElementById('no-surveys');
+
+                if (!d.surveys || d.surveys.length === 0) {
+                    container.innerHTML = ''; noSurveys.classList.remove('hidden'); return;
+                }
+                noSurveys.classList.add('hidden');
+
+                container.innerHTML = d.surveys.map(s => `
+                    <div class="glass-card mb-4 ${s.already_responded ? 'opacity-60' : ''}">
+                        <div class="p-5">
+                            <div class="flex items-start justify-between mb-2">
+                                <h3 class="font-bold text-slate-800 text-lg">${s.title}</h3>
+                                ${s.already_responded ? '<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">응답 완료</span>' :
+                                    '<span class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">미응답</span>'}
+                            </div>
+                            ${s.description ? `<p class="text-sm text-slate-500 mb-3">${s.description}</p>` : ''}
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-slate-400">${s.question_count}문항 | ${s.started_at} 시작</span>
+                                ${s.already_responded ? '' : `<button onclick="openSurvey(${s.id})" class="px-5 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-bold text-sm hover:opacity-90 transition">응답하기</button>`}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) { console.error('설문 목록 오류:', e); }
+        }
+
+        async function openSurvey(id) {
+            try {
+                const r = await fetch(`/api/survey/detail?id=${id}`);
+                const d = await r.json();
+                if (!d.success) return alert(d.message);
+
+                document.getElementById('survey-list').classList.add('hidden');
+                document.getElementById('survey-respond').classList.remove('hidden');
+
+                let html = `
+                    <div class="glass-card p-6 mb-6">
+                        <h2 class="text-xl font-bold text-slate-800 mb-2">${d.survey.title}</h2>
+                        ${d.survey.description ? `<p class="text-sm text-slate-500">${d.survey.description}</p>` : ''}
+                    </div>
+                    <form id="survey-form" data-survey-id="${id}">
+                `;
+
+                d.questions.forEach((q, qi) => {
+                    html += `<div class="glass-card p-6 mb-4">
+                        <h4 class="font-bold text-slate-800 mb-1">Q${q.question_order}. ${q.question_text} ${q.required ? '<span class="text-red-500">*</span>' : ''}</h4>`;
+
+                    if (q.question_type === 'single' && q.options) {
+                        q.options.forEach((opt, oi) => {
+                            html += `<label class="radio-option flex items-center gap-3 p-3 border-2 border-slate-200 rounded-xl mb-2" onclick="selectRadio(this)">
+                                <input type="radio" name="q_${q.id}" value="${oi}" class="w-4 h-4 text-indigo-600">
+                                <span class="text-sm font-medium text-slate-700">${opt}</span>
+                            </label>`;
+                        });
+                    } else if (q.question_type === 'multiple' && q.options) {
+                        q.options.forEach((opt, oi) => {
+                            html += `<label class="radio-option flex items-center gap-3 p-3 border-2 border-slate-200 rounded-xl mb-2" onclick="toggleCheck(this)">
+                                <input type="checkbox" name="q_${q.id}" value="${oi}" class="w-4 h-4 text-indigo-600 rounded">
+                                <span class="text-sm font-medium text-slate-700">${opt}</span>
+                            </label>`;
+                        });
+                    } else if (q.question_type === 'rating') {
+                        html += `<div class="flex items-center justify-center gap-2 py-4" id="rating-${q.id}">`;
+                        for (let i = 1; i <= 5; i++) {
+                            html += `<button type="button" onclick="setRating(${q.id}, ${i})" class="rating-star text-3xl text-slate-300"><i class="fas fa-star"></i></button>`;
+                        }
+                        html += `<input type="hidden" name="q_${q.id}" id="rating-val-${q.id}" value="">
+                        </div><p class="text-center text-sm text-slate-400" id="rating-label-${q.id}">별점을 선택하세요</p>`;
+                    } else if (q.question_type === 'text') {
+                        html += `<textarea name="q_${q.id}" rows="3" placeholder="자유롭게 작성해주세요" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none resize-none mt-2"></textarea>`;
+                    }
+                    html += `</div>`;
+                });
+
+                html += `<button type="button" onclick="submitSurveyResponse()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:opacity-90 transition mb-8">
+                    <i class="fas fa-paper-plane mr-2"></i>제출하기
+                </button></form>`;
+
+                document.getElementById('respond-content').innerHTML = html;
+            } catch(e) { alert('설문 불러오기 오류'); }
+        }
+
+        function selectRadio(label) {
+            const name = label.querySelector('input').name;
+            document.querySelectorAll(`label:has(input[name="${name}"])`).forEach(l => l.classList.remove('selected'));
+            label.classList.add('selected');
+        }
+
+        function toggleCheck(label) {
+            setTimeout(() => {
+                const cb = label.querySelector('input');
+                if (cb.checked) label.classList.add('selected');
+                else label.classList.remove('selected');
+            }, 10);
+        }
+
+        function setRating(qId, val) {
+            document.getElementById(`rating-val-${qId}`).value = val;
+            const stars = document.getElementById(`rating-${qId}`).querySelectorAll('.rating-star');
+            stars.forEach((s, i) => {
+                if (i < val) { s.classList.add('active'); s.classList.remove('text-slate-300'); }
+                else { s.classList.remove('active'); s.classList.add('text-slate-300'); }
+            });
+            const labels = ['', '매우 불만', '불만', '보통', '만족', '매우 만족'];
+            document.getElementById(`rating-label-${qId}`).textContent = labels[val] || '';
+        }
+
+        async function submitSurveyResponse() {
+            const form = document.getElementById('survey-form');
+            const surveyId = form.dataset.surveyId;
+            const inputs = form.querySelectorAll('input[type="radio"]:checked, input[type="hidden"][id^="rating-val-"], textarea[name^="q_"]');
+
+            const answers = {};
+            // Radios
+            form.querySelectorAll('input[type="radio"]:checked').forEach(inp => {
+                const qid = inp.name.replace('q_', '');
+                answers[qid] = inp.value;
+            });
+            // Checkboxes
+            form.querySelectorAll('input[type="checkbox"]:checked').forEach(inp => {
+                const qid = inp.name.replace('q_', '');
+                if (!answers[qid]) answers[qid] = [];
+                if (!Array.isArray(answers[qid])) answers[qid] = [answers[qid]];
+                answers[qid].push(inp.value);
+            });
+            // Ratings
+            form.querySelectorAll('input[type="hidden"][id^="rating-val-"]').forEach(inp => {
+                if (inp.value) {
+                    const qid = inp.name.replace('q_', '');
+                    answers[qid] = inp.value;
+                }
+            });
+            // Text
+            form.querySelectorAll('textarea[name^="q_"]').forEach(ta => {
+                if (ta.value.trim()) {
+                    const qid = ta.name.replace('q_', '');
+                    answers[qid] = ta.value.trim();
+                }
+            });
+
+            const answerList = Object.entries(answers).map(([qid, val]) => ({
+                question_id: qid,
+                answer_value: Array.isArray(val) ? val.join(',') : val
+            }));
+
+            try {
+                const r = await fetch('/api/survey/respond', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({survey_id: surveyId, answers: answerList})
+                });
+                const d = await r.json();
+                if (d.success) {
+                    alert('응답이 제출되었습니다. 감사합니다!');
+                    document.getElementById('survey-respond').classList.add('hidden');
+                    document.getElementById('survey-list').classList.remove('hidden');
+                    loadMySurveys();
+                } else {
+                    alert(d.message);
+                }
+            } catch(e) { alert('제출 중 오류가 발생했습니다.'); }
+        }
+    </script>
+</body>
+</html>

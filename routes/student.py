@@ -32,7 +32,9 @@ def get_student_info():
     cursor = None
     try:
         member_id = sanitize_input(request.args.get('member_id'), 50)
-        
+        if not member_id:
+            member_id = session.get('user_id')
+
         if not member_id:
             return jsonify({'success': False, 'message': '세션이 만료되었습니다. 다시 로그인해주세요.'})
         

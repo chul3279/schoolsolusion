@@ -95,8 +95,10 @@ def create_letter():
         require_consent = request.form.get('require_consent', '0') == '1'
         consent_deadline = sanitize_input(request.form.get('consent_deadline'), 10) or None
 
-        if not all([school_id, class_grade, class_no, title, content]):
-            return jsonify({'success': False, 'message': '필수 항목을 모두 입력해주세요.'})
+        if not school_id or not class_grade or not class_no:
+            return jsonify({'success': False, 'message': '반 정보가 누락되었습니다. 담임 선생님만 가정통신문을 작성할 수 있습니다.'})
+        if not title or not content:
+            return jsonify({'success': False, 'message': '제목과 내용을 입력해주세요.'})
 
         # 파일 처리
         file_path = None

@@ -96,6 +96,9 @@ def save_attendance():
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
         cursor = conn.cursor()
 
+        # autocommit=True 환경에서 명시적 트랜잭션 시작 (원자적 일괄 저장)
+        conn.begin()
+
         saved = 0
         absent_students = []
         for rec in records:
@@ -153,8 +156,19 @@ def get_student_history():
     conn = None
     cursor = None
     try:
+        # [보안] 세션 검증 — 학생은 본인만, 교사/학부모는 같은 학교만 조회 가능
+        user_id = session.get('user_id')
+        user_role = session.get('user_role')
+        if not user_id:
+            return jsonify({'success': False, 'message': '로그인이 필요합니다.'})
+
         school_id = session.get('school_id') or sanitize_input(request.args.get('school_id'), 50)
-        student_id = sanitize_input(request.args.get('student_id'), 50)
+
+        if user_role == 'student':
+            student_id = user_id  # 학생은 본인 이력만 조회
+        else:
+            student_id = sanitize_input(request.args.get('student_id'), 50)
+
         start_date = sanitize_input(request.args.get('start_date'), 10)
         end_date = sanitize_input(request.args.get('end_date'), 10)
 
