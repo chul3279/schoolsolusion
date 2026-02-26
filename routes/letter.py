@@ -231,11 +231,11 @@ def get_letter_detail():
             'created_at': letter['created_at'].strftime('%Y-%m-%d %H:%M') if letter['created_at'] else ''
         }
 
-        # 학부모인 경우 본인 응답 여부 확인
-        if session.get('user_role') == 'parent':
-            parent_id = session.get('user_id')
+        # 학부모 또는 학생인 경우 본인 응답 여부 확인
+        if session.get('user_role') in ('parent', 'student'):
+            user_id = session.get('user_id')
             cursor.execute("SELECT consent_status, reply_memo, created_at FROM home_letter_reply WHERE letter_id = %s AND parent_id = %s",
-                           (letter_id, parent_id))
+                           (letter_id, user_id))
             reply = cursor.fetchone()
             if reply:
                 result['my_reply'] = {
@@ -557,7 +557,9 @@ def export_consent_csv():
         response = make_response(output.getvalue())
         response.headers['Content-Type'] = 'text/csv; charset=utf-8'
         safe_title = letter['title'][:30].replace('"', '')
-        response.headers['Content-Disposition'] = f'attachment; filename="{safe_title}_동의현황.csv"'
+        from urllib.parse import quote
+        encoded_name = quote(f'{safe_title}_동의현황.csv')
+        response.headers['Content-Disposition'] = f"attachment; filename*=UTF-8''{encoded_name}"
         return response
 
     except Exception as e:

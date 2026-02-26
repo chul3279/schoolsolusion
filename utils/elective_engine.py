@@ -1,13 +1,12 @@
 """
-선택과목 교육반 배정 엔진 (4밴드 구조)
-- /tmp/rebuild_elective_v3.py에서 추출
-- 하드코딩 제거, 모든 함수 파라미터화
+선택과목 교육반 배정 엔진 (동적 밴드 구조)
+- 사용자 지정 band_group을 반영한 밴드 배정
 - caller가 cursor/connection 관리
 """
 import random
 from collections import defaultdict
 
-BAND_NAMES = ['A', 'B', 'C', 'D']
+BAND_NAMES = list('ABCDEFGHIJKLMNOP')  # 최대 16밴드
 
 
 def detect_elective_subjects(cursor, school_id, grade):
@@ -73,29 +72,165 @@ def find_slot_positions(cursor, school_id, grade, elective_subjects):
     return [(r['day_of_week'], int(r['period'])) for r in cursor.fetchall()]
 
 
-def assign_groups_to_bands(groups, subject_groups, band_count=4):
-    """교육반을 밴드에 분산 배정 (교사 충돌 회피)"""
-    band_names = BAND_NAMES[:band_count]
+def validate_band_balance(cursor, school_id, grade, band_count=4):
+    """밴드그룹별 교육반 총수가 원반 수의 배수인지 검증.
+    동일 카테고리(band_group) 내 교육반 총수 = 원반 수의 배수여야 균등 배정 가능."""
+    warnings = []
+
+    # 원반 수 조회
+    cursor.execute(
+        """SELECT COUNT(DISTINCT class_no) as cnt FROM timetable_stu
+           WHERE school_id=%s AND grade=%s AND class_no IS NOT NULL AND class_no != ''""",
+        (school_id, grade))
+    row = cursor.fetchone()
+    home_classes = row['cnt'] if row else 0
+    if home_classes == 0:
+        return warnings  # 원반 없으면 검증 불가
+
+    # 선택과목의 band_group 조회
+    cursor.execute(
+        """SELECT subject, band_group FROM timetable_data
+           WHERE school_id=%s AND grade=%s AND subject_type='선택' AND band_group IS NOT NULL AND band_group != ''""",
+        (school_id, grade))
+    subject_band = {}
+    for r in cursor.fetchall():
+        subject_band[r['subject']] = r['band_group']
+
+    if not subject_band:
+        return warnings  # band_group 미설정이면 검증 건너뜀
+
+    # 과목별 교육반 수 조회 (timetable_tea 기준)
+    elective_subjects = tuple(subject_band.keys())
+    cursor.execute(
+        """SELECT subject, COUNT(*) as group_cnt FROM timetable_tea
+           WHERE school_id=%s AND grade=%s AND subject IN %s
+           GROUP BY subject""",
+        (school_id, grade, elective_subjects))
+    subject_groups_cnt = {r['subject']: r['group_cnt'] for r in cursor.fetchall()}
+
+    # band_group별 합산
+    band_totals = defaultdict(lambda: {'total': 0, 'subjects': []})
+    for sub, bg in subject_band.items():
+        cnt = subject_groups_cnt.get(sub, 0)
+        band_totals[bg]['total'] += cnt
+        band_totals[bg]['subjects'].append({'subject': sub, 'groups': cnt})
+
+    # 검증: 각 band_group의 교육반 총수가 원반 수의 배수인지
+    for bg in sorted(band_totals.keys()):
+        info = band_totals[bg]
+        total = info['total']
+        if total == 0:
+            continue
+        remainder = total % home_classes
+        if remainder != 0:
+            need = home_classes - remainder
+            sub_detail = ', '.join(
+                f"{s['subject']}({s['groups']}반)" for s in info['subjects'])
+            warnings.append({
+                'band_group': bg,
+                'total_groups': total,
+                'home_classes': home_classes,
+                'remainder': remainder,
+                'need': need,
+                'subjects': sub_detail,
+                'message': f"밴드 {bg}: 교육반 {total}개 (원반 {home_classes}의 배수 아님, {need}반 부족) — {sub_detail}"
+            })
+
+    return warnings
+
+
+def assign_groups_to_bands(groups, subject_groups, subject_band_map=None, home_classes=0):
+    """교육반을 밴드에 분산 배정 (사용자 band_group 반영 + 교사 충돌 회피)
+
+    subject_band_map: {과목명: band_group라벨} (timetable_data에서 사용자가 설정)
+    home_classes: 원반(홈룸) 수
+    """
     teacher_gids = defaultdict(list)
     for g in groups:
         teacher_gids[g['teacher_id']].append(g)
 
-    for sub in sorted(subject_groups.keys()):
-        gs = subject_groups[sub]
-        for i, g in enumerate(gs):
-            base_band = i % band_count
-            assigned_band = base_band
-            for attempt in range(band_count):
-                candidate = band_names[(base_band + attempt) % band_count]
-                conflict = False
-                for other_g in teacher_gids[g['teacher_id']]:
-                    if other_g['id'] != g['id'] and other_g.get('band') == candidate:
-                        conflict = True
-                        break
+    # band_group 미설정이면 기존 4밴드 폴백
+    if not subject_band_map or home_classes <= 0:
+        all_groups = []
+        for sub in sorted(subject_groups.keys()):
+            all_groups.extend(subject_groups[sub])
+        band_labels = BAND_NAMES[:4]
+        for i, g in enumerate(all_groups):
+            base = i % 4
+            for attempt in range(4):
+                candidate = band_labels[(base + attempt) % 4]
+                conflict = any(
+                    og['id'] != g['id'] and og.get('band') == candidate
+                    for og in teacher_gids[g['teacher_id']]
+                )
                 if not conflict:
-                    assigned_band = (base_band + attempt) % band_count
+                    g['band'] = candidate
                     break
-            g['band'] = band_names[assigned_band]
+            else:
+                g['band'] = band_labels[base]
+        return
+
+    # band_group별로 과목 분류
+    bg_subjects = defaultdict(list)
+    unassigned = []
+    for sub in subject_groups:
+        bg = subject_band_map.get(sub)
+        if bg:
+            bg_subjects[bg].append(sub)
+        else:
+            unassigned.append(sub)
+
+    band_idx = 0  # 전역 밴드 라벨 인덱스 (A, B, C, ... 순차 사용)
+
+    for bg in sorted(bg_subjects.keys()):
+        subs = bg_subjects[bg]
+        total = sum(len(subject_groups[s]) for s in subs)
+        num_bands = max(1, total // home_classes)
+
+        band_labels = BAND_NAMES[band_idx:band_idx + num_bands]
+        band_idx += num_bands
+
+        # 과목별로 정렬 후 round-robin → 동일 과목의 반이 서로 다른 밴드에 분산
+        bg_groups = []
+        for sub in sorted(subs):
+            bg_groups.extend(subject_groups[sub])
+
+        for i, g in enumerate(bg_groups):
+            base = i % num_bands
+            for attempt in range(num_bands):
+                candidate = band_labels[(base + attempt) % num_bands]
+                conflict = any(
+                    og['id'] != g['id'] and og.get('band') == candidate
+                    for og in teacher_gids[g['teacher_id']]
+                )
+                if not conflict:
+                    g['band'] = candidate
+                    break
+            else:
+                g['band'] = band_labels[base]
+
+    # band_group 미지정 과목: 남은 밴드 라벨 사용
+    if unassigned:
+        un_groups = []
+        for sub in sorted(unassigned):
+            un_groups.extend(subject_groups[sub])
+        num_fallback = max(1, len(un_groups) // max(home_classes, 1))
+        if num_fallback < 1:
+            num_fallback = 1
+        fallback_labels = BAND_NAMES[band_idx:band_idx + num_fallback]
+        for i, g in enumerate(un_groups):
+            base = i % num_fallback
+            for attempt in range(num_fallback):
+                candidate = fallback_labels[(base + attempt) % num_fallback]
+                conflict = any(
+                    og['id'] != g['id'] and og.get('band') == candidate
+                    for og in teacher_gids[g['teacher_id']]
+                )
+                if not conflict:
+                    g['band'] = candidate
+                    break
+            else:
+                g['band'] = fallback_labels[base]
 
 
 def assign_students_to_groups(students, subject_groups, group_by_id, seed=None):
@@ -153,47 +288,51 @@ def assign_students_to_groups(students, subject_groups, group_by_id, seed=None):
     return {'success': success, 'fail': fail, 'fail_students': fail_students}
 
 
-def _build_bands_config(slot_count):
-    """슬롯 수에 따라 밴드 구성 자동 생성"""
-    band_count = min(4, slot_count // 3) if slot_count >= 3 else 1
+def _build_bands_config(groups, slot_count):
+    """실제 배정된 밴드를 기반으로 슬롯 배분 (동적 밴드 수 지원)"""
+    used_bands = sorted(set(g['band'] for g in groups if g.get('band')))
+    if not used_bands:
+        return {}
+    band_count = len(used_bands)
     slots_per_band = slot_count // band_count
     remainder = slot_count % band_count
     bands = {}
     idx = 0
-    for i in range(band_count):
+    for i, bn in enumerate(used_bands):
         size = slots_per_band + (1 if i < remainder else 0)
-        bands[BAND_NAMES[i]] = list(range(idx, idx + size))
+        bands[bn] = list(range(idx, idx + size))
         idx += size
     return bands
 
 
 def assign_slots_to_groups(groups, group_by_id, slot_count):
-    """각 그룹에 자기 밴드의 슬롯 중 3개 배정"""
-    bands = _build_bands_config(slot_count)
+    """각 그룹에 자기 밴드의 슬롯 배정"""
+    bands = _build_bands_config(groups, slot_count)
     teacher_groups_map = defaultdict(list)
     for g in groups:
         teacher_groups_map[g['teacher_id']].append(g)
 
-    for bn in BAND_NAMES:
-        if bn not in bands:
+    for bn, band_slots in bands.items():
+        if not band_slots:
             continue
-        band_slots = bands[bn]
         band_groups = [g for g in groups if g['band'] == bn]
         teacher_in_band = defaultdict(list)
         for g in band_groups:
             teacher_in_band[g['teacher_id']].append(g)
 
         for tid, tgs in teacher_in_band.items():
+            hours = tgs[0].get('hours', 3) or 3
             if len(tgs) == 1:
-                tgs[0]['slots'] = band_slots[:3]
+                tgs[0]['slots'] = band_slots[:hours]
             else:
                 for i, tg in enumerate(tgs):
-                    start = i
-                    tg['slots'] = [band_slots[(start + j) % len(band_slots)] for j in range(3)]
+                    h = tg.get('hours', 3) or 3
+                    tg['slots'] = [band_slots[(i + j) % len(band_slots)] for j in range(h)]
 
         for g in band_groups:
             if not g['slots']:
-                g['slots'] = band_slots[:3]
+                h = g.get('hours', 3) or 3
+                g['slots'] = band_slots[:h]
 
 
 def validate_conflicts(students, group_by_id):
@@ -321,8 +460,26 @@ def run_elective_pipeline(cursor, school_id, grade, seed=42):
     if not slot_positions:
         return {'skipped': True, 'reason': f'{grade}학년 선택과목 슬롯 없음'}
 
-    # Phase 1: 밴드 배정
-    assign_groups_to_bands(groups, subject_groups)
+    # Phase 0: 밴드 균형 검증
+    band_warnings = validate_band_balance(cursor, school_id, grade)
+
+    # 사용자 band_group 설정 + 원반 수 조회
+    cursor.execute(
+        """SELECT subject, band_group FROM timetable_data
+           WHERE school_id=%s AND grade=%s AND subject_type='선택'
+           AND band_group IS NOT NULL AND band_group != ''""",
+        (school_id, grade))
+    subject_band_map = {r['subject']: r['band_group'] for r in cursor.fetchall()}
+
+    cursor.execute(
+        """SELECT COUNT(DISTINCT class_no) as cnt FROM timetable_stu
+           WHERE school_id=%s AND grade=%s AND class_no IS NOT NULL AND class_no != ''""",
+        (school_id, grade))
+    hc_row = cursor.fetchone()
+    home_classes = hc_row['cnt'] if hc_row else 0
+
+    # Phase 1: 밴드 배정 (사용자 band_group 반영)
+    assign_groups_to_bands(groups, subject_groups, subject_band_map, home_classes)
 
     # Phase 2: 학생 배정
     assign_result = assign_students_to_groups(students, subject_groups, group_by_id, seed=seed)
@@ -363,6 +520,8 @@ def run_elective_pipeline(cursor, school_id, grade, seed=42):
         'saved': saved,
         'save_info': save_info,
         'group_stats': group_stats,
+        'subject_band_map': subject_band_map,
+        'band_warnings': [w['message'] for w in band_warnings],
         'fail_students': [
             {'class_no': s['class_no'], 'num': s['num'], 'name': s['name'],
              'electives': s['electives']}

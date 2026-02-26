@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SchoolUs - 메시지</title>
     <script src="/static/js/tailwindcss.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
-        body { font-family: 'Noto Sans KR', sans-serif; }
+body { font-family: 'Noto Sans KR', sans-serif; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
@@ -253,6 +255,7 @@
             if(date&&date!==lastDate){html+=`<div class="date-divider">${formatDate(date)}</div>`;lastDate=date;}
             if(m.is_system){html+=`<div class="flex justify-center my-2"><div class="msg-system">${escHtml(m.content)}</div></div>`;return;}
             const isMine=m.sender_id===memberId, time=m.created_at?formatTime(m.created_at):'';
+            if(m.is_deleted){const dh='<span class="italic text-slate-400 text-xs"><i class="fas fa-ban mr-1"></i>삭제된 메시지입니다.</span>',ds='background:#f1f5f9;color:#94a3b8;border:1px dashed #cbd5e1;';if(isMine){html+=`<div class="flex justify-end items-end gap-2 mb-1"><span class="text-xs text-slate-400 mb-1">${time}</span><div class="msg-bubble" style="${ds}">${dh}</div></div>`;}else{html+=`<div class="flex items-start gap-2 mb-1"><div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs font-bold flex-shrink-0 mt-1">${(m.sender_name||'?').charAt(0)}</div><div class="min-w-0"><div class="text-xs text-slate-500 font-medium mb-1">${escHtml(m.sender_name||'')}<span class="ml-1 text-slate-300">${roleLabel(m.sender_role)}</span></div><div class="msg-bubble" style="${ds}">${dh}</div></div><span class="text-xs text-slate-400 self-end mb-1">${time}</span></div>`;}return;}
             let ch=escHtml(m.content||'').replace(/\n/g,'<br>');
             if(m.file_name){const cls=isMine?'text-blue-100 underline':'text-blue-600 underline';ch+=`<div class="mt-2"><a href="/api/message/file/download?message_id=${m.id}" class="text-xs ${cls}"><i class="fas fa-${m.message_type==='image'?'image':'file-download'} mr-1"></i>${escHtml(m.file_name)}</a></div>`;}
             if(isMine){html+=`<div class="flex justify-end items-end gap-2 mb-1"><span class="text-xs text-slate-400 mb-1">${time}</span><div class="msg-bubble msg-mine">${ch}</div></div>`;}
@@ -263,6 +266,7 @@
     function appendMessage(m) {
         const c=document.getElementById('chatMessages'); const em=c.querySelector('.text-center'); if(em)c.innerHTML='';
         const isMine=m.sender_id===memberId, time=m.created_at?formatTime(m.created_at):'';
+        if(m.is_deleted){const dh='<span class="italic text-slate-400 text-xs"><i class="fas fa-ban mr-1"></i>삭제된 메시지입니다.</span>',ds='background:#f1f5f9;color:#94a3b8;border:1px dashed #cbd5e1;';if(isMine){c.insertAdjacentHTML('beforeend',`<div class="flex justify-end items-end gap-2 mb-1"><span class="text-xs text-slate-400 mb-1">${time}</span><div class="msg-bubble" style="${ds}">${dh}</div></div>`);}else{c.insertAdjacentHTML('beforeend',`<div class="flex items-start gap-2 mb-1"><div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs font-bold flex-shrink-0 mt-1">${(m.sender_name||'?').charAt(0)}</div><div class="min-w-0"><div class="text-xs text-slate-500 font-medium mb-1">${escHtml(m.sender_name||'')}<span class="ml-1 text-slate-300">${roleLabel(m.sender_role)}</span></div><div class="msg-bubble" style="${ds}">${dh}</div></div><span class="text-xs text-slate-400 self-end mb-1">${time}</span></div>`);}scrollToBottom();return;}
         let ch=escHtml(m.content||'').replace(/\n/g,'<br>');
         if(m.file_name){const cls=isMine?'text-blue-100 underline':'text-blue-600 underline';ch+=`<div class="mt-2"><a href="/api/message/file/download?message_id=${m.id}" class="text-xs ${cls}"><i class="fas fa-${m.message_type==='image'?'image':'file-download'} mr-1"></i>${escHtml(m.file_name)}</a></div>`;}
         if(m.is_system){c.insertAdjacentHTML('beforeend',`<div class="flex justify-center my-2"><div class="msg-system">${escHtml(m.content)}</div></div>`);}

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>시간표 작성 및 반편성</title>
     <script src="/static/js/tailwindcss.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style type="text/tailwindcss">
         * { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -197,9 +197,9 @@
         <div onclick="goToStep(4)" class="group bg-white rounded-xl border border-slate-200 p-5 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all">
             <div class="flex items-center gap-3 mb-3">
                 <div class="w-9 h-9 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-black text-sm">4</div>
-                <h4 class="font-bold text-slate-800 text-sm">수강인원 조정</h4>
+                <h4 class="font-bold text-slate-800 text-sm">수강인원 현황</h4>
             </div>
-            <p class="text-xs text-slate-500 leading-relaxed mb-3">과목별 실제 수강인원, 반 수요, 교사 수요를 조정합니다. 학생 선택 데이터 기반 자동 계산이 가능합니다.</p>
+            <p class="text-xs text-slate-500 leading-relaxed mb-3">학생 선택 데이터 기반으로 과목별 수강인원과 반 수요를 확인합니다. 조정이 필요하면 3단계에서 수정합니다.</p>
             <div class="flex items-center text-xs text-blue-600 font-bold group-hover:translate-x-1 transition-transform">
                 <i class="fas fa-users-cog mr-1.5 text-amber-400"></i>시작하기 <i class="fas fa-arrow-right ml-1 text-[10px]"></i>
             </div>
@@ -313,6 +313,65 @@
             <li><i class="fas fa-caret-right mr-2 text-amber-400"></i><b>7단계(시간표)</b>를 완료한 후 <b>8단계(학생별 배분)</b>를 실행하세요. 시간표가 없으면 배분이 불가능합니다.</li>
             <li><i class="fas fa-caret-right mr-2 text-amber-400"></i>선택과목이 없는 학년은 8단계를 건너뛸 수 있습니다.</li>
         </ul>
+    </div>
+
+    <!-- 밴드 편성 핵심 규칙 -->
+    <div class="bg-violet-50 border border-violet-200 rounded-xl p-5 mb-6">
+        <h4 class="font-bold text-violet-800 text-sm mb-3"><i class="fas fa-balance-scale mr-2 text-violet-500"></i>선택과목 밴드 편성 규칙 (8단계 사전 필수)</h4>
+        <div class="text-xs text-violet-900 space-y-3">
+            <div class="bg-white rounded-lg border border-violet-200 p-4">
+                <div class="font-bold text-violet-700 mb-2"><i class="fas fa-star mr-1 text-amber-400"></i>핵심 원칙</div>
+                <p class="leading-relaxed">
+                    동일 밴드(카테고리)에 배정된 <b>선택과목의 교육반 총수</b>는 반드시 <b>원반(홈룸) 수의 배수</b>여야 합니다.
+                    이 조건이 맞지 않으면 8단계 교육반 배정 시 학생 배정이 실패합니다.
+                </p>
+            </div>
+            <div class="bg-white rounded-lg border border-violet-200 p-4">
+                <div class="font-bold text-emerald-700 mb-2"><i class="fas fa-check-circle mr-1"></i>올바른 예시 (원반 10개)</div>
+                <div class="grid grid-cols-2 gap-3 mt-2">
+                    <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                        <div class="font-bold text-emerald-700 text-[11px] mb-1">밴드 A (과학 계열)</div>
+                        <div class="text-[11px] text-slate-600 space-y-0.5">
+                            <div>물리학 <b>3반</b> + 화학 <b>3반</b> + 생명과학 <b>2반</b> + 지구과학 <b>2반</b></div>
+                            <div class="font-bold text-emerald-700 mt-1">= 총 10반 (10의 배수 O)</div>
+                        </div>
+                    </div>
+                    <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                        <div class="font-bold text-emerald-700 text-[11px] mb-1">밴드 B (사회 계열)</div>
+                        <div class="text-[11px] text-slate-600 space-y-0.5">
+                            <div>세계사 <b>2반</b> + 사회문화 <b>3반</b> + 세계지리 <b>2반</b> + 현대윤리 <b>3반</b></div>
+                            <div class="font-bold text-emerald-700 mt-1">= 총 10반 (10의 배수 O)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg border border-violet-200 p-4">
+                <div class="font-bold text-red-600 mb-2"><i class="fas fa-times-circle mr-1"></i>잘못된 예시 (원반 10개)</div>
+                <div class="bg-red-50 rounded-lg p-3 border border-red-200">
+                    <div class="font-bold text-red-600 text-[11px] mb-1">밴드 A (과학 계열)</div>
+                    <div class="text-[11px] text-slate-600 space-y-0.5">
+                        <div>물리학 <b>2반</b> + 화학 <b>3반</b> + 생명과학 <b>3반</b> + 지구과학 <b>2반</b></div>
+                        <div class="font-bold text-red-600 mt-1">= 총 10반 (10의 배수 O)</div>
+                    </div>
+                </div>
+                <div class="bg-red-50 rounded-lg p-3 border border-red-200 mt-2">
+                    <div class="font-bold text-red-600 text-[11px] mb-1">밴드 B (사회 계열)</div>
+                    <div class="text-[11px] text-slate-600 space-y-0.5">
+                        <div>세계사 <b>2반</b> + 사회문화 <b>3반</b> + 세계지리 <b>2반</b> + 현대윤리 <b>2반</b></div>
+                        <div class="font-bold text-red-600 mt-1">= 총 9반 (10의 배수 X → 1반 부족!)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-start gap-2 bg-white rounded-lg border border-violet-200 p-3">
+                <i class="fas fa-lightbulb text-amber-400 mt-0.5"></i>
+                <div>
+                    <b>4단계(수강인원 현황)</b>에서 밴드별 교육반 합계를 확인할 수 있습니다.
+                    밴드 옆의 <span class="inline-flex items-center px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">10/10 ✓</span> 표시가
+                    모든 밴드에서 초록색이 되도록 반 수를 조정하세요.
+                    8단계 실행 전 <b>"사전 조건 확인"</b> 버튼으로 경고 여부를 검토할 수 있습니다.
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- 시작 버튼 -->
@@ -503,18 +562,19 @@
     </div>
 </div>
 
-<!-- ========== STEP 4: 수강인원 조정 ========== -->
+<!-- ========== STEP 4: 수강인원 현황 ========== -->
 <div id="step-4" class="step-content hidden fade-in space-y-5">
     <div class="bg-white rounded-xl shadow-sm border p-6">
         <div class="flex justify-between items-center mb-4">
-            <h3 class="font-bold text-slate-800 text-lg"><i class="fas fa-users-cog mr-2 text-amber-500"></i>수강인원 조정</h3>
+            <h3 class="font-bold text-slate-800 text-lg"><i class="fas fa-chart-bar mr-2 text-amber-500"></i>수강인원 현황</h3>
             <div class="flex gap-2">
-                <button onclick="autoCalcDemand()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold"><i class="fas fa-calculator mr-1"></i>자동 계산</button>
-                <button onclick="saveDemandToDB()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold"><i class="fas fa-save mr-1"></i>저장</button>
+                <button onclick="saveDemandToDB()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold"><i class="fas fa-save mr-1"></i>확정반수 저장</button>
                 <button onclick="printStep(4)" class="bg-slate-500 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold no-print"><i class="fas fa-print mr-1"></i>인쇄</button>
             </div>
         </div>
-        <p class="text-xs text-slate-500 mb-3">과목별 수강인원과 반 수요/교사 수요를 조정합니다. "자동 계산"으로 학생 선택 결과를 반영할 수 있습니다.</p>
+        <p class="text-xs text-slate-500 mb-3">학생 과목 선정(3단계) 데이터를 기반으로 과목별 수강인원과 반 수요를 자동 산출합니다. 인원 조정이 필요하면 <b>3단계로 돌아가 학생 선택을 수정</b>하세요.</p>
+        <!-- 요약 카드 -->
+        <div class="grid grid-cols-4 gap-3 mb-4" id="s4-summary"></div>
         <!-- 필터 -->
         <div class="flex items-center gap-3 mb-3">
             <div class="relative flex-1 max-w-xs">
@@ -533,15 +593,42 @@
             <table class="w-full text-sm">
                 <thead class="bg-slate-100 sticky top-0"><tr>
                     <th class="px-3 py-2 text-left text-xs font-bold text-slate-500">학년</th>
+                    <th class="px-3 py-2 text-left text-xs font-bold text-slate-500">교과(군)</th>
                     <th class="px-3 py-2 text-left text-xs font-bold text-slate-500">교과명</th>
                     <th class="px-3 py-2 text-center text-xs font-bold text-slate-500">구분</th>
                     <th class="px-3 py-2 text-center text-xs font-bold text-slate-500">시수</th>
                     <th class="px-3 py-2 text-center text-xs font-bold text-slate-500 bg-amber-50">수강인원</th>
                     <th class="px-3 py-2 text-center text-xs font-bold text-slate-500 bg-amber-50">반수요</th>
-                    <th class="px-3 py-2 text-center text-xs font-bold text-slate-500 bg-amber-50">교사수</th>
+                    <th class="px-3 py-2 text-center text-xs font-bold text-slate-500 bg-emerald-50">확정반수</th>
+                    <th class="px-3 py-2 text-center text-xs font-bold text-slate-500 bg-emerald-50">반당인원</th>
+                    <th class="px-3 py-2 text-center text-xs font-bold text-slate-500 bg-violet-50">밴드</th>
                 </tr></thead>
                 <tbody id="s4-tbody"></tbody>
             </table>
+        </div>
+        <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <p class="text-xs text-amber-700"><i class="fas fa-info-circle mr-1"></i>
+                수강인원·반수요는 학생 선택 데이터에서 자동 집계됩니다. <b>확정반수</b>를 조정한 뒤 "확정반수 저장"을 클릭하세요.
+                확정반수가 5단계(교사 수급) 이후 시간표 편성의 기초 자료로 사용됩니다.
+            </p>
+        </div>
+    </div>
+    <!-- 밴드 편성 검증 -->
+    <div class="bg-white rounded-xl shadow-sm border p-6" id="s4-band-panel">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-slate-800 text-lg"><i class="fas fa-layer-group mr-2 text-violet-500"></i>밴드 편성 현황</h3>
+            <div class="flex items-center gap-3">
+                <label class="text-xs text-slate-500">원반 수</label>
+                <input type="number" id="s4-home-classes" value="10" min="1" max="30" class="form-input h-7 w-16 text-center text-xs font-bold" onchange="renderBandSummary()">
+                <span class="text-[10px] text-slate-400">각 밴드 확정반수 합 = 원반 수의 배수</span>
+            </div>
+        </div>
+        <div id="s4-band-summary" class="space-y-4"></div>
+        <div class="mt-3 bg-violet-50 border border-violet-200 rounded-lg p-3">
+            <p class="text-xs text-violet-700"><i class="fas fa-info-circle mr-1"></i>
+                같은 밴드에 묶인 선택과목은 동시에 수업이 진행됩니다. 밴드 내 확정반수의 합이 <b>원반 수의 배수</b>여야
+                모든 학생이 교육반에 빠짐없이 배치됩니다.
+            </p>
         </div>
     </div>
 </div>
@@ -551,7 +638,7 @@
     <div class="bg-white rounded-xl shadow-sm border p-6">
         <div class="flex justify-between items-center mb-3">
             <h3 class="font-bold text-slate-800 text-lg"><i class="fas fa-chalkboard-teacher mr-2 text-violet-500"></i>교사 수급 및 수업 배분</h3>
-            <button onclick="printStep(5)" class="bg-slate-500 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold no-print"><i class="fas fa-print mr-1"></i>인쇄</button>
+            <button onclick="openDemandFullView()" class="bg-slate-600 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold no-print"><i class="fas fa-expand-alt mr-1"></i>큰화면으로 보기</button>
         </div>
         <!-- 서브탭 -->
         <div class="flex gap-1 border-b mb-4">
@@ -562,32 +649,50 @@
         <!-- ===== 탭A: 교사 수급 분석 ===== -->
         <div id="s5-demand" class="s5-panel">
             <div class="flex justify-between items-center mb-3">
-                <p class="text-xs text-slate-500">과목군별·학년별 필요 교사수를 산출합니다. (1~4단계 데이터 기반)</p>
+                <div class="flex items-center gap-3">
+                    <p class="text-xs text-slate-500">과목군별·학년별 필요 교사수를 산출합니다.</p>
+                    <div class="flex items-center gap-1.5 bg-violet-50 border border-violet-200 rounded-lg px-3 py-1">
+                        <label class="text-xs font-bold text-violet-700 whitespace-nowrap">기준시수</label>
+                        <input type="number" id="s5-base-hours" value="16" min="1" max="30" class="form-input h-7 w-14 text-center text-xs font-bold" onchange="updateBaseHours(this.value)">
+                        <span class="text-[10px] text-violet-500 whitespace-nowrap">시간/주</span>
+                        <div class="flex gap-1 ml-1">
+                            <button onclick="document.getElementById('s5-base-hours').value=16;updateBaseHours(16)" class="px-2 py-0.5 text-[10px] rounded bg-violet-200 hover:bg-violet-300 text-violet-700 font-bold">고등 16h</button>
+                            <button onclick="document.getElementById('s5-base-hours').value=19;updateBaseHours(19)" class="px-2 py-0.5 text-[10px] rounded bg-emerald-200 hover:bg-emerald-300 text-emerald-700 font-bold">중등 19h</button>
+                        </div>
+                    </div>
+                </div>
                 <button onclick="calcTeacherDemand()" class="bg-violet-600 hover:bg-violet-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold"><i class="fas fa-calculator mr-1"></i>수급 분석 실행</button>
             </div>
             <!-- 요약 카드 -->
             <div class="grid grid-cols-4 gap-3 mb-4" id="s5-demand-summary"></div>
             <!-- 과목군별 테이블 -->
             <div class="overflow-auto max-h-[420px]">
-                <table class="w-full text-sm" id="s5-demand-table">
+                <table class="w-full text-sm" id="s5-demand-table" style="table-layout:fixed;">
+                    <colgroup>
+                        <col style="width:27%">
+                        <col span="3" style="width:6.5%">
+                        <col span="3" style="width:6.5%">
+                        <col span="3" style="width:6.5%">
+                        <col style="width:9.5%">
+                    </colgroup>
                     <thead class="bg-slate-100 sticky top-0">
                         <tr>
                             <th rowspan="2" class="px-3 py-2 text-left text-xs font-bold text-slate-500 border-r bg-slate-100">과목군</th>
-                            <th colspan="3" class="px-2 py-1 text-center text-[10px] font-bold text-blue-600 border-r bg-blue-50">1학년</th>
-                            <th colspan="3" class="px-2 py-1 text-center text-[10px] font-bold text-emerald-600 border-r bg-emerald-50">2학년</th>
-                            <th colspan="3" class="px-2 py-1 text-center text-[10px] font-bold text-amber-600 border-r bg-amber-50">3학년</th>
-                            <th rowspan="2" class="px-3 py-2 text-center text-xs font-bold text-rose-600 bg-rose-50">전체<br>필요 교사수</th>
+                            <th colspan="3" class="px-1 py-1 text-center text-[10px] font-bold text-blue-600 border-r bg-blue-50">1학년</th>
+                            <th colspan="3" class="px-1 py-1 text-center text-[10px] font-bold text-emerald-600 border-r bg-emerald-50">2학년</th>
+                            <th colspan="3" class="px-1 py-1 text-center text-[10px] font-bold text-amber-600 border-r bg-amber-50">3학년</th>
+                            <th rowspan="2" class="px-2 py-2 text-center text-xs font-bold text-rose-600 bg-rose-50">필요<br>교사수</th>
                         </tr>
                         <tr>
-                            <th class="px-2 py-1 text-center text-[10px] text-slate-500 bg-blue-50">과목수</th>
-                            <th class="px-2 py-1 text-center text-[10px] text-slate-500 bg-blue-50">총시수</th>
-                            <th class="px-2 py-1 text-center text-[10px] text-slate-500 border-r bg-blue-50">교사수</th>
-                            <th class="px-2 py-1 text-center text-[10px] text-slate-500 bg-emerald-50">과목수</th>
-                            <th class="px-2 py-1 text-center text-[10px] text-slate-500 bg-emerald-50">총시수</th>
-                            <th class="px-2 py-1 text-center text-[10px] text-slate-500 border-r bg-emerald-50">교사수</th>
-                            <th class="px-2 py-1 text-center text-[10px] text-slate-500 bg-amber-50">과목수</th>
-                            <th class="px-2 py-1 text-center text-[10px] text-slate-500 bg-amber-50">총시수</th>
-                            <th class="px-2 py-1 text-center text-[10px] text-slate-500 border-r bg-amber-50">교사수</th>
+                            <th class="px-1 py-1 text-center text-[10px] text-slate-500 bg-blue-50">과목</th>
+                            <th class="px-1 py-1 text-center text-[10px] text-slate-500 bg-blue-50">시수</th>
+                            <th class="px-1 py-1 text-center text-[10px] text-slate-500 border-r bg-blue-50">교사</th>
+                            <th class="px-1 py-1 text-center text-[10px] text-slate-500 bg-emerald-50">과목</th>
+                            <th class="px-1 py-1 text-center text-[10px] text-slate-500 bg-emerald-50">시수</th>
+                            <th class="px-1 py-1 text-center text-[10px] text-slate-500 border-r bg-emerald-50">교사</th>
+                            <th class="px-1 py-1 text-center text-[10px] text-slate-500 bg-amber-50">과목</th>
+                            <th class="px-1 py-1 text-center text-[10px] text-slate-500 bg-amber-50">시수</th>
+                            <th class="px-1 py-1 text-center text-[10px] text-slate-500 border-r bg-amber-50">교사</th>
                         </tr>
                     </thead>
                     <tbody id="s5-demand-tbody"></tbody>
@@ -595,8 +700,8 @@
             </div>
             <div class="mt-3 bg-violet-50 border border-violet-200 rounded-lg p-3">
                 <p class="text-xs text-violet-700"><i class="fas fa-info-circle mr-1"></i>
-                    <b>필요 교사수</b> = 과목군별 (반수요 × 시수)의 합 ÷ 교사 1인당 주당 최대 수업시수(기본 18시간).
-                    같은 과목군 교사가 여러 학년을 담당할 수 있으므로 3학년 합산 후 산출합니다.
+                    <b>필요 교사수</b> = (반수요 × 시수)의 합 ÷ 기준시수(고등학교 16h, 중학교 19h).
+                    교과군 클릭 시 세부 과목별 필요 교사수를 확인할 수 있습니다.
                 </p>
             </div>
         </div>
@@ -936,14 +1041,14 @@ function getSchoolId() { return currentUser?.school_id || ''; }
 function getSchoolName() { return currentUser?.member_school || ''; }
 
 function printStep(n) {
-    const titles = {1:'개설교과목 편집',2:'조사일시 설정',3:'학생 과목 선정 현황',4:'수강인원 조정',5:'교사 수급 및 수업 배분',6:'반편성',7:'시간표 작성',8:'학생별 시간표 배분'};
+    const titles = {1:'개설교과목 편집',2:'조사일시 설정',3:'학생 과목 선정 현황',4:'수강인원 현황',5:'교사 수급 및 수업 배분',6:'반편성',7:'시간표 작성',8:'학생별 시간표 배분'};
     const el = document.getElementById(`step-${n}`);
     if (!el) return;
     const printWin = window.open('', '_blank');
     printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
         <title>${titles[n]} - 인쇄</title>
         <script src="/static/js/tailwindcss.js"><\/script>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
         <style>
             * { font-family: 'Pretendard', -apple-system, sans-serif; }
             body { padding: 20px; }
@@ -967,6 +1072,111 @@ function printStep(n) {
     </body></html>`);
     printWin.document.close();
 }
+
+function openDemandFullView() {
+    const tbody = document.getElementById('s5-demand-tbody');
+    if (!tbody || !tbody.innerHTML.trim()) { alert('먼저 "수급 분석 실행"을 해주세요.'); return; }
+
+    // 요약 카드 HTML
+    const summaryEl = document.getElementById('s5-demand-summary');
+    const summaryHtml = summaryEl ? summaryEl.innerHTML : '';
+
+    // 테이블: 세부교과 모두 펼친 상태로 복사
+    const table = document.getElementById('s5-demand-table');
+    const tableClone = table.outerHTML;
+
+    const schoolName = getSchoolName();
+    const baseH = TEACHER_MAX_HOURS;
+    const dateStr = new Date().toLocaleDateString('ko-KR');
+
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>교사 수급 현황 - ${schoolName}</title>
+<script src="/static/js/tailwindcss.js"><\/script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+* { font-family: 'Pretendard', -apple-system, 'Noto Sans KR', sans-serif; }
+body { margin: 0; padding: 0; background: #f8fafc; }
+.toolbar { position: sticky; top: 0; z-index: 50; background: #1e293b; color: #fff; padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.toolbar h1 { font-size: 16px; font-weight: 800; margin: 0; }
+.toolbar .meta { font-size: 11px; opacity: 0.7; }
+.toolbar .btns { display: flex; gap: 8px; }
+.toolbar .btns button { padding: 6px 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.btn-save { background: #3b82f6; color: #fff; }
+.btn-save:hover { background: #2563eb; }
+.btn-print { background: #8b5cf6; color: #fff; }
+.btn-print:hover { background: #7c3aed; }
+.btn-close { background: #475569; color: #fff; }
+.btn-close:hover { background: #334155; }
+.content { max-width: 1100px; margin: 0 auto; padding: 24px; }
+.header-info { text-align: center; margin-bottom: 20px; }
+.header-info h2 { font-size: 22px; font-weight: 900; margin: 0 0 4px 0; color: #1e293b; }
+.header-info p { font-size: 12px; color: #94a3b8; margin: 0; }
+.summary-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+table { border-collapse: collapse; width: 100%; font-size: 12px; }
+th, td { border: 1px solid #e2e8f0; padding: 6px 10px; }
+th { background: #f1f5f9; font-size: 11px; font-weight: 700; }
+tr.dept-row { background: #f8fafc; cursor: pointer; }
+tr.dept-row:hover { background: #f1f5f9; }
+tr.detail-row:hover { background: #eff6ff; }
+@media print {
+    .toolbar { display: none !important; }
+    body { background: #fff; }
+    .content { padding: 10px; max-width: 100%; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; }
+}
+</style>
+</head><body>
+<div class="toolbar">
+    <div>
+        <h1><i class="fas fa-chalkboard-teacher" style="margin-right:6px"></i>교사 수급 현황</h1>
+        <div class="meta">${schoolName} · 기준시수 ${baseH}h · ${dateStr}</div>
+    </div>
+    <div class="btns">
+        <button class="btn-save" onclick="saveAsPDF()"><i class="fas fa-file-download"></i> 출력(파일저장)</button>
+        <button class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> 인쇄</button>
+        <button class="btn-close" onclick="window.close()"><i class="fas fa-times"></i> 닫기</button>
+    </div>
+</div>
+<div class="content">
+    <div class="header-info">
+        <h2>${schoolName} 교사 수급 현황표</h2>
+        <p>기준시수: 교사 1인당 주당 ${baseH}시간 · 출력일: ${dateStr}</p>
+    </div>
+    <div class="summary-cards">${summaryHtml}</div>
+    <div id="full-table-wrap">${tableClone}</div>
+    <div style="margin-top:16px; padding:12px; background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px;">
+        <p style="font-size:11px; color:#6d28d9; margin:0;">
+            <i class="fas fa-info-circle" style="margin-right:4px"></i>
+            <b>필요 교사수</b> = (반수요 × 시수)의 합 ÷ 기준시수(${baseH}h). 교과군 행을 클릭하면 세부 과목을 펼치거나 접을 수 있습니다.
+        </p>
+    </div>
+</div>
+<script>
+// 세부교과 모두 펼치기
+document.querySelectorAll('tr[class*="detail-"]').forEach(r => r.classList.remove('hidden'));
+// 교과군 토글 기능 유지
+document.querySelectorAll('.dept-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const cls = this.dataset.detail;
+        document.querySelectorAll('.' + cls).forEach(r => r.classList.toggle('hidden'));
+    });
+});
+
+function saveAsPDF() {
+    // 브라우저 인쇄 다이얼로그를 PDF 모드로 열기
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e293b;color:#fff;padding:20px 32px;border-radius:12px;z-index:9999;font-size:14px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,0.3)';
+    msg.innerHTML = '<i class="fas fa-info-circle" style="margin-right:6px;color:#60a5fa"></i>인쇄 대화상자에서 <b>"PDF로 저장"</b>을 선택하세요';
+    document.body.appendChild(msg);
+    setTimeout(() => { msg.remove(); window.print(); }, 1200);
+}
+<\/script>
+</body></html>`);
+    win.document.close();
+}
+
 function toggleLoading(show, text) {
     document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
     if (text) document.getElementById('loadingText').textContent = text;
@@ -1040,15 +1250,20 @@ function prevStep() {
 }
 function nextStep() { goToStep(currentStep + 1); }
 
-function onStepEnter(n) {
+async function onStepEnter(n) {
     const sid = getSchoolId();
     if (!sid) return;
+    // 선행 데이터 자동 로드 (어떤 스텝에서든 필요한 데이터가 없으면 DB에서 가져옴)
+    if (n >= 1 && openSubjects.length === 0) await loadSubjectsFromDB(true);
+    if (n >= 3 && allStudents.length === 0) await loadStudentSelections(true);
+    if (n >= 5 && teachers.length === 0) await loadTeachersFromDB(true);
+    // 각 스텝 고유 로직
     switch(n) {
-        case 1: if (openSubjects.length === 0) loadSubjectsFromDB(true); break;
+        case 1: renderSubjectTable(); break;
         case 2: loadSurveyPeriod(); break;
-        case 3: if (allStudents.length === 0) loadStudentSelections(true); break;
+        case 3: renderStudentSummary(); renderStudentSubjectStats(); renderStudentTable3(); break;
         case 4: renderDemandTable(); break;
-        case 5: calcTeacherDemand(); if (teachers.length === 0) loadTeachersFromDB(true); break;
+        case 5: calcTeacherDemand(); break;
         case 6: loadClassMakerData(); break;
         case 7: initStep7(); break;
         case 8: break;
@@ -1166,11 +1381,17 @@ async function loadSubjectsFromDB(silent) {
         const r = await fetch(`/api/timetable-data/list?school_id=${sid}`);
         const d = await r.json();
         if (d.success) {
-            openSubjects = (d.data || d.subjects || []).map(s => ({
-                grade: String(s.grade || ''), subject: s.subject, hours: s.subject_demand || 0,
-                type: s.subject_type || '일반', dept: s.subject_depart || '',
-                stu_count: s.stu_count || 0, class_demand: s.class_demand || 0, tea_demand: s.tea_demand || 0
-            }));
+            openSubjects = (d.data || d.subjects || []).map(s => {
+                const cd = parseInt(s.class_demand) || 0;
+                return {
+                    grade: String(s.grade || ''), subject: s.subject, hours: parseInt(s.subject_demand) || 0,
+                    type: s.subject_type || '일반', dept: s.subject_depart || '',
+                    stu_count: parseInt(s.stu_count) || 0, class_demand: cd,
+                    class_confirmed: cd > 0 ? cd : null,
+                    band_group: s.band_group || null,
+                    tea_demand: parseInt(s.tea_demand) || 0
+                };
+            });
             renderSubjectTable();
             if (!silent) alert(`과목 ${openSubjects.length}개를 불러왔습니다.`);
         } else if (!silent) {
@@ -1232,7 +1453,7 @@ async function saveSubjectsToDB() {
     try {
         const r = await fetch('/api/timetable-data/save', {
             method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ school_id: sid, subjects: openSubjects.map(s => ({
+            body: JSON.stringify({ school_id: sid, member_school: currentUser?.member_school || '', data: openSubjects.map(s => ({
                 subject: s.subject, grade: s.grade, subject_demand: s.hours,
                 subject_type: s.type, subject_depart: s.dept,
                 stu_count: s.stu_count, class_demand: s.class_demand, tea_demand: s.tea_demand
@@ -1471,16 +1692,51 @@ async function saveStudentSelectionsToDB() {
 }
 
 // ============================================================
-// STEP 4: 수강인원 조정
+// STEP 4: 수강인원 현황
 // ============================================================
 function renderDemandTable() {
+    // 학생 선택 데이터에서 자동 집계
+    const counts = {};
+    allStudents.forEach(s => {
+        for (let i=1;i<=12;i++) { const sub=s[`subject${i}`]; if(sub) counts[sub]=(counts[sub]||0)+1; }
+    });
+    // 일반과목은 해당 학년 전체 인원
+    const gradeCount = {};
+    allStudents.forEach(s => { gradeCount[String(s.grade)] = (gradeCount[String(s.grade)]||0)+1; });
+
+    openSubjects.forEach(s => {
+        if (s.type === '선택' || s.type === '학기교차') {
+            s.stu_count = counts[s.subject] || 0;
+        } else {
+            s.stu_count = gradeCount[String(s.grade)] || 0;
+        }
+        s.class_demand = s.stu_count > 0 ? Math.ceil(s.stu_count / 25) : 0;
+        // 확정반수 초기값: 기존 값 유지, 없으면 반수요와 동일
+        if (s.class_confirmed === undefined || s.class_confirmed === null) {
+            s.class_confirmed = s.class_demand;
+        }
+    });
+
+    // 요약 카드
+    const totalStu = allStudents.length;
+    const electiveSubs = openSubjects.filter(s => s.type === '선택' || s.type === '학기교차');
+    const maxElec = electiveSubs.length > 0 ? Math.max(...electiveSubs.map(s => s.stu_count)) : 0;
+    const minElec = electiveSubs.filter(s => s.stu_count > 0).length > 0 ? Math.min(...electiveSubs.filter(s => s.stu_count > 0).map(s => s.stu_count)) : 0;
+    const sumEl = document.getElementById('s4-summary');
+    if (sumEl) sumEl.innerHTML = `
+        <div class="stat-card"><div class="text-xs text-slate-500 mb-1">전체 학생</div><div class="value text-blue-600">${totalStu}명</div></div>
+        <div class="stat-card"><div class="text-xs text-slate-500 mb-1">개설 과목</div><div class="value text-violet-600">${openSubjects.length}개</div></div>
+        <div class="stat-card"><div class="text-xs text-slate-500 mb-1">선택과목 최대</div><div class="value text-emerald-600">${maxElec}명</div></div>
+        <div class="stat-card"><div class="text-xs text-slate-500 mb-1">선택과목 최소</div><div class="value text-rose-600">${minElec}명</div></div>`;
+
+    // 테이블 렌더링
     const tb = document.getElementById('s4-tbody');
     const keyword = (document.getElementById('s4-filter')?.value || '').trim().toLowerCase();
     const fGrade = document.getElementById('s4-filter-grade')?.value || '';
     const fType = document.getElementById('s4-filter-type')?.value || '';
 
     let filtered = openSubjects.map((s, i) => ({...s, _idx: i}));
-    if (keyword) filtered = filtered.filter(s => s.subject.toLowerCase().includes(keyword));
+    if (keyword) filtered = filtered.filter(s => s.subject.toLowerCase().includes(keyword) || (s.dept||'').toLowerCase().includes(keyword));
     if (fGrade) filtered = filtered.filter(s => String(s.grade) === fGrade);
     if (fType) filtered = filtered.filter(s => s.type === fType);
 
@@ -1488,41 +1744,165 @@ function renderDemandTable() {
     if (countEl) countEl.textContent = `${filtered.length}/${openSubjects.length}개`;
 
     if (filtered.length === 0) {
-        tb.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">${openSubjects.length === 0 ? '과목 데이터가 없습니다.' : '검색 결과가 없습니다.'}</td></tr>`;
+        tb.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-slate-400">${openSubjects.length === 0 ? '과목 데이터가 없습니다.' : '검색 결과가 없습니다.'}</td></tr>`;
         return;
     }
-    tb.innerHTML = filtered.map(s => `<tr class="border-b hover:bg-slate-50">
-        <td class="px-3 py-2">${s.grade}</td>
-        <td class="px-3 py-2 font-medium">${s.subject}</td>
-        <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.type==='선택'?'bg-amber-100 text-amber-700':'bg-slate-100 text-slate-600'}">${s.type}</span></td>
-        <td class="px-3 py-2 text-center">${s.hours}</td>
-        <td class="px-3 py-2 text-center bg-amber-50"><input type="number" class="form-input h-7 w-16 text-center text-xs" value="${s.stu_count||0}" onchange="openSubjects[${s._idx}].stu_count=+this.value"></td>
-        <td class="px-3 py-2 text-center bg-amber-50"><input type="number" class="form-input h-7 w-14 text-center text-xs" value="${s.class_demand||0}" onchange="openSubjects[${s._idx}].class_demand=+this.value"></td>
-        <td class="px-3 py-2 text-center bg-amber-50"><input type="number" class="form-input h-7 w-14 text-center text-xs" value="${s.tea_demand||0}" onchange="openSubjects[${s._idx}].tea_demand=+this.value"></td>
-    </tr>`).join('');
+    const BAND_OPTIONS = ['A','B','C','D','E','F','G','H'];
+    tb.innerHTML = filtered.map(s => {
+        const isElective = s.type === '선택' || s.type === '학기교차';
+        const stuBar = isElective
+            ? `<span class="font-bold ${s.stu_count < 15 ? 'text-rose-600' : 'text-slate-800'}">${s.stu_count}</span>`
+            : `<span class="text-slate-400">${s.stu_count}</span>`;
+        const confirmed = s.class_confirmed ?? s.class_demand;
+        const diff = confirmed !== s.class_demand;
+        const bandCell = isElective
+            ? `<select class="form-input h-7 w-14 text-center text-xs font-bold text-violet-700 border-violet-300" onchange="openSubjects[${s._idx}].band_group=this.value||null;renderBandSummary()">
+                <option value="">-</option>${BAND_OPTIONS.map(b => `<option value="${b}" ${s.band_group===b?'selected':''}>${b}</option>`).join('')}
+               </select>`
+            : `<span class="text-slate-300">-</span>`;
+        return `<tr class="border-b hover:bg-slate-50">
+            <td class="px-3 py-2">${s.grade}</td>
+            <td class="px-3 py-2 text-xs text-slate-400">${s.dept||''}</td>
+            <td class="px-3 py-2 font-medium">${s.subject}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.type==='선택'?'bg-amber-100 text-amber-700':s.type==='학기교차'?'bg-purple-100 text-purple-700':'bg-slate-100 text-slate-600'}">${s.type}</span></td>
+            <td class="px-3 py-2 text-center">${s.hours}</td>
+            <td class="px-3 py-2 text-center bg-amber-50">${stuBar}</td>
+            <td class="px-3 py-2 text-center bg-amber-50 font-medium">${s.class_demand}</td>
+            <td class="px-3 py-1 text-center bg-emerald-50">
+                <input type="number" class="form-input h-7 w-14 text-center text-xs font-bold ${diff?'text-rose-600 border-rose-300':'text-emerald-700 border-emerald-300'}" value="${confirmed}" min="0" onchange="openSubjects[${s._idx}].class_confirmed=+this.value;renderDemandTable()">
+            </td>
+            <td class="px-3 py-2 text-center bg-emerald-50 text-xs font-medium">${confirmed > 0 ? Math.round(s.stu_count / confirmed) : '-'}</td>
+            <td class="px-3 py-1 text-center bg-violet-50">${bandCell}</td>
+        </tr>`;
+    }).join('');
+    renderBandSummary();
 }
 
-function autoCalcDemand() {
-    const counts = {};
-    allStudents.forEach(s => {
-        for (let i=1;i<=12;i++) { const sub=s[`subject${i}`]; if(sub) counts[sub]=(counts[sub]||0)+1; }
-    });
-    openSubjects.forEach(s => {
-        if (counts[s.subject]) { s.stu_count = counts[s.subject]; }
-        if (s.type === '선택' && s.stu_count > 0) {
-            s.class_demand = Math.ceil(s.stu_count / 30);
-            s.tea_demand = s.class_demand;
+// ============================================================
+// STEP 4: 밴드 편성 검증
+// ============================================================
+function renderBandSummary() {
+    const container = document.getElementById('s4-band-summary');
+    if (!container) return;
+    const homeClasses = parseInt(document.getElementById('s4-home-classes')?.value) || 10;
+
+    const electives = openSubjects.filter(s => s.type === '선택' || s.type === '학기교차');
+    // 학년별 그룹핑
+    const grades = [...new Set(electives.map(s => String(s.grade)))].sort();
+
+    if (grades.length === 0) {
+        container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">선택/학기교차 과목이 없습니다.</p>';
+        return;
+    }
+
+    let html = '';
+    grades.forEach(g => {
+        const gradeElectives = electives.filter(s => String(s.grade) === g);
+        // 밴드별 그룹핑
+        const bands = {};
+        const unassigned = [];
+        gradeElectives.forEach(s => {
+            if (s.band_group) {
+                if (!bands[s.band_group]) bands[s.band_group] = [];
+                bands[s.band_group].push(s);
+            } else {
+                unassigned.push(s);
+            }
+        });
+
+        const bandKeys = Object.keys(bands).sort();
+        const gradeLabel = `${g}학년`;
+
+        html += `<div class="border rounded-lg overflow-hidden">
+            <div class="bg-slate-50 px-4 py-2 border-b flex items-center justify-between">
+                <span class="font-bold text-sm text-slate-700"><i class="fas fa-graduation-cap mr-1"></i>${gradeLabel} 선택과목 밴드</span>
+                <span class="text-[10px] text-slate-400">원반 수: ${homeClasses} · 선택과목 ${gradeElectives.length}개</span>
+            </div>
+            <div class="p-3 space-y-2">`;
+
+        if (bandKeys.length === 0 && unassigned.length > 0) {
+            html += `<p class="text-xs text-slate-400 text-center py-2">밴드가 배정되지 않았습니다. 위 테이블에서 선택과목에 밴드(A~H)를 지정하세요.</p>`;
         }
+
+        bandKeys.forEach(bk => {
+            const subs = bands[bk];
+            const total = subs.reduce((acc, s) => acc + ((s.class_confirmed ?? s.class_demand) || 0), 0);
+            const isValid = total > 0 && total % homeClasses === 0;
+            const diff = homeClasses - (total % homeClasses);
+            const statusIcon = isValid
+                ? '<i class="fas fa-check-circle text-emerald-500"></i>'
+                : `<i class="fas fa-exclamation-triangle text-rose-500"></i>`;
+            const statusText = isValid
+                ? `<span class="text-emerald-600 font-bold">${total}/${homeClasses} ✓</span>`
+                : `<span class="text-rose-600 font-bold">${total}/${homeClasses}</span> <span class="text-rose-500 text-[10px]">${diff === homeClasses ? '' : diff + '반 부족'}</span>`;
+
+            html += `<div class="flex items-center gap-2 p-2 rounded ${isValid ? 'bg-emerald-50 border border-emerald-200' : 'bg-rose-50 border border-rose-200'}">
+                <span class="w-8 h-8 flex items-center justify-center rounded-lg font-bold text-sm ${isValid ? 'bg-emerald-200 text-emerald-800' : 'bg-rose-200 text-rose-800'}">${bk}</span>
+                <div class="flex-1 flex flex-wrap gap-1">
+                    ${subs.map(s => {
+                        const cc = (s.class_confirmed ?? s.class_demand) || 0;
+                        return `<span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${isValid ? 'bg-white border border-emerald-300 text-emerald-800' : 'bg-white border border-rose-300 text-rose-800'}">
+                            ${s.subject} <b>${cc}반</b>
+                        </span>`;
+                    }).join('')}
+                </div>
+                <div class="text-right text-xs whitespace-nowrap">${statusIcon} ${statusText}</div>
+            </div>`;
+        });
+
+        // 미배정 과목
+        if (unassigned.length > 0) {
+            html += `<div class="flex items-center gap-2 p-2 rounded bg-slate-50 border border-dashed border-slate-300">
+                <span class="w-8 h-8 flex items-center justify-center rounded-lg font-bold text-sm bg-slate-200 text-slate-500">?</span>
+                <div class="flex-1 flex flex-wrap gap-1">
+                    ${unassigned.map(s => {
+                        const cc = (s.class_confirmed ?? s.class_demand) || 0;
+                        return `<span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-white border border-slate-300 text-slate-600">${s.subject} <b>${cc}반</b></span>`;
+                    }).join('')}
+                </div>
+                <span class="text-[10px] text-slate-400 whitespace-nowrap">미배정</span>
+            </div>`;
+        }
+
+        html += `</div></div>`;
     });
-    renderDemandTable();
-    alert('학생 선택 데이터 기반으로 수강인원을 계산했습니다.');
+
+    container.innerHTML = html;
 }
 
-async function saveDemandToDB() { await saveSubjectsToDB(); }
+async function saveDemandToDB() {
+    const sid = getSchoolId();
+    if (!sid || openSubjects.length === 0) return alert('저장할 데이터가 없습니다.');
+    toggleLoading(true, '확정반수 저장 중...');
+    try {
+        const r = await fetch('/api/timetable-data/save', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ school_id: sid, member_school: currentUser?.member_school || '', data: openSubjects.map(s => ({
+                subject: s.subject, grade: s.grade, subject_demand: s.hours,
+                subject_type: s.type, subject_depart: s.dept,
+                stu_count: s.stu_count, class_demand: s.class_confirmed ?? s.class_demand,
+                band_group: s.band_group || null,
+                tea_demand: s.tea_demand || 0
+            }))})
+        });
+        const d = await r.json();
+        alert(d.success ? '확정반수 저장 완료' : d.message);
+    } catch(e) { alert('저장 오류: ' + e); }
+    toggleLoading(false);
+}
 
 // ============================================================
 // STEP 5: 교사 수급 및 수업 배분
 // ============================================================
+function updateBaseHours(val) {
+    const v = parseInt(val);
+    if (v > 0 && v <= 30) {
+        TEACHER_MAX_HOURS = v;
+        // 이미 분석 결과가 있으면 자동 재계산
+        if (document.getElementById('s5-demand-tbody').innerHTML.trim()) calcTeacherDemand();
+    }
+}
+
 function s5Tab(tab) {
     document.querySelectorAll('.s5-panel').forEach(p => p.classList.add('hidden'));
     document.getElementById(`s5-${tab}`).classList.remove('hidden');
@@ -1533,9 +1913,12 @@ function s5Tab(tab) {
     if (tab === 'assign') renderAssignSummary();
 }
 
-const TEACHER_MAX_HOURS = 18; // 교사 1인당 주당 최대 수업시수
+let TEACHER_MAX_HOURS = 16; // 교사 1인당 주당 기준시수 (고등학교 16, 중학교 19)
 
 function calcTeacherDemand() {
+    // 기준시수 입력값 반영
+    const baseInput = document.getElementById('s5-base-hours');
+    if (baseInput) { const v = parseInt(baseInput.value); if (v > 0) TEACHER_MAX_HOURS = v; }
     // openSubjects를 과목군별·학년별로 그룹화 (세부교과 포함)
     const deptData = {}; // { dept: { subjects: [{grade,subject,hours,type,class_demand,tea_demand},...], byGrade: {'1':{...},'2':{...},'3':{...}} } }
     openSubjects.forEach(s => {
@@ -1546,7 +1929,7 @@ function calcTeacherDemand() {
         if (!deptData[dept].byGrade[gr]) deptData[dept].byGrade[gr] = { items: [], totalHours: 0, teaDemand: 0 };
         const gd = deptData[dept].byGrade[gr];
         gd.items.push(s);
-        gd.totalHours += (s.class_demand || 1) * (s.hours || 0);
+        gd.totalHours += ((s.class_confirmed ?? s.class_demand) || 1) * (s.hours || 0);
         gd.teaDemand += (s.tea_demand || 0);
     });
 
@@ -1588,7 +1971,7 @@ function calcTeacherDemand() {
         dd.subjects.forEach(s => {
             const key = s.subject;
             if (!subjectMap[key]) subjectMap[key] = { name: s.subject, type: s.type, grades: {} };
-            subjectMap[key].grades[String(s.grade)] = { hours: s.hours||0, class_demand: s.class_demand||1, tea_demand: s.tea_demand||0 };
+            subjectMap[key].grades[String(s.grade)] = { hours: s.hours||0, class_demand: (s.class_confirmed ?? s.class_demand) || 1, tea_demand: s.tea_demand||0 };
         });
         Object.values(subjectMap).forEach(sub => {
             let subTotalHours = 0;
@@ -1635,7 +2018,7 @@ function calcTeacherDemand() {
     document.getElementById('s5-demand-summary').innerHTML = `
         <div class="stat-card"><div class="text-xs text-slate-500 mb-1">과목군 수</div><div class="value text-violet-600">${depts.length}</div></div>
         <div class="stat-card"><div class="text-xs text-slate-500 mb-1">전체 총시수</div><div class="value text-blue-600">${grandTotalHours}</div></div>
-        <div class="stat-card border-2 border-rose-200"><div class="text-xs text-rose-500 mb-1 font-bold">필요 교사수</div><div class="value text-rose-600">${grandTotalTeachers}</div></div>
+        <div class="stat-card border-2 border-rose-200"><div class="text-xs text-rose-500 mb-1 font-bold">필요 교사수 <span class="font-normal">(÷${TEACHER_MAX_HOURS}h)</span></div><div class="value text-rose-600">${grandTotalTeachers}</div></div>
         <div class="stat-card"><div class="text-xs text-slate-500 mb-1">배분된 교사</div><div class="value ${assignedNames >= grandTotalTeachers ? 'text-emerald-600' : 'text-amber-600'}">${assignedNames}<span class="text-xs text-slate-400 ml-1">/ ${grandTotalTeachers}</span></div></div>`;
 }
 
@@ -1645,7 +2028,7 @@ function renderAssignSummary() {
     openSubjects.forEach(s => {
         const dept = s.dept || '미분류';
         if (!deptNeed[dept]) deptNeed[dept] = 0;
-        deptNeed[dept] += (s.class_demand || 1) * (s.hours || 0);
+        deptNeed[dept] += ((s.class_confirmed ?? s.class_demand) || 1) * (s.hours || 0);
     });
 
     const deptAssigned = {};
@@ -2293,6 +2676,14 @@ async function checkElectivePrereqs() {
                     ${info.has_electives?'<span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-bold">선택과목 있음</span>':''}
                     ${info.missing.length>0?`<span class="text-xs text-red-500">${info.missing.join(', ')}</span>`:''}
                 </div>`;
+                // 밴드 균형 경고
+                if (info.band_warnings && info.band_warnings.length > 0) {
+                    html += `<div class="ml-8 mb-2 bg-amber-50 border border-amber-200 rounded-lg p-3 mt-1">
+                        <div class="text-xs font-bold text-amber-700 mb-1"><i class="fas fa-exclamation-triangle mr-1"></i>밴드 교육반 균형 경고</div>
+                        ${info.band_warnings.map(w => `<div class="text-xs text-amber-600 py-0.5"><i class="fas fa-caret-right mr-1"></i>${w}</div>`).join('')}
+                        <div class="text-[10px] text-amber-500 mt-1">4단계에서 교육반 수를 조정하세요 (동일 밴드 내 교육반 총수 = 원반 수의 배수)</div>
+                    </div>`;
+                }
             });
             html += '</div>';
             el.innerHTML = html;
@@ -2345,23 +2736,76 @@ function renderElectiveResult(grade, data) {
             <i class="fas fa-exclamation-triangle mr-1"></i> 충돌 발생으로 DB 저장되지 않았습니다. 교육반 구성을 확인하세요.
         </div>`;
     }
-    // 교육반별 학생수
+    // 밴드 균형 경고
+    if (data.band_warnings && data.band_warnings.length > 0) {
+        html += `<div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-3">
+            <div class="font-bold text-sm text-amber-700 mb-2"><i class="fas fa-exclamation-triangle mr-1"></i>밴드 교육반 균형 경고</div>
+            ${data.band_warnings.map(w => `<div class="text-xs text-amber-600 py-0.5"><i class="fas fa-caret-right mr-1"></i>${w}</div>`).join('')}
+            <div class="text-xs text-amber-500 mt-2 border-t border-amber-200 pt-2">
+                <b>해결 방법:</b> 4단계(수강인원 현황)에서 동일 밴드 내 과목의 교육반 총수가 원반 수의 배수가 되도록 조정하세요.
+                <br>예) 원반 10개 → 밴드 A의 교육반 합계가 10, 20, 30... 이어야 합니다.
+            </div>
+        </div>`;
+    }
+    // 교육반별 학생수 (선택군별 그룹)
     if (data.group_stats) {
-        html += '<div class="bg-white rounded-xl border p-4 mt-3"><h4 class="font-bold text-sm text-slate-700 mb-3">교육반별 학생 배정</h4>';
-        html += '<div class="grid grid-cols-2 gap-4">';
+        // 선택군(band_group)별로 과목 묶기
+        const bgMap = data.subject_band_map || {};
+        const byBandGroup = {};
+        const noBand = [];
         Object.entries(data.group_stats).forEach(([sub, groups]) => {
-            html += `<div><div class="text-xs font-bold text-slate-600 mb-1">${sub}</div>`;
-            html += groups.map(g =>
-                `<div class="flex items-center gap-2 text-xs py-0.5">
-                    <span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-bold">${g.group_no}반</span>
-                    <span class="text-slate-400">밴드${g.band}</span>
-                    <span class="text-slate-500">${g.teacher}</span>
-                    <span class="font-bold">${g.count}명</span>
-                </div>`
-            ).join('');
-            html += '</div>';
+            const bg = bgMap[sub];
+            if (bg) {
+                if (!byBandGroup[bg]) byBandGroup[bg] = [];
+                byBandGroup[bg].push({sub, groups});
+            } else {
+                noBand.push({sub, groups});
+            }
         });
-        html += '</div></div>';
+        html += '<div class="bg-white rounded-xl border p-4 mt-3"><h4 class="font-bold text-sm text-slate-700 mb-3"><i class="fas fa-layer-group mr-1 text-violet-500"></i>교육반별 학생 배정</h4>';
+
+        // 선택군별 표시
+        Object.keys(byBandGroup).sort().forEach(bg => {
+            const items = byBandGroup[bg];
+            const totalGroups = items.reduce((s,it) => s + it.groups.length, 0);
+            html += `<div class="mb-4 bg-violet-50/50 rounded-lg p-3 border border-violet-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="px-2 py-0.5 bg-violet-200 text-violet-800 rounded-full text-xs font-bold">선택군 ${bg}</span>
+                    <span class="text-[10px] text-violet-500">교육반 ${totalGroups}개</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">`;
+            items.forEach(({sub, groups}) => {
+                html += `<div><div class="text-xs font-bold text-slate-600 mb-1">${sub}</div>`;
+                html += groups.map(g => {
+                    const label = `${sub}(${g.group_no}반)`;
+                    return `<div class="flex items-center gap-2 text-xs py-0.5">
+                        <span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-bold">${label}</span>
+                        <span class="text-slate-500">${g.teacher}</span>
+                        <span class="font-bold">${g.count}명</span>
+                    </div>`;
+                }).join('');
+                html += '</div>';
+            });
+            html += '</div></div>';
+        });
+
+        // 선택군 미지정 과목
+        if (noBand.length > 0) {
+            html += '<div class="grid grid-cols-2 gap-3">';
+            noBand.forEach(({sub, groups}) => {
+                html += `<div><div class="text-xs font-bold text-slate-600 mb-1">${sub}</div>`;
+                html += groups.map(g =>
+                    `<div class="flex items-center gap-2 text-xs py-0.5">
+                        <span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-bold">${g.group_no}반</span>
+                        <span class="text-slate-500">${g.teacher}</span>
+                        <span class="font-bold">${g.count}명</span>
+                    </div>`
+                ).join('');
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
     }
     el.innerHTML = html;
 }

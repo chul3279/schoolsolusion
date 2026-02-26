@@ -620,7 +620,7 @@ def get_messages():
                 SELECT id, room_id, sender_id, sender_name, sender_role,
                        content, message_type, file_name, is_system, is_deleted, created_at
                 FROM messages
-                WHERE room_id = %s AND id < %s AND is_deleted = 0
+                WHERE room_id = %s AND id < %s
                 ORDER BY created_at DESC
                 LIMIT %s
             """, (room_id, before_id, limit))
@@ -629,7 +629,7 @@ def get_messages():
                 SELECT id, room_id, sender_id, sender_name, sender_role,
                        content, message_type, file_name, is_system, is_deleted, created_at
                 FROM messages
-                WHERE room_id = %s AND is_deleted = 0
+                WHERE room_id = %s
                 ORDER BY created_at DESC
                 LIMIT %s OFFSET %s
             """, (room_id, limit, offset))
@@ -879,7 +879,7 @@ def delete_message():
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            UPDATE messages SET is_deleted=1
+            UPDATE messages SET is_deleted=1, content='', file_name=NULL, file_path=NULL
             WHERE id=%s AND sender_id=%s
         """, (message_id, member_id))
         if cursor.rowcount == 0:
@@ -986,6 +986,74 @@ def leave_room():
     except Exception as e:
         conn.rollback()
         print(f"[Message] leave_room error: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# ============================================
+# API 9-2: 멤버 강퇴 (그룹방만, admin만)
+# ============================================
+@message_bp.route('/api/message/room/kick', methods=['POST'])
+def kick_member():
+    info = _get_session_info()
+    if not info:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+    member_id, school_id, role = info
+
+    data = request.get_json(silent=True) or {}
+    room_id = data.get('room_id')
+    target_ids = data.get('target_ids', [])
+    # 하위호환: 단수 파라미터도 수용
+    if not target_ids and data.get('target_id'):
+        target_ids = [data.get('target_id')]
+
+    if not room_id or not target_ids:
+        return jsonify({'success': False, 'message': 'room_id와 target_ids가 필요합니다.'})
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+    try:
+        cursor = conn.cursor()
+
+        # admin 확인
+        mem = _is_room_member(cursor, room_id, member_id)
+        if not mem or not mem['is_admin']:
+            return jsonify({'success': False, 'message': '관리자만 강퇴할 수 있습니다.'}), 403
+
+        # 방 타입 확인
+        cursor.execute("SELECT room_type FROM message_rooms WHERE id=%s", (room_id,))
+        room = cursor.fetchone()
+        if not room:
+            return jsonify({'success': False, 'message': '대화방을 찾을 수 없습니다.'})
+        if room['room_type'] == 'direct':
+            return jsonify({'success': False, 'message': '1:1 대화방에서는 강퇴할 수 없습니다.'})
+
+        my_name = _get_my_name(cursor, member_id, school_id)
+        kicked = []
+        for tid in target_ids:
+            if tid == member_id:
+                continue  # 본인은 건너뜀
+            target_mem = _is_room_member(cursor, room_id, tid)
+            if not target_mem:
+                continue
+            target_name = target_mem.get('member_name', tid)
+            cursor.execute("""
+                UPDATE message_room_members SET is_active=0
+                WHERE room_id=%s AND member_id=%s
+            """, (room_id, tid))
+            _system_message(cursor, room_id, f'{my_name}님이 {target_name}님을 내보냈습니다.')
+            kicked.append(target_name)
+
+        conn.commit()
+        if kicked:
+            return jsonify({'success': True, 'kicked_count': len(kicked), 'message': f'{", ".join(kicked)}님을 내보냈습니다.'})
+        return jsonify({'success': False, 'message': '강퇴할 대상이 없습니다.'})
+    except Exception as e:
+        conn.rollback()
+        print(f"[Message] kick_member error: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
         cursor.close()
@@ -1148,11 +1216,15 @@ def download_file():
 
         # 메시지 조회
         cursor.execute("""
-            SELECT m.file_path, m.file_name, m.room_id
-            FROM messages m WHERE m.id=%s AND m.is_deleted=0
+            SELECT m.file_path, m.file_name, m.room_id, m.is_deleted
+            FROM messages m WHERE m.id=%s
         """, (message_id,))
         msg = cursor.fetchone()
-        if not msg or not msg['file_path']:
+        if not msg:
+            return jsonify({'success': False, 'message': '파일을 찾을 수 없습니다.'}), 404
+        if msg['is_deleted']:
+            return jsonify({'success': False, 'message': '삭제된 메시지의 파일입니다.'}), 404
+        if not msg['file_path']:
             return jsonify({'success': False, 'message': '파일을 찾을 수 없습니다.'}), 404
 
         # 방 멤버 확인

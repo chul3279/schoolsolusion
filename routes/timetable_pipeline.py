@@ -74,6 +74,14 @@ def check_prerequisites():
                 (school_id, grade))
             info['has_electives'] = cursor.fetchone()['cnt'] > 0
 
+            # 밴드그룹별 교육반 균형 검증
+            if info['has_electives']:
+                from utils.elective_engine import validate_band_balance
+                band_warnings = validate_band_balance(cursor, school_id, grade)
+                info['band_warnings'] = [w['message'] for w in band_warnings]
+            else:
+                info['band_warnings'] = []
+
             grades_info[grade] = info
 
         return jsonify({'success': True, 'grades': grades_info})

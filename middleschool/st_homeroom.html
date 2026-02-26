@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SchoolUs - 학급활동</title>
     <script src="/static/js/tailwindcss.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
-        body { font-family: 'Noto Sans KR', sans-serif; }
+body { font-family: 'Noto Sans KR', sans-serif; }
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.8); }
     </style>
     <!-- Google Analytics (GA4) -->
@@ -108,6 +110,20 @@
                 </div>
             </div>
         </div>
+
+        <!-- 가정통신문 (읽기 전용) -->
+        <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-rose-500 to-pink-600 p-4 text-white flex items-center justify-between">
+                <h3 class="font-bold"><i class="fas fa-envelope-open-text mr-2"></i>가정통신문</h3>
+                <input type="text" id="letter-search" placeholder="검색..." oninput="searchLetters()" class="bg-white/20 text-white placeholder-white/60 rounded-lg px-3 py-1 text-sm w-32 focus:w-48 transition-all outline-none">
+            </div>
+            <div id="letter-list" class="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+                <div class="text-center py-8 text-slate-300">
+                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                    <p class="text-xs">로딩 중...</p>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- 공지 상세 모달 -->
@@ -123,6 +139,44 @@
             </div>
             <div class="p-6 overflow-y-auto flex-1">
                 <div id="modal-content" class="text-slate-700 whitespace-pre-wrap"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 가정통신문 상세 모달 -->
+    <div id="letter-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeLetterModal()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden max-h-[80vh] flex flex-col">
+            <div class="bg-gradient-to-r from-rose-500 to-pink-600 p-5 text-white flex-shrink-0">
+                <button onclick="closeLetterModal()" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <h3 class="font-bold text-lg pr-8" id="modal-letter-title">-</h3>
+                <p class="text-sm text-white/70 mt-1" id="modal-letter-meta">-</p>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1">
+                <div id="modal-letter-content" class="text-slate-700 whitespace-pre-wrap mb-4"></div>
+                <div id="modal-letter-file" class="hidden">
+                    <a id="modal-letter-file-link" href="#" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-lg text-sm text-slate-600 hover:bg-slate-200 transition">
+                        <i class="fas fa-paperclip"></i><span id="modal-letter-file-name"></span>
+                    </a>
+                </div>
+                <!-- 동의 응답 영역 -->
+                <div id="modal-letter-consent" class="hidden border-t pt-4 mt-4">
+                    <h4 class="font-bold text-sm mb-3"><i class="fas fa-file-signature mr-1 text-rose-500"></i>학생 동의</h4>
+                    <div id="modal-letter-already-replied" class="hidden p-3 rounded-xl bg-emerald-50 text-emerald-700 text-sm mb-3">
+                        <i class="fas fa-check-circle mr-1"></i><span id="already-reply-text"></span>
+                    </div>
+                    <div id="modal-letter-reply-form">
+                        <textarea id="letter-reply-memo" placeholder="비고 (선택)" class="w-full border rounded-xl p-3 text-sm mb-3 resize-none" rows="2"></textarea>
+                        <div class="flex gap-2">
+                            <button onclick="submitLetterReply('agreed')" class="flex-1 py-2 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 transition">
+                                <i class="fas fa-check mr-1"></i>동의
+                            </button>
+                            <button onclick="submitLetterReply('disagreed')" class="flex-1 py-2 bg-slate-400 text-white rounded-xl font-medium hover:bg-slate-500 transition">
+                                <i class="fas fa-times mr-1"></i>미동의
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -175,6 +229,8 @@
                         loadMyAttendance();
                         // 학급 공지사항 로드
                         loadHomeroomNotices();
+                        // 가정통신문 로드
+                        loadLetters();
                     } else {
                         showNoClass();
                     }
@@ -193,6 +249,7 @@
             document.getElementById('teacher-info').textContent = '';
             document.getElementById('counsel-schedule-list').innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-sm">학급 배정 후 이용 가능합니다.</p></div>';
             document.getElementById('notice-list').innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-sm">학급 배정 후 이용 가능합니다.</p></div>';
+            document.getElementById('letter-list').innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-sm">학급 배정 후 이용 가능합니다.</p></div>';
         }
 
         async function loadTeacherInfo() {
@@ -341,6 +398,133 @@
             noticeSearchTimer = setTimeout(() => {
                 loadHomeroomNotices(document.getElementById('notice-search').value.trim());
             }, 300);
+        }
+
+        // ===== 가정통신문 (읽기 전용) =====
+        async function loadLetters(keyword) {
+            const container = document.getElementById('letter-list');
+            try {
+                const params = getSchoolParams();
+                params.append('class_grade', studentInfo.class_grade);
+                params.append('class_no', studentInfo.class_no);
+                if (keyword) params.append('keyword', keyword);
+
+                const response = await fetch(`/api/letter/list?${params.toString()}`);
+                const data = await response.json();
+
+                if (data.success && data.letters?.length > 0) {
+                    container.innerHTML = data.letters.map(l => {
+                        let badges = '';
+                        if (l.require_consent) badges += '<span class="px-2 py-0.5 bg-rose-100 text-rose-600 rounded-full text-xs font-medium">동의필요</span>';
+                        if (l.has_file) badges += '<span class="px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-full text-xs"><i class="fas fa-paperclip"></i></span>';
+                        return `
+                        <div class="p-4 hover:bg-slate-50 transition cursor-pointer" onclick="showLetterDetail(${l.id})">
+                            <div class="flex items-start gap-3">
+                                <span class="w-8 h-8 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas fa-envelope text-sm"></i></span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-slate-800 truncate">${l.title}</p>
+                                    <p class="text-xs text-slate-500 mt-1">${l.teacher_name} · ${l.created_at}</p>
+                                </div>
+                                <div class="flex flex-col gap-1 items-end">${badges}</div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center py-8 text-slate-300"><i class="fas fa-envelope-open text-2xl mb-2"></i><p class="text-xs">가정통신문이 없습니다.</p></div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="text-center py-8 text-slate-300"><p class="text-xs">통신문을 불러올 수 없습니다.</p></div>';
+            }
+        }
+
+        let letterSearchTimer;
+        function searchLetters() {
+            clearTimeout(letterSearchTimer);
+            letterSearchTimer = setTimeout(() => {
+                loadLetters(document.getElementById('letter-search').value.trim());
+            }, 300);
+        }
+
+        let currentLetterId = null;
+
+        async function showLetterDetail(id) {
+            currentLetterId = id;
+            try {
+                const response = await fetch(`/api/letter/detail?id=${id}`);
+                const data = await response.json();
+                if (!data.success) { alert(data.message); return; }
+
+                const l = data.letter;
+                document.getElementById('modal-letter-title').textContent = l.title;
+                document.getElementById('modal-letter-meta').textContent = `${l.teacher_name} · ${l.created_at}`;
+                document.getElementById('modal-letter-content').textContent = l.content;
+
+                const fileEl = document.getElementById('modal-letter-file');
+                if (l.has_file) {
+                    fileEl.classList.remove('hidden');
+                    document.getElementById('modal-letter-file-link').href = `/api/letter/download?id=${id}`;
+                    document.getElementById('modal-letter-file-name').textContent = l.file_name;
+                } else {
+                    fileEl.classList.add('hidden');
+                }
+
+                // 동의 영역
+                const consentEl = document.getElementById('modal-letter-consent');
+                if (l.require_consent) {
+                    consentEl.classList.remove('hidden');
+                    const alreadyEl = document.getElementById('modal-letter-already-replied');
+                    const formEl = document.getElementById('modal-letter-reply-form');
+
+                    if (l.my_reply) {
+                        alreadyEl.classList.remove('hidden');
+                        formEl.style.display = 'none';
+                        const statusText = l.my_reply.consent_status === 'agreed' ? '동의 완료' : '미동의';
+                        document.getElementById('already-reply-text').textContent = `${statusText} (${l.my_reply.replied_at})`;
+                    } else {
+                        alreadyEl.classList.add('hidden');
+                        formEl.style.display = '';
+                        document.getElementById('letter-reply-memo').value = '';
+                    }
+                } else {
+                    consentEl.classList.add('hidden');
+                }
+
+                document.getElementById('letter-modal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } catch (error) {
+                alert('통신문을 불러올 수 없습니다.');
+            }
+        }
+
+        async function submitLetterReply(status) {
+            if (!currentLetterId) return;
+            try {
+                const response = await fetch('/api/letter/reply', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        letter_id: currentLetterId,
+                        consent_status: status,
+                        reply_memo: document.getElementById('letter-reply-memo').value.trim(),
+                        student_id: studentInfo?.member_id || ''
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert(data.message);
+                    closeLetterModal();
+                    loadLetters();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('응답 제출 중 오류가 발생했습니다.');
+            }
+        }
+
+        function closeLetterModal() {
+            document.getElementById('letter-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
         }
     </script>
 </body>

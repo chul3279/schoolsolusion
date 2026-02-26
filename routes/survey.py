@@ -471,7 +471,12 @@ def respond_survey():
         saved_count = 0
         for ans in answers:
             question_id = sanitize_input(str(ans.get('question_id', '')), 20)
-            answer_value = sanitize_html(str(ans.get('answer_value') or ans.get('answer') or ''), 2000)
+            raw_answer = ans.get('answer_value') or ans.get('answer') or ''
+            if isinstance(raw_answer, list):
+                answer_value = ','.join(str(v) for v in raw_answer)
+            else:
+                answer_value = str(raw_answer)
+            answer_value = sanitize_html(answer_value, 2000)
             if not question_id:
                 continue
             # question_id가 유효한 DB ID가 아니면 question_order로 매핑 시도
@@ -664,8 +669,23 @@ def survey_stats():
                             if idx is not None:
                                 counts[idx] += 1
                     else:  # multiple
-                        for part in ans.split(','):
-                            part = part.strip()
+                        # JSON 배열 또는 파이썬 리스트 문자열 파싱 시도
+                        parts = []
+                        stripped = ans.strip()
+                        if stripped.startswith('['):
+                            try:
+                                parsed = json.loads(stripped)
+                                if isinstance(parsed, list):
+                                    parts = [str(p).strip() for p in parsed]
+                            except (json.JSONDecodeError, ValueError):
+                                # 파이썬 repr 형태: "['국어', '수학']" → 정리
+                                cleaned = stripped.strip('[]')
+                                parts = [p.strip().strip("'\"") for p in cleaned.split(',')]
+                        else:
+                            parts = [p.strip() for p in ans.split(',')]
+                        for part in parts:
+                            if not part:
+                                continue
                             try:
                                 idx = int(part)
                                 if 0 <= idx < len(option_list):

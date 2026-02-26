@@ -221,9 +221,9 @@ def get_timetable_data_list():
         
         if school_id:
             query = """
-                SELECT id, school_id, member_school, subject, course_year, grade, 
+                SELECT id, school_id, member_school, subject, course_year, grade,
                        subject_demand, subject_type, subject_depart,
-                       stu_count, class_demand, tea_demand, tea_1person,
+                       stu_count, class_demand, band_group, tea_demand, tea_1person,
                        subject_type_tea_conclution
                 FROM timetable_data
                 WHERE school_id = %s
@@ -232,9 +232,9 @@ def get_timetable_data_list():
             cursor.execute(query, (school_id,))
         else:
             query = """
-                SELECT id, school_id, member_school, subject, course_year, grade, 
+                SELECT id, school_id, member_school, subject, course_year, grade,
                        subject_demand, subject_type, subject_depart,
-                       stu_count, class_demand, tea_demand, tea_1person,
+                       stu_count, class_demand, band_group, tea_demand, tea_1person,
                        subject_type_tea_conclution
                 FROM timetable_data
                 WHERE member_school = %s
@@ -299,7 +299,8 @@ def save_timetable_data():
             tea_demand = item.get('tea_demand')
             tea_1person = item.get('tea_1person')
             tea_conclution = item.get('subject_type_tea_conclution')
-            
+            band_group = sanitize_input(item.get('band_group'), 10) if item.get('band_group') else None
+
             if not subject:
                 continue
             
@@ -318,26 +319,27 @@ def save_timetable_data():
             
             if existing:
                 cursor.execute("""
-                    UPDATE timetable_data 
-                    SET course_year = %s, subject_demand = %s, subject_type = %s, 
+                    UPDATE timetable_data
+                    SET course_year = %s, subject_demand = %s, subject_type = %s,
                         subject_depart = %s, stu_count = %s, class_demand = %s,
-                        tea_demand = %s, tea_1person = %s, subject_type_tea_conclution = %s,
+                        band_group = %s, tea_demand = %s, tea_1person = %s,
+                        subject_type_tea_conclution = %s,
                         school_id = %s, member_school = %s, updated_at = NOW()
                     WHERE id = %s
-                """, (course_year, subject_demand, subject_type, subject_depart, 
-                      stu_count, class_demand, tea_demand, tea_1person, tea_conclution,
-                      school_id, member_school, existing['id']))
+                """, (course_year, subject_demand, subject_type, subject_depart,
+                      stu_count, class_demand, band_group, tea_demand, tea_1person,
+                      tea_conclution, school_id, member_school, existing['id']))
                 updated += 1
             else:
                 cursor.execute("""
-                    INSERT INTO timetable_data 
-                    (school_id, member_school, subject, course_year, grade, subject_demand, 
-                     subject_type, subject_depart, stu_count, class_demand, tea_demand, tea_1person,
-                     subject_type_tea_conclution, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-                """, (school_id, member_school, subject, course_year, grade, subject_demand, 
-                      subject_type, subject_depart, stu_count, class_demand, tea_demand, tea_1person,
-                      tea_conclution))
+                    INSERT INTO timetable_data
+                    (school_id, member_school, subject, course_year, grade, subject_demand,
+                     subject_type, subject_depart, stu_count, class_demand, band_group,
+                     tea_demand, tea_1person, subject_type_tea_conclution, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                """, (school_id, member_school, subject, course_year, grade, subject_demand,
+                      subject_type, subject_depart, stu_count, class_demand, band_group,
+                      tea_demand, tea_1person, tea_conclution))
                 inserted += 1
         
         conn.commit()
