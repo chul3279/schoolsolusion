@@ -3,47 +3,47 @@
     <!-- 메인 페이지 -->
     <url>
         <loc>https://www.schoolwithus.co.kr/</loc>
-        <lastmod>2025-02-04</lastmod>
+        <lastmod>2026-02-26</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
-    
+
     <!-- 회원가입 -->
     <url>
         <loc>https://www.schoolwithus.co.kr/signup</loc>
-        <lastmod>2025-02-04</lastmod>
+        <lastmod>2026-02-26</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
-    
+
     <!-- 이용약관 -->
     <url>
         <loc>https://www.schoolwithus.co.kr/terms.html</loc>
-        <lastmod>2025-02-04</lastmod>
+        <lastmod>2026-02-26</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
-    
+
     <!-- 개인정보처리방침 -->
     <url>
         <loc>https://www.schoolwithus.co.kr/privacy.html</loc>
-        <lastmod>2025-02-04</lastmod>
+        <lastmod>2026-02-26</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
-    
+
     <!-- 환불규정 -->
     <url>
         <loc>https://www.schoolwithus.co.kr/refund_policy.html</loc>
-        <lastmod>2025-02-04</lastmod>
+        <lastmod>2026-02-26</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
-    
+
     <!-- 고객센터 -->
     <url>
         <loc>https://www.schoolwithus.co.kr/support.html</loc>
-        <lastmod>2025-02-04</lastmod>
+        <lastmod>2026-02-26</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>

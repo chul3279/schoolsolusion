@@ -577,6 +577,130 @@ def get_class_timetable():
         if conn: conn.close()
 
 # ============================================
+# 학생 개인 시간표 조회 API (선택과목 교육반 반영)
+# ============================================
+@timetable_bp.route('/api/timetable/student', methods=['GET'])
+def get_student_timetable():
+    """학생 개인 시간표: 원반 시간표 + 선택과목 교육반 오버레이"""
+    conn = None
+    cursor = None
+    try:
+        school_id = sanitize_input(request.args.get('school_id'), 50)
+        grade = sanitize_input(request.args.get('grade'), 10)
+        class_no = sanitize_input(request.args.get('class_no'), 10)
+        member_id = sanitize_input(request.args.get('member_id'), 50)
+        day = sanitize_input(request.args.get('day'), 5)
+
+        if not all([school_id, grade, class_no, member_id]):
+            return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
+
+        if not day:
+            day_map = {0: '월', 1: '화', 2: '수', 3: '목', 4: '금', 5: '토', 6: '일'}
+            day = day_map.get(datetime.now().weekday(), '월')
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        # 1) 원반 시간표 (해당 요일)
+        cursor.execute("""
+            SELECT period, subject, member_name, day_of_week
+            FROM timetable
+            WHERE school_id=%s AND grade=%s AND class_no=%s AND day_of_week=%s
+            ORDER BY CAST(period AS UNSIGNED)
+        """, (school_id, grade, class_no, day))
+        base_timetable = cursor.fetchall()
+
+        # 2) 학생의 선택과목 교육반 배정
+        cursor.execute("""
+            SELECT subject, group_no, band, teacher_name
+            FROM timetable_stu_group
+            WHERE school_id=%s AND grade=%s AND member_id=%s
+        """, (school_id, grade, member_id))
+        stu_groups = {r['band']: r for r in cursor.fetchall()}
+
+        # 3) 밴드→시간대 매핑 (해당 요일)
+        cursor.execute("""
+            SELECT band, period
+            FROM timetable_band_slots
+            WHERE school_id=%s AND grade=%s AND day_of_week=%s
+        """, (school_id, grade, day))
+        period_to_band = {}
+        for r in cursor.fetchall():
+            period_to_band[str(r['period'])] = r['band']
+
+        # 4) 오버레이: 선택과목 시간대에 학생 개인 교육반 반영
+        today_date = datetime.now().strftime('%Y-%m-%d')
+        cursor.execute("""
+            SELECT period, new_teacher, new_subject, change_reason
+            FROM timetable_changes
+            WHERE school_id=%s AND change_date=%s AND day_of_week=%s
+              AND original_grade=%s AND original_class_no=%s
+        """, (school_id, today_date, day, grade, class_no))
+        change_map = {str(c['period']): c for c in cursor.fetchall()}
+
+        result = []
+        for item in base_timetable:
+            entry = {
+                'period': item['period'],
+                'subject': item['subject'],
+                'member_name': item['member_name'] or '',
+                'is_elective': False
+            }
+
+            p = str(item['period'])
+
+            # 선택과목 교육반 오버레이
+            band = period_to_band.get(p)
+            if band and band in stu_groups:
+                sg = stu_groups[band]
+                entry['subject'] = sg['subject']
+                entry['subject_label'] = f"{sg['subject']}({sg['group_no']}반)"
+                entry['member_name'] = sg['teacher_name']
+                entry['group_no'] = sg['group_no']
+                entry['is_elective'] = True
+
+            # 시간표 변경사항 오버레이 (오늘만)
+            if p in change_map:
+                ch = change_map[p]
+                entry['changed'] = True
+                entry['change_reason'] = ch.get('change_reason', '')
+                entry['original_subject'] = entry['subject']
+                entry['subject'] = ch.get('new_subject') or '자습'
+                entry['member_name'] = ch.get('new_teacher') or '자습'
+
+            result.append(entry)
+
+        result.sort(key=lambda x: int(x['period']))
+
+        # 학생의 전체 선택과목 교육반 목록 (참고용)
+        elective_list = []
+        for band, sg in sorted(stu_groups.items()):
+            elective_list.append({
+                'subject': sg['subject'],
+                'group_no': sg['group_no'],
+                'band': band,
+                'teacher': sg['teacher_name'],
+                'label': f"{sg['subject']}({sg['group_no']}반)"
+            })
+
+        return jsonify({
+            'success': True,
+            'today': day,
+            'timetable': result,
+            'elective_groups': elective_list
+        })
+
+    except Exception as e:
+        print(f"학생 개인 시간표 조회 오류: {e}")
+        return jsonify({'success': False, 'message': '시간표 조회 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
 # timetable_stu DB 불러오기 API (학생 데이터)
 # ============================================
 @timetable_bp.route('/api/timetable-stu/list', methods=['GET'])

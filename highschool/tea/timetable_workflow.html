@@ -197,9 +197,9 @@
         <div onclick="goToStep(4)" class="group bg-white rounded-xl border border-slate-200 p-5 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all">
             <div class="flex items-center gap-3 mb-3">
                 <div class="w-9 h-9 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-black text-sm">4</div>
-                <h4 class="font-bold text-slate-800 text-sm">수강인원 현황</h4>
+                <h4 class="font-bold text-slate-800 text-sm">수강인원 조정</h4>
             </div>
-            <p class="text-xs text-slate-500 leading-relaxed mb-3">학생 선택 데이터 기반으로 과목별 수강인원과 반 수요를 확인합니다. 조정이 필요하면 3단계에서 수정합니다.</p>
+            <p class="text-xs text-slate-500 leading-relaxed mb-3">과목별 수강인원, 교육반 수, 교사 수요를 조정합니다. 선택과목은 <b>선택군(밴드그룹)</b>을 지정하여 동시 수업 과목을 묶습니다.</p>
             <div class="flex items-center text-xs text-blue-600 font-bold group-hover:translate-x-1 transition-transform">
                 <i class="fas fa-users-cog mr-1.5 text-amber-400"></i>시작하기 <i class="fas fa-arrow-right ml-1 text-[10px]"></i>
             </div>
@@ -210,7 +210,7 @@
                 <div class="w-9 h-9 bg-violet-100 text-violet-600 rounded-lg flex items-center justify-center font-black text-sm">5</div>
                 <h4 class="font-bold text-slate-800 text-sm">교사 수급 조정</h4>
             </div>
-            <p class="text-xs text-slate-500 leading-relaxed mb-3">과목군별 3개 학년 통합 필요 교사수를 산출하고, 소속 교사에게 수업을 배분합니다.</p>
+            <p class="text-xs text-slate-500 leading-relaxed mb-3">교사별 담당 학년·반·시수를 배정합니다. 선택과목의 <b>교육반 합계가 학급 수의 배수</b>가 되도록 조정하세요.</p>
             <div class="flex items-center text-xs text-blue-600 font-bold group-hover:translate-x-1 transition-transform">
                 <i class="fas fa-chalkboard-teacher mr-1.5 text-violet-400"></i>시작하기 <i class="fas fa-arrow-right ml-1 text-[10px]"></i>
             </div>
@@ -243,7 +243,7 @@
                 <div class="w-9 h-9 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center font-black text-sm">8</div>
                 <h4 class="font-bold text-slate-800 text-sm">학생별 시간표 배분</h4>
             </div>
-            <p class="text-xs text-slate-500 leading-relaxed mb-3">선택과목이 있는 학년의 교육반을 4밴드 방식으로 배정하여 학생별 개인 시간표를 생성합니다.</p>
+            <p class="text-xs text-slate-500 leading-relaxed mb-3">선택군별 교육반을 밴드로 자동 분배하고 학생을 배정합니다. 학생별 이동수업 개인 시간표가 생성됩니다.</p>
             <div class="flex items-center text-xs text-blue-600 font-bold group-hover:translate-x-1 transition-transform">
                 <i class="fas fa-user-graduate mr-1.5 text-rose-400"></i>시작하기 <i class="fas fa-arrow-right ml-1 text-[10px]"></i>
             </div>
@@ -271,11 +271,15 @@
                     </li>
                     <li class="flex items-start gap-2">
                         <span class="text-indigo-400 mt-0.5"><i class="fas fa-check-circle"></i></span>
-                        <span><b>3단계</b>에서 학생 선택 결과를 확인하고, <b>4단계</b>에서 수강인원과 반 수요를 조정합니다.</span>
+                        <span><b>3단계</b>에서 학생 선택 결과를 확인합니다.</span>
                     </li>
                     <li class="flex items-start gap-2">
                         <span class="text-indigo-400 mt-0.5"><i class="fas fa-check-circle"></i></span>
-                        <span><b>5단계</b>에서 교사별 담당 교과, 학년, 반을 배정합니다. 이 데이터가 시간표 생성의 기반이 됩니다.</span>
+                        <span><b>4단계</b>에서 과목별 수강인원, 교육반 수, 교사 수요를 조정하고 <b>선택군(밴드그룹)</b>을 지정합니다. 동시에 이동수업할 과목끼리 같은 선택군으로 묶으세요.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-indigo-400 mt-0.5"><i class="fas fa-check-circle"></i></span>
+                        <span><b>5단계</b>에서 교사별 담당 학년·반·시수를 배정합니다. 선택군별 <b>교육반 합계가 학급 수의 배수</b>가 되어야 8단계 배정이 가능합니다.</span>
                     </li>
                 </ul>
             </div>
@@ -296,7 +300,7 @@
                     </li>
                     <li class="flex items-start gap-2">
                         <span class="text-emerald-400 mt-0.5"><i class="fas fa-check-circle"></i></span>
-                        <span><b>8단계</b>는 선택과목이 있는 학년에만 필요합니다. 교육반 배정을 실행하면 학생별 개인 시간표가 자동 생성됩니다.</span>
+                        <span><b>8단계</b>는 선택과목이 있는 학년에만 필요합니다. 선택군별로 교육반을 밴드에 자동 분배하고, 학생을 교육반에 배정하여 <b>이동수업 개인 시간표</b>를 생성합니다.</span>
                     </li>
                 </ul>
             </div>
@@ -309,66 +313,94 @@
         <ul class="text-xs text-amber-900 space-y-1.5">
             <li><i class="fas fa-caret-right mr-2 text-amber-400"></i>작업은 <b>1단계부터 순서대로</b> 진행하는 것을 권장합니다. 이전 단계의 데이터가 다음 단계에 영향을 줍니다.</li>
             <li><i class="fas fa-caret-right mr-2 text-amber-400"></i>각 단계에서 데이터를 입력하거나 수정한 후 반드시 <b>DB 저장</b> 버튼을 클릭하세요.</li>
+            <li><i class="fas fa-caret-right mr-2 text-amber-400"></i><b>4단계</b>에서 선택과목의 <b>선택군</b>을 지정하세요. 교과간 선택은 하나의 선택군으로 통합합니다.</li>
+            <li><i class="fas fa-caret-right mr-2 text-amber-400"></i><b>5단계</b>에서 선택군별 교육반 합계가 <b>학급 수의 배수</b>인지 반드시 확인하세요. 맞지 않으면 8단계에서 오류가 발생합니다.</li>
             <li><i class="fas fa-caret-right mr-2 text-amber-400"></i><b>6단계(반편성)</b>를 확정한 후에 <b>7단계(시간표)</b>를 진행하세요. 반편성이 변경되면 시간표를 다시 생성해야 합니다.</li>
             <li><i class="fas fa-caret-right mr-2 text-amber-400"></i><b>7단계(시간표)</b>를 완료한 후 <b>8단계(학생별 배분)</b>를 실행하세요. 시간표가 없으면 배분이 불가능합니다.</li>
             <li><i class="fas fa-caret-right mr-2 text-amber-400"></i>선택과목이 없는 학년은 8단계를 건너뛸 수 있습니다.</li>
+            <li><i class="fas fa-caret-right mr-2 text-amber-400"></i>8단계 완료 후 학생은 <b>"나의 시간표"</b>에서 이동수업이 포함된 개인 시간표를 확인할 수 있습니다.</li>
         </ul>
     </div>
 
-    <!-- 밴드 편성 핵심 규칙 -->
+    <!-- 선택과목 밴드 편성 규칙 -->
     <div class="bg-violet-50 border border-violet-200 rounded-xl p-5 mb-6">
         <h4 class="font-bold text-violet-800 text-sm mb-3"><i class="fas fa-balance-scale mr-2 text-violet-500"></i>선택과목 밴드 편성 규칙 (8단계 사전 필수)</h4>
         <div class="text-xs text-violet-900 space-y-3">
+            <!-- 개념 설명 -->
             <div class="bg-white rounded-lg border border-violet-200 p-4">
-                <div class="font-bold text-violet-700 mb-2"><i class="fas fa-star mr-1 text-amber-400"></i>핵심 원칙</div>
+                <div class="font-bold text-violet-700 mb-2"><i class="fas fa-info-circle mr-1 text-blue-400"></i>선택군과 밴드란?</div>
+                <ul class="leading-relaxed space-y-1.5">
+                    <li><b>선택군</b>: 학생이 그 중에서 과목을 고르는 묶음입니다. 4단계에서 교사가 과목을 보고 직접 지정합니다.</li>
+                    <li><b>밴드</b>: 같은 시간대에 동시에 운영되는 교육반 그룹입니다. 선택군 안의 교육반을 학급 수만큼씩 나눈 것이 밴드가 됩니다.</li>
+                    <li>학생은 각 밴드에서 <b>하나의 교육반</b>에 배정되어 <b>이동수업</b>을 합니다.</li>
+                </ul>
+            </div>
+            <!-- 핵심 규칙 -->
+            <div class="bg-white rounded-lg border-2 border-red-200 p-4">
+                <div class="font-bold text-red-700 mb-2"><i class="fas fa-exclamation-circle mr-1"></i>필수 규칙: 교육반 합계 = 학급 수 x 밴드 수</div>
                 <p class="leading-relaxed">
-                    동일 밴드(카테고리)에 배정된 <b>선택과목의 교육반 총수</b>는 반드시 <b>원반(홈룸) 수의 배수</b>여야 합니다.
-                    이 조건이 맞지 않으면 8단계 교육반 배정 시 학생 배정이 실패합니다.
+                    각 선택군의 <b>교육반 합계</b>는 반드시 <b>학급 수의 배수</b>여야 합니다.
+                    이 조건이 맞지 않으면 8단계 실행 시 <b>오류가 발생하여 배정을 진행할 수 없습니다.</b>
                 </p>
+                <div class="mt-2 bg-red-50 rounded-lg p-3 text-red-700">
+                    <b>공식:</b> 선택군의 교육반 합계 = 학급 수 x N (N=밴드 수, 자연수)<br>
+                    <b>예시:</b> 학급 10개 → 교육반 합계는 10, 20, 30, 40... 이어야 함
+                </div>
             </div>
+            <!-- 예시: 교과간 선택 -->
             <div class="bg-white rounded-lg border border-violet-200 p-4">
-                <div class="font-bold text-emerald-700 mb-2"><i class="fas fa-check-circle mr-1"></i>올바른 예시 (원반 10개)</div>
-                <div class="grid grid-cols-2 gap-3 mt-2">
+                <div class="font-bold text-emerald-700 mb-2"><i class="fas fa-check-circle mr-1"></i>올바른 예시 — 교과간 선택 (학급 10개)</div>
+                <p class="text-slate-600 mb-2">과학·사회 구분 없이 학생이 8과목 중 4과목을 선택 → 하나의 선택군으로 묶음</p>
+                <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                    <div class="font-bold text-emerald-700 text-[11px] mb-1">선택군 A (교과간 선택 — 과학+사회 통합)</div>
+                    <div class="text-[11px] text-slate-600 space-y-0.5">
+                        <div>물리학 <b>5반</b> + 화학 <b>5반</b> + 생명과학 <b>5반</b> + 지구과학 <b>5반</b></div>
+                        <div>+ 사회문화 <b>5반</b> + 세계사 <b>5반</b> + 세계지리 <b>5반</b> + 현대윤리 <b>5반</b></div>
+                        <div class="font-bold text-emerald-700 mt-1">= 총 40반 ÷ 학급 10개 = <b>4밴드</b> (배수 O)</div>
+                    </div>
+                </div>
+                <div class="text-[10px] text-slate-500 mt-2">→ 학생은 4개 밴드에서 각 1과목씩, 총 4과목을 수강합니다.</div>
+            </div>
+            <!-- 예시: 교과 내 선택 -->
+            <div class="bg-white rounded-lg border border-violet-200 p-4">
+                <div class="font-bold text-emerald-700 mb-2"><i class="fas fa-check-circle mr-1"></i>올바른 예시 — 교과 내 선택 (학급 10개)</div>
+                <p class="text-slate-600 mb-2">각 교과 안에서 2~3과목 중 1과목 선택 → 교과별로 별도 선택군</p>
+                <div class="grid grid-cols-2 gap-2">
                     <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
-                        <div class="font-bold text-emerald-700 text-[11px] mb-1">밴드 A (과학 계열)</div>
-                        <div class="text-[11px] text-slate-600 space-y-0.5">
-                            <div>물리학 <b>3반</b> + 화학 <b>3반</b> + 생명과학 <b>2반</b> + 지구과학 <b>2반</b></div>
-                            <div class="font-bold text-emerald-700 mt-1">= 총 10반 (10의 배수 O)</div>
+                        <div class="font-bold text-emerald-700 text-[11px] mb-1">선택군 C (수학)</div>
+                        <div class="text-[11px] text-slate-600">
+                            <div>경제수학 <b>5반</b> + 미적분II <b>5반</b></div>
+                            <div class="font-bold text-emerald-700 mt-1">= 10반 ÷ 10 = <b>1밴드</b> (O)</div>
                         </div>
                     </div>
                     <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
-                        <div class="font-bold text-emerald-700 text-[11px] mb-1">밴드 B (사회 계열)</div>
-                        <div class="text-[11px] text-slate-600 space-y-0.5">
-                            <div>세계사 <b>2반</b> + 사회문화 <b>3반</b> + 세계지리 <b>2반</b> + 현대윤리 <b>3반</b></div>
-                            <div class="font-bold text-emerald-700 mt-1">= 총 10반 (10의 배수 O)</div>
+                        <div class="font-bold text-emerald-700 text-[11px] mb-1">선택군 G (과학탐구)</div>
+                        <div class="text-[11px] text-slate-600">
+                            <div>생물유전 <b>3반</b> + 전자기양자 <b>4반</b> + 화학반응 <b>3반</b></div>
+                            <div class="font-bold text-emerald-700 mt-1">= 10반 ÷ 10 = <b>1밴드</b> (O)</div>
                         </div>
                     </div>
                 </div>
+                <div class="text-[10px] text-slate-500 mt-2">→ 학생은 각 선택군에서 1과목씩 선택합니다. 과목별 반 수는 달라도 합계만 배수이면 됩니다.</div>
             </div>
+            <!-- 잘못된 예시 -->
             <div class="bg-white rounded-lg border border-violet-200 p-4">
-                <div class="font-bold text-red-600 mb-2"><i class="fas fa-times-circle mr-1"></i>잘못된 예시 (원반 10개)</div>
+                <div class="font-bold text-red-600 mb-2"><i class="fas fa-times-circle mr-1"></i>잘못된 예시 (학급 10개)</div>
                 <div class="bg-red-50 rounded-lg p-3 border border-red-200">
-                    <div class="font-bold text-red-600 text-[11px] mb-1">밴드 A (과학 계열)</div>
+                    <div class="font-bold text-red-600 text-[11px] mb-1">선택군 A (교과간 선택)</div>
                     <div class="text-[11px] text-slate-600 space-y-0.5">
-                        <div>물리학 <b>2반</b> + 화학 <b>3반</b> + 생명과학 <b>3반</b> + 지구과학 <b>2반</b></div>
-                        <div class="font-bold text-red-600 mt-1">= 총 10반 (10의 배수 O)</div>
-                    </div>
-                </div>
-                <div class="bg-red-50 rounded-lg p-3 border border-red-200 mt-2">
-                    <div class="font-bold text-red-600 text-[11px] mb-1">밴드 B (사회 계열)</div>
-                    <div class="text-[11px] text-slate-600 space-y-0.5">
-                        <div>세계사 <b>2반</b> + 사회문화 <b>3반</b> + 세계지리 <b>2반</b> + 현대윤리 <b>2반</b></div>
-                        <div class="font-bold text-red-600 mt-1">= 총 9반 (10의 배수 X → 1반 부족!)</div>
+                        <div>물리학 <b>4반</b> + 화학 <b>4반</b> + 생명과학 <b>4반</b> + 지구과학 <b>4반</b> + 사회문화 <b>4반</b> + 세계사 <b>4반</b> + 세계지리 <b>4반</b> + 현대윤리 <b>4반</b></div>
+                        <div class="font-bold text-red-600 mt-1">= 총 32반 ÷ 학급 10개 = 3.2 (배수 X) → <b>오류 발생!</b></div>
+                        <div class="text-red-500 mt-1">→ 30반(3밴드) 또는 40반(4밴드)으로 조정 필요</div>
                     </div>
                 </div>
             </div>
+            <!-- 안내 -->
             <div class="flex items-start gap-2 bg-white rounded-lg border border-violet-200 p-3">
                 <i class="fas fa-lightbulb text-amber-400 mt-0.5"></i>
                 <div>
-                    <b>4단계(수강인원 현황)</b>에서 밴드별 교육반 합계를 확인할 수 있습니다.
-                    밴드 옆의 <span class="inline-flex items-center px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">10/10 ✓</span> 표시가
-                    모든 밴드에서 초록색이 되도록 반 수를 조정하세요.
-                    8단계 실행 전 <b>"사전 조건 확인"</b> 버튼으로 경고 여부를 검토할 수 있습니다.
+                    <b>4단계</b>에서 선택군을 지정하고, <b>5단계</b>에서 교사·교육반을 배정할 때 합계가 학급 수의 배수인지 확인하세요.
+                    8단계 실행 시 배수가 맞지 않으면 <b>오류 메시지와 함께 조정 방법을 안내</b>합니다.
                 </div>
             </div>
         </div>
@@ -1069,7 +1101,7 @@ function printStep(n) {
         </div>
         ${el.innerHTML}
         <script>setTimeout(()=>{window.print();},500);<\/script>
-    </body></html>`);
+</body></html>`);
     printWin.document.close();
 }
 
@@ -2676,12 +2708,12 @@ async function checkElectivePrereqs() {
                     ${info.has_electives?'<span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-bold">선택과목 있음</span>':''}
                     ${info.missing.length>0?`<span class="text-xs text-red-500">${info.missing.join(', ')}</span>`:''}
                 </div>`;
-                // 밴드 균형 경고
+                // 밴드 교육반 수 오류
                 if (info.band_warnings && info.band_warnings.length > 0) {
-                    html += `<div class="ml-8 mb-2 bg-amber-50 border border-amber-200 rounded-lg p-3 mt-1">
-                        <div class="text-xs font-bold text-amber-700 mb-1"><i class="fas fa-exclamation-triangle mr-1"></i>밴드 교육반 균형 경고</div>
-                        ${info.band_warnings.map(w => `<div class="text-xs text-amber-600 py-0.5"><i class="fas fa-caret-right mr-1"></i>${w}</div>`).join('')}
-                        <div class="text-[10px] text-amber-500 mt-1">4단계에서 교육반 수를 조정하세요 (동일 밴드 내 교육반 총수 = 원반 수의 배수)</div>
+                    html += `<div class="ml-8 mb-2 bg-red-50 border-2 border-red-300 rounded-lg p-3 mt-1">
+                        <div class="text-xs font-bold text-red-700 mb-1"><i class="fas fa-exclamation-circle mr-1"></i>선택군 교육반 수 오류 — 배정 실행 불가</div>
+                        ${info.band_warnings.map(w => `<div class="text-xs text-red-600 py-0.5 whitespace-pre-line"><i class="fas fa-caret-right mr-1"></i>${w}</div>`).join('')}
+                        <div class="text-[10px] text-red-500 mt-1 pt-1 border-t border-red-200">5단계(교사 수급)에서 교육반 수를 조정하세요 (선택군 내 교육반 합계 = 학급 수의 배수)</div>
                     </div>`;
                 }
             });
@@ -2704,7 +2736,28 @@ async function runElectiveAssign() {
         const d = await r.json();
         if (d.success) {
             renderElectiveResult(grade, d);
-        } else alert('실패: ' + d.message);
+        } else if (d.error_type === 'band_balance') {
+            // 밴드 교육반 수 오류 — 상세 안내 표시
+            const el = document.getElementById('s8-result');
+            let html = `<div class="bg-red-50 border-2 border-red-300 rounded-xl p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-exclamation-circle text-red-500 text-lg"></i>
+                    <span class="font-bold text-red-700">${d.message}</span>
+                </div>
+                <div class="space-y-2 mb-4">`;
+            (d.band_errors || []).forEach(msg => {
+                html += `<div class="bg-white rounded-lg p-3 border border-red-200 text-sm text-red-700 whitespace-pre-line">${msg}</div>`;
+            });
+            html += `</div>
+                <div class="bg-red-100/50 rounded-lg p-3 text-xs text-red-600">
+                    <b>해결 방법:</b> 각 선택군의 교육반 합계가 학급 수의 배수가 되도록 5단계(교사 수급)에서 교육반 수를 조정하세요.<br>
+                    <b>공식:</b> 선택군 교육반 합계 = 학급 수 × 밴드 수 (예: 학급 10개 → 교육반 합계 10, 20, 30...)
+                </div>
+            </div>`;
+            el.innerHTML = html;
+        } else {
+            alert('실패: ' + d.message);
+        }
     } catch(e) { alert('오류: ' + e); }
     toggleLoading(false);
 }
@@ -2736,15 +2789,11 @@ function renderElectiveResult(grade, data) {
             <i class="fas fa-exclamation-triangle mr-1"></i> 충돌 발생으로 DB 저장되지 않았습니다. 교육반 구성을 확인하세요.
         </div>`;
     }
-    // 밴드 균형 경고
-    if (data.band_warnings && data.band_warnings.length > 0) {
+    // 교사 충돌 경고 (배정은 완료되지만 교사 시간 겹침 안내)
+    if (data.teacher_conflicts > 0) {
         html += `<div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-3">
-            <div class="font-bold text-sm text-amber-700 mb-2"><i class="fas fa-exclamation-triangle mr-1"></i>밴드 교육반 균형 경고</div>
-            ${data.band_warnings.map(w => `<div class="text-xs text-amber-600 py-0.5"><i class="fas fa-caret-right mr-1"></i>${w}</div>`).join('')}
-            <div class="text-xs text-amber-500 mt-2 border-t border-amber-200 pt-2">
-                <b>해결 방법:</b> 4단계(수강인원 현황)에서 동일 밴드 내 과목의 교육반 총수가 원반 수의 배수가 되도록 조정하세요.
-                <br>예) 원반 10개 → 밴드 A의 교육반 합계가 10, 20, 30... 이어야 합니다.
-            </div>
+            <div class="font-bold text-sm text-amber-700 mb-1"><i class="fas fa-exclamation-triangle mr-1"></i>교사 시간 충돌 ${data.teacher_conflicts}건</div>
+            <div class="text-xs text-amber-600">동일 교사가 같은 밴드(시간대)에 여러 반을 담당하고 있습니다. 5단계(교사 수급)에서 교사 배정을 조정하세요.</div>
         </div>`;
     }
     // 교육반별 학생수 (선택군별 그룹)
@@ -2818,5 +2867,6 @@ document.getElementById('s6-ctype')?.addEventListener('change', function() {
 });
 </script>
 
+<script src="/static/js/help-modal.js" data-doc="timetable-workflow"></script>
 </body>
 </html>

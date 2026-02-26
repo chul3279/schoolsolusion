@@ -74,8 +74,9 @@ def find_slot_positions(cursor, school_id, grade, elective_subjects):
 
 def validate_band_balance(cursor, school_id, grade, band_count=4):
     """밴드그룹별 교육반 총수가 원반 수의 배수인지 검증.
-    동일 카테고리(band_group) 내 교육반 총수 = 원반 수의 배수여야 균등 배정 가능."""
-    warnings = []
+    규칙: 선택군 내 교육반 총수 = 원반 수 × N (N=밴드 수, 자연수)
+    예) 원반 10개, 선택군에 과목 8개 → 교육반 총수는 10, 20, 30, 40... 이어야 함"""
+    errors = []
 
     # 원반 수 조회
     cursor.execute(
@@ -85,7 +86,7 @@ def validate_band_balance(cursor, school_id, grade, band_count=4):
     row = cursor.fetchone()
     home_classes = row['cnt'] if row else 0
     if home_classes == 0:
-        return warnings  # 원반 없으면 검증 불가
+        return errors
 
     # 선택과목의 band_group 조회
     cursor.execute(
@@ -97,7 +98,7 @@ def validate_band_balance(cursor, school_id, grade, band_count=4):
         subject_band[r['subject']] = r['band_group']
 
     if not subject_band:
-        return warnings  # band_group 미설정이면 검증 건너뜀
+        return errors
 
     # 과목별 교육반 수 조회 (timetable_tea 기준)
     elective_subjects = tuple(subject_band.keys())
@@ -126,17 +127,26 @@ def validate_band_balance(cursor, school_id, grade, band_count=4):
             need = home_classes - remainder
             sub_detail = ', '.join(
                 f"{s['subject']}({s['groups']}반)" for s in info['subjects'])
-            warnings.append({
+            # 가능한 교육반 수 예시
+            lower = (total // home_classes) * home_classes
+            upper = lower + home_classes
+            errors.append({
                 'band_group': bg,
                 'total_groups': total,
                 'home_classes': home_classes,
                 'remainder': remainder,
                 'need': need,
                 'subjects': sub_detail,
-                'message': f"밴드 {bg}: 교육반 {total}개 (원반 {home_classes}의 배수 아님, {need}반 부족) — {sub_detail}"
+                'message': (
+                    f"선택군 {bg} 오류: 교육반 합계 {total}개는 "
+                    f"학급 수({home_classes})의 배수가 아닙니다.\n"
+                    f"  현재: {sub_detail}\n"
+                    f"  교육반 합계는 {lower}개 또는 {upper}개로 조정하세요.\n"
+                    f"  (교육반 수 = 선택과목 반 수의 합 = 학급 수 × 밴드 수)"
+                )
             })
 
-    return warnings
+    return errors
 
 
 def assign_groups_to_bands(groups, subject_groups, subject_band_map=None, home_classes=0):
@@ -242,14 +252,13 @@ def assign_students_to_groups(students, subject_groups, group_by_id, seed=None):
         return {'success': 0, 'fail': 0, 'fail_students': []}
 
     def find_valid_assignment(stu):
-        subs = stu['electives']
+        # 교육반이 존재하는 과목만 필터 (timetable_tea에 없는 과목은 건너뜀)
+        subs = [s for s in stu['electives'] if s in subject_groups]
         if not subs:
-            return None
+            return subs, None
         stu_cnt = len(subs)
         options = []
         for sub in subs:
-            if sub not in subject_groups:
-                return None
             opts = [(g['band'], g['id']) for g in subject_groups[sub]]
             options.append(opts)
 
@@ -266,7 +275,7 @@ def assign_students_to_groups(students, subject_groups, group_by_id, seed=None):
                     assignment.pop()
             return None
 
-        return backtrack(0, set(), [])
+        return subs, backtrack(0, set(), [])
 
     random.shuffle(students)
     success = 0
@@ -274,10 +283,10 @@ def assign_students_to_groups(students, subject_groups, group_by_id, seed=None):
     fail_students = []
 
     for stu in students:
-        result = find_valid_assignment(stu)
+        subs, result = find_valid_assignment(stu)
         if result:
             for i, gid in enumerate(result):
-                sub = stu['electives'][i]
+                sub = subs[i]
                 stu['group_map'][sub] = gid
                 group_by_id[gid]['students'].append(stu['member_id'])
             success += 1
@@ -438,6 +447,26 @@ def save_results(cursor, school_id, grade, groups, students, slot_positions, gro
                  stu['num'], sub, g['group_no'], g['band'], g['teacher_name'], g['teacher_id']))
             mapping_count += 1
 
+    # 밴드→시간대 매핑 저장 (학생 개인 시간표 조회용)
+    cursor.execute("""CREATE TABLE IF NOT EXISTS timetable_band_slots (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        school_id VARCHAR(50), grade VARCHAR(10),
+        band VARCHAR(5), day_of_week VARCHAR(5), period VARCHAR(5),
+        INDEX idx_school_grade (school_id, grade)
+    )""")
+    cursor.execute("DELETE FROM timetable_band_slots WHERE school_id=%s AND grade=%s",
+                   (school_id, grade))
+    bands_config = _build_bands_config(groups, len(slot_positions))
+    for band_name, slot_indices in bands_config.items():
+        for si in slot_indices:
+            if si < len(slot_positions):
+                day, period = slot_positions[si]
+                cursor.execute(
+                    """INSERT INTO timetable_band_slots
+                        (school_id, grade, band, day_of_week, period)
+                        VALUES (%s,%s,%s,%s,%s)""",
+                    (school_id, grade, band_name, day, str(period)))
+
     return {'timetable_inserted': insert_count, 'mappings_saved': mapping_count}
 
 
@@ -460,8 +489,16 @@ def run_elective_pipeline(cursor, school_id, grade, seed=42):
     if not slot_positions:
         return {'skipped': True, 'reason': f'{grade}학년 선택과목 슬롯 없음'}
 
-    # Phase 0: 밴드 균형 검증
-    band_warnings = validate_band_balance(cursor, school_id, grade)
+    # Phase 0: 밴드 균형 검증 — 실패 시 즉시 중단
+    band_errors = validate_band_balance(cursor, school_id, grade)
+    if band_errors:
+        return {
+            'status': 'error',
+            'error_type': 'band_balance',
+            'message': '선택군 교육반 수가 학급 수의 배수가 아닙니다. 5단계(교사 수급)에서 교육반 수를 조정하세요.',
+            'band_errors': [e['message'] for e in band_errors],
+            'details': band_errors
+        }
 
     # 사용자 band_group 설정 + 원반 수 조회
     cursor.execute(
@@ -490,12 +527,10 @@ def run_elective_pipeline(cursor, school_id, grade, seed=42):
     # Phase 4: 충돌 검증
     conflicts = validate_conflicts(students, group_by_id)
 
-    # Phase 5: 저장 (충돌 0일 때만)
+    # Phase 5: 저장 (학생 배정 실패/충돌 0일 때. 교사 충돌은 경고만)
     saved = False
     save_info = {}
-    if (conflicts['student_conflicts'] == 0 and
-            conflicts['teacher_conflicts'] == 0 and
-            assign_result['fail'] == 0):
+    if (conflicts['student_conflicts'] == 0 and assign_result['fail'] == 0):
         save_info = save_results(
             cursor, school_id, grade, groups, students, slot_positions, group_by_id)
         saved = True
@@ -521,7 +556,7 @@ def run_elective_pipeline(cursor, school_id, grade, seed=42):
         'save_info': save_info,
         'group_stats': group_stats,
         'subject_band_map': subject_band_map,
-        'band_warnings': [w['message'] for w in band_warnings],
+        'band_warnings': [],  # 검증 통과 시 비어있음 (실패 시 조기반환)
         'fail_students': [
             {'class_no': s['class_no'], 'num': s['num'], 'name': s['name'],
              'electives': s['electives']}

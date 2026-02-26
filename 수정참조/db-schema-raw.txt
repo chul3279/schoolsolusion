@@ -1,0 +1,954 @@
+TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	COLUMN_KEY	COLUMN_DEFAULT	EXTRA
+adm_stu	id	int	NO	PRI	NULL	auto_increment
+adm_stu	member_id	varchar(50)	NO	MUL	NULL	
+adm_stu	school_id	varchar(45)	YES		NULL	
+adm_stu	member_name	varchar(100)	NO		NULL	
+adm_stu	member_birth	date	YES		NULL	
+adm_stu	member_school	varchar(200)	YES	MUL	NULL	
+adm_stu	semester	varchar(20)	YES	MUL	NULL	
+adm_stu	subject	varchar(100)	NO		NULL	
+adm_stu	units	int	YES		NULL	
+adm_stu	rank_or_grade	varchar(20)	YES		NULL	
+adm_stu	score_raw	decimal(5,2)	YES		NULL	
+adm_stu	consult_memo	text	YES		NULL	
+adm_stu	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+adm_stu	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+adm_stu_neis	id	int	NO	PRI	NULL	auto_increment
+adm_stu_neis	member_id	varchar(50)	NO	MUL	NULL	
+adm_stu_neis	school_id	varchar(45)	YES		NULL	
+adm_stu_neis	member_name	varchar(100)	NO		NULL	
+adm_stu_neis	member_birth	date	YES		NULL	
+adm_stu_neis	member_school	varchar(200)	YES		NULL	
+adm_stu_neis	section	varchar(100)	YES		NULL	
+adm_stu_neis	content	text	YES		NULL	
+adm_stu_neis	keywords	varchar(500)	YES		NULL	
+adm_stu_neis	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+adm_stu_neis	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+admission_consultation	id	int	NO	PRI	NULL	auto_increment
+admission_consultation	teacher_id	varchar(50)	NO	MUL	NULL	
+admission_consultation	student_id	varchar(50)	NO	MUL	NULL	
+admission_consultation	school_id	varchar(50)	YES	MUL	NULL	
+admission_consultation	academy_id	int	YES	MUL	NULL	
+admission_consultation	consultation_date	date	YES		NULL	
+admission_consultation	content	text	YES		NULL	
+admission_consultation	recommendations	text	YES		NULL	
+admission_consultation	record_file_ids	json	YES		NULL	
+admission_consultation	ai_analysis	text	YES		NULL	
+admission_consultation	analysis_type	varchar(20)	YES		NULL	
+admission_consultation	point_used	int	YES		0	
+admission_consultation	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+admission_csat_score	id	int	NO	PRI	NULL	auto_increment
+admission_csat_score	school_id	varchar(20)	NO	MUL	NULL	
+admission_csat_score	student_id	varchar(50)	NO		NULL	
+admission_csat_score	curriculum	varchar(10)	NO		NULL	
+admission_csat_score	exam_year	int	NO		NULL	
+admission_csat_score	track	varchar(10)	YES		NULL	
+admission_csat_score	kor_choice	varchar(30)	YES		NULL	
+admission_csat_score	kor_standard	int	YES		NULL	
+admission_csat_score	kor_percentile	decimal(5,2)	YES		NULL	
+admission_csat_score	kor_grade	int	YES		NULL	
+admission_csat_score	math_choice	varchar(30)	YES		NULL	
+admission_csat_score	math_standard	int	YES		NULL	
+admission_csat_score	math_percentile	decimal(5,2)	YES		NULL	
+admission_csat_score	math_grade	int	YES		NULL	
+admission_csat_score	eng_grade	int	YES		NULL	
+admission_csat_score	hist_grade	int	YES		NULL	
+admission_csat_score	tam1_choice	varchar(30)	YES		NULL	
+admission_csat_score	tam1_standard	int	YES		NULL	
+admission_csat_score	tam1_percentile	decimal(5,2)	YES		NULL	
+admission_csat_score	tam1_grade	int	YES		NULL	
+admission_csat_score	tam2_choice	varchar(30)	YES		NULL	
+admission_csat_score	tam2_standard	int	YES		NULL	
+admission_csat_score	tam2_percentile	decimal(5,2)	YES		NULL	
+admission_csat_score	tam2_grade	int	YES		NULL	
+admission_csat_score	lang2_choice	varchar(30)	YES		NULL	
+admission_csat_score	lang2_standard	int	YES		NULL	
+admission_csat_score	lang2_percentile	decimal(5,2)	YES		NULL	
+admission_csat_score	lang2_grade	int	YES		NULL	
+admission_csat_score	input_by	varchar(50)	NO	MUL	NULL	
+admission_csat_score	input_by_role	varchar(20)	NO		NULL	
+admission_csat_score	share_status	enum('private','requested','approved')	NO	MUL	private	
+admission_csat_score	share_requested_by	varchar(50)	YES		NULL	
+admission_csat_score	share_requested_at	datetime	YES		NULL	
+admission_csat_score	share_approved_at	datetime	YES		NULL	
+admission_csat_score	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+admission_csat_score	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+admission_data	id	int	NO	PRI	NULL	auto_increment
+admission_data	uni_name	varchar(100)	NO	MUL	NULL	
+admission_data	dept_name	varchar(200)	NO		NULL	
+admission_data	dept_type	varchar(50)	YES		NULL	
+admission_data	year	int	YES		2026	
+admission_data	adm_type	varchar(20)	YES		NULL	
+admission_data	adm_name	varchar(200)	YES		NULL	
+admission_data	adm_code	varchar(50)	YES		NULL	
+admission_data	cat_id	varchar(20)	YES		NULL	
+admission_data	recruit_cnt	int	YES		0	
+admission_data	recruit_detail	text	YES		NULL	
+admission_data	selection_summary	text	YES		NULL	
+admission_data	cut_70	varchar(50)	YES		NULL	
+admission_data	min_criteria	text	YES		NULL	
+admission_data	campus_name	varchar(100)	YES		NULL	
+admission_data	region	varchar(50)	YES		NULL	
+admission_data	url	varchar(500)	YES		NULL	
+admission_data	adm_info	longtext	YES		NULL	
+admission_data	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+admission_data	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+admission_mock_exam	id	int	NO	PRI	NULL	auto_increment
+admission_mock_exam	school_id	varchar(20)	NO	MUL	NULL	
+admission_mock_exam	student_id	varchar(50)	NO		NULL	
+admission_mock_exam	curriculum	varchar(10)	NO		NULL	
+admission_mock_exam	exam_year	int	NO		NULL	
+admission_mock_exam	exam_type	varchar(20)	NO		NULL	
+admission_mock_exam	exam_name	varchar(100)	YES		NULL	
+admission_mock_exam	track	varchar(10)	YES		NULL	
+admission_mock_exam	kor_choice	varchar(30)	YES		NULL	
+admission_mock_exam	kor_raw	int	YES		NULL	
+admission_mock_exam	kor_standard	int	YES		NULL	
+admission_mock_exam	kor_percentile	decimal(5,2)	YES		NULL	
+admission_mock_exam	kor_grade	int	YES		NULL	
+admission_mock_exam	math_choice	varchar(30)	YES		NULL	
+admission_mock_exam	math_raw	int	YES		NULL	
+admission_mock_exam	math_standard	int	YES		NULL	
+admission_mock_exam	math_percentile	decimal(5,2)	YES		NULL	
+admission_mock_exam	math_grade	int	YES		NULL	
+admission_mock_exam	eng_raw	int	YES		NULL	
+admission_mock_exam	eng_grade	int	YES		NULL	
+admission_mock_exam	hist_raw	int	YES		NULL	
+admission_mock_exam	hist_grade	int	YES		NULL	
+admission_mock_exam	tam1_choice	varchar(30)	YES		NULL	
+admission_mock_exam	tam1_raw	int	YES		NULL	
+admission_mock_exam	tam1_standard	int	YES		NULL	
+admission_mock_exam	tam1_percentile	decimal(5,2)	YES		NULL	
+admission_mock_exam	tam1_grade	int	YES		NULL	
+admission_mock_exam	tam2_choice	varchar(30)	YES		NULL	
+admission_mock_exam	tam2_raw	int	YES		NULL	
+admission_mock_exam	tam2_standard	int	YES		NULL	
+admission_mock_exam	tam2_percentile	decimal(5,2)	YES		NULL	
+admission_mock_exam	tam2_grade	int	YES		NULL	
+admission_mock_exam	lang2_choice	varchar(30)	YES		NULL	
+admission_mock_exam	lang2_raw	int	YES		NULL	
+admission_mock_exam	lang2_standard	int	YES		NULL	
+admission_mock_exam	lang2_percentile	decimal(5,2)	YES		NULL	
+admission_mock_exam	lang2_grade	int	YES		NULL	
+admission_mock_exam	input_by	varchar(50)	NO	MUL	NULL	
+admission_mock_exam	input_by_role	varchar(20)	NO		NULL	
+admission_mock_exam	share_status	enum('private','requested','approved')	NO	MUL	private	
+admission_mock_exam	share_requested_by	varchar(50)	YES		NULL	
+admission_mock_exam	share_requested_at	datetime	YES		NULL	
+admission_mock_exam	share_approved_at	datetime	YES		NULL	
+admission_mock_exam	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+admission_mock_exam	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+admission_student_record	id	int	NO	PRI	NULL	auto_increment
+admission_student_record	school_id	varchar(20)	NO	MUL	NULL	
+admission_student_record	student_id	varchar(50)	NO		NULL	
+admission_student_record	upload_year	int	NO		NULL	
+admission_student_record	grade	int	NO		NULL	
+admission_student_record	original_filename	varchar(255)	NO		NULL	
+admission_student_record	stored_filename	varchar(255)	NO		NULL	
+admission_student_record	file_size	int	YES		0	
+admission_student_record	input_by	varchar(50)	NO	MUL	NULL	
+admission_student_record	input_by_role	varchar(20)	NO		NULL	
+admission_student_record	share_status	enum('private','requested','approved')	NO	MUL	private	
+admission_student_record	share_requested_by	varchar(50)	YES		NULL	
+admission_student_record	share_requested_at	datetime	YES		NULL	
+admission_student_record	share_approved_at	datetime	YES		NULL	
+admission_student_record	memo	text	YES		NULL	
+admission_student_record	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+admission_student_record	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+afterschool_attendance	id	int	NO	PRI	NULL	auto_increment
+afterschool_attendance	program_id	int	NO	MUL	NULL	
+afterschool_attendance	enrollment_id	int	NO	MUL	NULL	
+afterschool_attendance	session_no	int	NO		NULL	
+afterschool_attendance	session_date	date	NO		NULL	
+afterschool_attendance	status	varchar(20)	NO		present	
+afterschool_attendance	memo	varchar(200)	YES			
+afterschool_enrollment	id	int	NO	PRI	NULL	auto_increment
+afterschool_enrollment	program_id	int	NO	MUL	NULL	
+afterschool_enrollment	student_id	varchar(50)	NO		NULL	
+afterschool_enrollment	student_name	varchar(100)	YES		NULL	
+afterschool_enrollment	class_grade	varchar(10)	YES		NULL	
+afterschool_enrollment	class_no	varchar(10)	YES		NULL	
+afterschool_enrollment	class_num	varchar(10)	YES		NULL	
+afterschool_enrollment	status	varchar(20)	NO		applied	
+afterschool_enrollment	applied_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+afterschool_enrollment	approved_at	datetime	YES		NULL	
+afterschool_program	id	int	NO	PRI	NULL	auto_increment
+afterschool_program	school_id	varchar(50)	NO	MUL	NULL	
+afterschool_program	program_name	varchar(200)	NO		NULL	
+afterschool_program	description	text	YES		NULL	
+afterschool_program	instructor_name	varchar(100)	YES		NULL	
+afterschool_program	target_grades	varchar(50)	NO		all	
+afterschool_program	max_students	int	YES		30	
+afterschool_program	total_sessions	int	NO		10	
+afterschool_program	day_of_week	varchar(20)	YES		NULL	
+afterschool_program	time_slot	varchar(50)	YES		NULL	
+afterschool_program	start_date	date	NO		NULL	
+afterschool_program	end_date	date	NO		NULL	
+afterschool_program	status	varchar(20)	NO		recruiting	
+afterschool_program	created_by	varchar(50)	NO		NULL	
+afterschool_program	survey_id	int	YES		NULL	
+afterschool_program	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+afterschool_program	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+afterschool_session	id	int	NO	PRI	NULL	auto_increment
+afterschool_session	program_id	int	NO	MUL	NULL	
+afterschool_session	session_no	int	NO		NULL	
+afterschool_session	session_date	date	NO		NULL	
+afterschool_session	topic	varchar(200)	YES			
+attendance	id	int	NO	PRI	NULL	auto_increment
+attendance	school_id	varchar(20)	NO	MUL	NULL	
+attendance	class_grade	int	NO		NULL	
+attendance	class_no	int	NO		NULL	
+attendance	student_id	varchar(50)	NO		NULL	
+attendance	attendance_date	date	NO		NULL	
+attendance	status	enum('present','absent','late','early_leave','sick')	NO		present	
+attendance	memo	varchar(200)	YES		NULL	
+attendance	checked_by	varchar(50)	YES		NULL	
+attendance	created_at	datetime	NO		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+attendance	updated_at	datetime	NO		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+calendar_events	id	int	NO	PRI	NULL	auto_increment
+calendar_events	school_id	varchar(45)	YES		NULL	
+calendar_events	member_school	varchar(200)	YES	MUL	NULL	
+calendar_events	member_id	varchar(50)	YES	MUL	NULL	
+calendar_events	member_name	varchar(100)	YES		NULL	
+calendar_events	title	varchar(500)	NO		NULL	
+calendar_events	event_date	date	NO	MUL	NULL	
+calendar_events	event_type	varchar(50)	YES		NULL	
+calendar_events	target_grade	varchar(10)	YES		NULL	
+calendar_events	target_class	varchar(10)	YES		NULL	
+calendar_events	target_dept	varchar(100)	YES		NULL	
+calendar_events	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+calendar_events	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+class_maker_config	id	int	NO	PRI	NULL	auto_increment
+class_maker_config	school_id	varchar(50)	NO	MUL	NULL	
+class_maker_config	grade	varchar(10)	NO		NULL	
+class_maker_config	num_classes	int	YES		10	
+class_maker_config	min_per_class	int	YES		20	
+class_maker_config	max_per_class	int	YES		35	
+class_maker_config	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+class_maker_config	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+class_maker_constraints	id	int	NO	PRI	NULL	auto_increment
+class_maker_constraints	school_id	varchar(50)	NO	MUL	NULL	
+class_maker_constraints	grade	varchar(10)	NO		NULL	
+class_maker_constraints	constraint_type	enum('separate','together','fixed_class','special')	NO		NULL	
+class_maker_constraints	student_ids	json	YES		NULL	
+class_maker_constraints	student_names	json	YES		NULL	
+class_maker_constraints	target_class	varchar(10)	YES		NULL	
+class_maker_constraints	memo	varchar(500)	YES		NULL	
+class_maker_constraints	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+class_maker_constraints	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+class_maker_result	id	int	NO	PRI	NULL	auto_increment
+class_maker_result	school_id	varchar(50)	NO	MUL	NULL	
+class_maker_result	grade	varchar(10)	NO		NULL	
+class_maker_result	member_id	varchar(50)	YES	MUL	NULL	
+class_maker_result	member_name	varchar(100)	YES		NULL	
+class_maker_result	original_class	varchar(10)	YES		NULL	
+class_maker_result	assigned_class	varchar(10)	YES		NULL	
+class_maker_result	score	decimal(10,2)	YES		NULL	
+class_maker_result	assignment_type	enum('auto','manual','fixed')	YES		auto	
+class_maker_result	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+class_maker_result	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+club_common_activity	id	int	NO	PRI	NULL	auto_increment
+club_common_activity	school_id	varchar(50)	NO	MUL	NULL	
+club_common_activity	member_school	varchar(100)	YES		NULL	
+club_common_activity	teacher_id	varchar(50)	NO		NULL	
+club_common_activity	teacher_name	varchar(100)	YES		NULL	
+club_common_activity	club_name	varchar(100)	NO		NULL	
+club_common_activity	record_year	varchar(4)	NO		NULL	
+club_common_activity	record_semester	varchar(1)	NO		NULL	
+club_common_activity	activity_type	varchar(50)	YES		NULL	
+club_common_activity	activity_date	varchar(20)	YES		NULL	
+club_common_activity	title	varchar(200)	NO		NULL	
+club_common_activity	content	text	YES		NULL	
+club_common_activity	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+club_files	id	int	NO	PRI	NULL	auto_increment
+club_files	school_id	varchar(50)	NO	MUL	NULL	
+club_files	member_school	varchar(100)	YES		NULL	
+club_files	teacher_id	varchar(50)	YES		NULL	
+club_files	club_name	varchar(100)	NO		NULL	
+club_files	student_id	varchar(50)	YES		NULL	
+club_files	student_name	varchar(100)	YES		NULL	
+club_files	record_year	varchar(4)	NO		NULL	
+club_files	record_semester	varchar(1)	NO		NULL	
+club_files	file_name	varchar(255)	NO		NULL	
+club_files	original_name	varchar(255)	NO		NULL	
+club_files	file_path	varchar(500)	NO		NULL	
+club_files	file_size	int	YES		0	
+club_files	file_type	varchar(20)	YES		NULL	
+club_files	uploaded_by	varchar(50)	YES		NULL	
+club_files	uploaded_name	varchar(100)	YES		NULL	
+club_files	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+club_list	id	int	NO	PRI	NULL	auto_increment
+club_list	school_id	varchar(50)	NO	MUL	NULL	
+club_list	member_school	varchar(100)	YES		NULL	
+club_list	club_name	varchar(100)	NO		NULL	
+club_list	teacher_id	varchar(50)	YES		NULL	
+club_list	teacher_name	varchar(100)	YES		NULL	
+club_list	authorized_teachers	text	YES		NULL	
+club_list	description	text	YES		NULL	
+club_list	record_year	varchar(4)	NO		NULL	
+club_list	record_semester	varchar(1)	NO		NULL	
+club_list	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+club_record	id	int	NO	PRI	NULL	auto_increment
+club_record	school_id	varchar(50)	NO	MUL	NULL	
+club_record	member_school	varchar(100)	YES		NULL	
+club_record	teacher_id	varchar(50)	NO		NULL	
+club_record	teacher_name	varchar(100)	YES		NULL	
+club_record	club_name	varchar(100)	NO		NULL	
+club_record	student_id	varchar(50)	NO		NULL	
+club_record	student_name	varchar(100)	YES		NULL	
+club_record	class_grade	varchar(10)	YES		NULL	
+club_record	class_no	varchar(10)	YES		NULL	
+club_record	class_num	varchar(10)	YES		NULL	
+club_record	record_year	varchar(4)	NO		NULL	
+club_record	record_semester	varchar(1)	NO		NULL	
+club_record	base_data	text	YES		NULL	
+club_record	content	text	YES		NULL	
+club_record	status	varchar(20)	YES		draft	
+club_record	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+club_record	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+counsel_files	id	int	NO	PRI	NULL	auto_increment
+counsel_files	school_id	varchar(50)	YES		NULL	
+counsel_files	member_school	varchar(100)	YES		NULL	
+counsel_files	student_id	varchar(50)	YES		NULL	
+counsel_files	student_name	varchar(100)	YES		NULL	
+counsel_files	record_year	varchar(4)	YES		NULL	
+counsel_files	record_semester	varchar(1)	YES		NULL	
+counsel_files	file_name	varchar(255)	YES		NULL	
+counsel_files	original_name	varchar(255)	YES		NULL	
+counsel_files	file_path	varchar(500)	YES		NULL	
+counsel_files	file_size	int	YES		NULL	
+counsel_files	file_type	varchar(100)	YES		NULL	
+counsel_files	uploaded_by	varchar(50)	YES		NULL	
+counsel_files	uploaded_name	varchar(100)	YES		NULL	
+counsel_files	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+cours_subject	id	int	NO	PRI	NULL	auto_increment
+cours_subject	course_year	varchar(20)	YES		NULL	
+cours_subject	domain	varchar(45)	YES		NULL	
+cours_subject	subject	varchar(100)	NO		NULL	
+cours_subject	school_level	varchar(20)	YES		NULL	
+cours_subject	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+cours_subject	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+cours_subject	cours_subjectcol	varchar(45)	YES		NULL	
+dept_category	cat_id	varchar(10)	NO	PRI	NULL	
+dept_category	cat_level	tinyint	NO	MUL	NULL	
+dept_category	parent_id	varchar(10)	YES	MUL	NULL	
+dept_category	cat_name	varchar(100)	NO		NULL	
+dept_category	cat_order	int	YES		0	
+dept_category	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+dept_master	dept_id	int	NO	PRI	NULL	auto_increment
+dept_master	dept_name	varchar(200)	NO		NULL	
+dept_master	dept_type	varchar(100)	YES		NULL	
+dept_master	cat_id	varchar(10)	YES		NULL	
+dept_master	uni_name	varchar(200)	YES	MUL	NULL	
+dept_master	year	int	YES		NULL	
+dept_master	adm_type	varchar(100)	YES		NULL	
+dept_master	adm_name	varchar(200)	YES		NULL	
+dept_master	adm_code	varchar(20)	YES		NULL	
+dept_master	recruit_cnt	int	YES		NULL	
+dept_master	recruit_detail	json	YES		NULL	
+dept_master	cut_70	decimal(5,2)	YES		NULL	
+dept_master	min_criteria	text	YES		NULL	
+dept_master	selection_summary	varchar(500)	YES		NULL	
+dept_master	campus_name	varchar(200)	YES		NULL	
+dept_master	region	varchar(100)	YES		NULL	
+dept_master	url	varchar(500)	YES		NULL	
+dept_master	adm_info	text	YES		NULL	
+dept_master	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+dept_master	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+fm_all	id	int	NO	PRI	NULL	auto_increment
+fm_all	member_id	varchar(50)	NO		NULL	
+fm_all	school_id	varchar(45)	YES		NULL	
+fm_all	member_school	varchar(200)	YES	MUL	NULL	
+fm_all	member_name	varchar(100)	NO		NULL	
+fm_all	point	int	YES		0	
+fm_all	child_name	varchar(100)	YES		NULL	
+fm_all	child_birth	date	YES		NULL	
+fm_all	member_tel	varchar(20)	YES		NULL	
+fm_all	member_birth	date	YES		NULL	
+fm_all	class_grade	varchar(10)	YES		NULL	
+fm_all	class_no	varchar(10)	YES		NULL	
+fm_all	class_num	varchar(10)	YES		NULL	
+fm_all	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+fm_all	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+home_letter	id	int	NO	PRI	NULL	auto_increment
+home_letter	school_id	varchar(20)	NO	MUL	NULL	
+home_letter	class_grade	int	NO		NULL	
+home_letter	class_no	int	NO		NULL	
+home_letter	teacher_id	varchar(50)	NO	MUL	NULL	
+home_letter	title	varchar(200)	NO		NULL	
+home_letter	content	text	NO		NULL	
+home_letter	require_consent	tinyint(1)	NO		0	
+home_letter	consent_deadline	date	YES		NULL	
+home_letter	file_path	varchar(500)	YES		NULL	
+home_letter	file_name	varchar(200)	YES		NULL	
+home_letter	created_at	datetime	NO		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+home_letter_reply	id	int	NO	PRI	NULL	auto_increment
+home_letter_reply	letter_id	int	NO	MUL	NULL	
+home_letter_reply	parent_id	varchar(50)	NO		NULL	
+home_letter_reply	student_id	varchar(50)	NO		NULL	
+home_letter_reply	consent_status	enum('agreed','disagreed')	NO		NULL	
+home_letter_reply	reply_memo	varchar(500)	YES		NULL	
+home_letter_reply	created_at	datetime	NO		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+homeroom_common_activity	id	int	NO	PRI	NULL	auto_increment
+homeroom_common_activity	school_id	varchar(50)	YES		NULL	
+homeroom_common_activity	member_school	varchar(100)	YES		NULL	
+homeroom_common_activity	class_grade	varchar(10)	YES		NULL	
+homeroom_common_activity	class_no	varchar(10)	YES		NULL	
+homeroom_common_activity	record_year	varchar(4)	YES		NULL	
+homeroom_common_activity	record_semester	varchar(1)	YES		NULL	
+homeroom_common_activity	activity_type	varchar(50)	YES		NULL	
+homeroom_common_activity	activity_date	varchar(20)	YES		NULL	
+homeroom_common_activity	title	varchar(200)	YES		NULL	
+homeroom_common_activity	content	text	YES		NULL	
+homeroom_common_activity	teacher_id	varchar(50)	YES		NULL	
+homeroom_common_activity	teacher_name	varchar(100)	YES		NULL	
+homeroom_common_activity	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+homeroom_counsel_log	id	int	NO	PRI	NULL	auto_increment
+homeroom_counsel_log	school_id	varchar(50)	YES	MUL	NULL	
+homeroom_counsel_log	member_school	varchar(200)	YES		NULL	
+homeroom_counsel_log	class_grade	int	YES		NULL	
+homeroom_counsel_log	class_no	int	YES		NULL	
+homeroom_counsel_log	teacher_id	varchar(50)	YES		NULL	
+homeroom_counsel_log	teacher_name	varchar(100)	YES		NULL	
+homeroom_counsel_log	student_id	varchar(50)	YES		NULL	
+homeroom_counsel_log	student_name	varchar(100)	YES		NULL	
+homeroom_counsel_log	class_num	int	YES		NULL	
+homeroom_counsel_log	counsel_date	date	YES		NULL	
+homeroom_counsel_log	counsel_type	varchar(50)	YES		NULL	
+homeroom_counsel_log	content	text	YES		NULL	
+homeroom_counsel_log	result	text	YES		NULL	
+homeroom_counsel_log	next_plan	text	YES		NULL	
+homeroom_counsel_log	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+homeroom_counsel_log	updated_at	datetime	YES		NULL	
+homeroom_counsel_schedule	id	int	NO	PRI	NULL	auto_increment
+homeroom_counsel_schedule	school_id	varchar(50)	YES	MUL	NULL	
+homeroom_counsel_schedule	member_school	varchar(200)	YES		NULL	
+homeroom_counsel_schedule	class_grade	int	YES		NULL	
+homeroom_counsel_schedule	class_no	int	YES		NULL	
+homeroom_counsel_schedule	teacher_id	varchar(50)	YES		NULL	
+homeroom_counsel_schedule	teacher_name	varchar(100)	YES		NULL	
+homeroom_counsel_schedule	student_id	varchar(50)	YES		NULL	
+homeroom_counsel_schedule	student_name	varchar(100)	YES		NULL	
+homeroom_counsel_schedule	class_num	int	YES		NULL	
+homeroom_counsel_schedule	counsel_date	datetime	YES		NULL	
+homeroom_counsel_schedule	counsel_type	varchar(50)	YES		NULL	
+homeroom_counsel_schedule	memo	text	YES		NULL	
+homeroom_counsel_schedule	status	varchar(20)	YES		scheduled	
+homeroom_counsel_schedule	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+homeroom_counsel_schedule	completed_at	datetime	YES		NULL	
+homeroom_notice	id	int	NO	PRI	NULL	auto_increment
+homeroom_notice	school_id	varchar(50)	YES		NULL	
+homeroom_notice	member_school	varchar(200)	YES		NULL	
+homeroom_notice	class_grade	int	YES		NULL	
+homeroom_notice	class_no	int	YES		NULL	
+homeroom_notice	teacher_id	varchar(50)	YES		NULL	
+homeroom_notice	teacher_name	varchar(100)	YES		NULL	
+homeroom_notice	title	varchar(200)	YES		NULL	
+homeroom_notice	content	text	YES		NULL	
+homeroom_notice	category	varchar(20)	YES		일반	
+homeroom_notice	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+homeroom_notice	updated_at	datetime	YES		NULL	
+login_attempts	id	int	NO	PRI	NULL	auto_increment
+login_attempts	login_id	varchar(50)	NO	MUL	NULL	
+login_attempts	ip_address	varchar(50)	YES		NULL	
+login_attempts	attempted_at	datetime	YES	MUL	CURRENT_TIMESTAMP	DEFAULT_GENERATED
+member	member_id	varchar(50)	NO	PRI	NULL	
+member	member_sn	varchar(30)	NO		NULL	
+member	member_name	varchar(100)	NO		NULL	
+member	member_birth	date	YES		NULL	
+member	school_id	varchar(45)	YES		NULL	
+member	member_school	varchar(200)	YES	MUL	NULL	
+member	member_roll	varchar(20)	YES	MUL	NULL	
+member	member_add	varchar(500)	YES		NULL	
+member	member_tel	varchar(20)	YES		NULL	
+member	child_name	varchar(100)	YES		NULL	
+member	child_birth	date	YES		NULL	
+member	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+member	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+member	member_email	varchar(100)	YES	MUL	NULL	
+message_room_members	id	bigint	NO	PRI	NULL	auto_increment
+message_room_members	room_id	bigint	NO	MUL	NULL	
+message_room_members	member_id	varchar(50)	NO	MUL	NULL	
+message_room_members	member_name	varchar(50)	NO		NULL	
+message_room_members	member_role	enum('teacher','student','parent')	NO		NULL	
+message_room_members	class_grade	varchar(5)	YES		NULL	
+message_room_members	class_no	varchar(5)	YES		NULL	
+message_room_members	is_admin	tinyint(1)	YES		0	
+message_room_members	joined_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+message_room_members	last_read_at	datetime	YES		NULL	
+message_room_members	is_active	tinyint(1)	YES		1	
+message_rooms	id	bigint	NO	PRI	NULL	auto_increment
+message_rooms	school_id	varchar(20)	NO	MUL	NULL	
+message_rooms	room_type	enum('direct','class','grade','school','group')	NO		direct	
+message_rooms	room_title	varchar(100)	YES		NULL	
+message_rooms	class_grade	varchar(5)	YES		NULL	
+message_rooms	class_no	varchar(5)	YES		NULL	
+message_rooms	target_roles	varchar(50)	YES		NULL	
+message_rooms	announcement_only	tinyint(1)	YES		0	
+message_rooms	created_by	varchar(50)	NO		NULL	
+message_rooms	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+message_rooms	is_active	tinyint(1)	YES		1	
+message_users	id	bigint	NO	PRI	NULL	auto_increment
+message_users	school_id	varchar(20)	NO	MUL	NULL	
+message_users	member_id	varchar(50)	NO		NULL	
+message_users	member_name	varchar(50)	NO		NULL	
+message_users	member_role	enum('teacher','student','parent')	NO		NULL	
+message_users	class_grade	varchar(5)	YES		NULL	
+message_users	class_no	varchar(5)	YES		NULL	
+message_users	class_num	varchar(5)	YES		NULL	
+message_users	parent_of	varchar(50)	YES		NULL	
+message_users	parent_of_name	varchar(50)	YES		NULL	
+message_users	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+messages	id	bigint	NO	PRI	NULL	auto_increment
+messages	room_id	bigint	NO	MUL	NULL	
+messages	sender_id	varchar(50)	NO	MUL	NULL	
+messages	sender_name	varchar(50)	NO		NULL	
+messages	sender_role	enum('teacher','student','parent')	NO		NULL	
+messages	content	text	NO		NULL	
+messages	message_type	enum('text','image','file')	YES		text	
+messages	file_path	varchar(500)	YES		NULL	
+messages	file_name	varchar(255)	YES		NULL	
+messages	is_system	tinyint(1)	YES		0	
+messages	is_deleted	tinyint(1)	YES		0	
+messages	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+notice	id	int	NO	PRI	NULL	auto_increment
+notice	member_name	varchar(45)	NO		NULL	
+notice	school_id	varchar(45)	YES		NULL	
+notice	member_school	varchar(45)	YES		NULL	
+notice	title	varchar(45)	NO		NULL	
+notice	message	longtext	NO		NULL	
+notice	created_at	datetime	NO		NULL	
+notice	correct_no	varchar(45)	YES		NULL	
+payment_history	id	int	NO	PRI	NULL	auto_increment
+payment_history	member_id	varchar(50)	NO	MUL	NULL	
+payment_history	order_id	varchar(200)	NO	UNI	NULL	
+payment_history	payment_key	varchar(200)	NO		NULL	
+payment_history	amount	int	NO		NULL	
+payment_history	payment_method	varchar(50)	YES		NULL	
+payment_history	payment_status	varchar(20)	YES		PENDING	
+payment_history	approved_at	datetime	YES		NULL	
+payment_history	canceled_at	datetime	YES		NULL	
+payment_history	cancel_reason	varchar(500)	YES		NULL	
+payment_history	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+payment_history	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+point_deduction_log	id	int	NO	PRI	NULL	auto_increment
+point_deduction_log	member_id	varchar(50)	NO	MUL	NULL	
+point_deduction_log	student_id	varchar(50)	NO		NULL	
+point_deduction_log	school_id	varchar(50)	NO		NULL	
+point_deduction_log	record_type	varchar(50)	NO		NULL	
+point_deduction_log	amount	int	NO		300	
+point_deduction_log	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+point_history	id	int	NO	PRI	NULL	auto_increment
+point_history	member_id	varchar(50)	NO	MUL	NULL	
+point_history	academy_id	int	YES		NULL	
+point_history	point_change	int	NO		NULL	
+point_history	point_type	varchar(20)	NO	MUL	NULL	
+point_history	description	varchar(500)	YES		NULL	
+point_history	order_id	varchar(200)	YES		NULL	
+point_history	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+push_subscriptions	id	int	NO	PRI	NULL	auto_increment
+push_subscriptions	member_id	varchar(50)	NO	MUL	NULL	
+push_subscriptions	school_id	varchar(20)	YES	MUL	NULL	
+push_subscriptions	user_role	varchar(20)	YES	MUL	NULL	
+push_subscriptions	endpoint	text	NO	UNI	NULL	
+push_subscriptions	p256dh	text	NO		NULL	
+push_subscriptions	auth	text	NO		NULL	
+push_subscriptions	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+push_subscriptions	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+schedule	id	int	NO	PRI	NULL	auto_increment
+schedule	school_id	varchar(50)	YES		NULL	
+schedule	member_school	varchar(200)	YES		NULL	
+schedule	member_id	varchar(50)	YES		NULL	
+schedule	member_name	varchar(100)	YES		NULL	
+schedule	read_roll	varchar(100)	YES		self	
+schedule	schedule_date	datetime	YES		NULL	
+schedule	title	varchar(200)	YES		NULL	
+schedule	content	text	YES		NULL	
+schedule	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+school_meal	id	int	NO	PRI	NULL	auto_increment
+school_meal	school_id	varchar(45)	YES		NULL	
+school_meal	member_school	varchar(45)	NO		NULL	
+school_meal	month	varchar(45)	YES		NULL	
+school_meal	day	varchar(20)	NO		NULL	
+school_meal	menu	longtext	NO		NULL	
+school_record_generated	id	int	NO	PRI	NULL	auto_increment
+school_record_generated	school_id	varchar(20)	NO	MUL	NULL	
+school_record_generated	student_id	varchar(50)	NO		NULL	
+school_record_generated	record_year	int	NO		NULL	
+school_record_generated	record_semester	int	NO		1	
+school_record_generated	curriculum_type	varchar(10)	NO		2015	
+school_record_generated	behavior	text	YES		NULL	
+school_record_generated	autonomous	text	YES		NULL	
+school_record_generated	career	text	YES		NULL	
+school_record_generated	volunteer	text	YES		NULL	
+school_record_generated	behavior_byte_limit	int	YES		1500	
+school_record_generated	autonomous_byte_limit	int	YES		1500	
+school_record_generated	career_byte_limit	int	YES		2100	
+school_record_generated	volunteer_byte_limit	int	YES		500	
+school_record_generated	status	varchar(20)	NO		draft	
+school_record_generated	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+school_record_generated	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+schoolinfo	school_id	int	NO	PRI	NULL	auto_increment
+schoolinfo	member_school	varchar(200)	NO		NULL	
+schoolinfo	region	varchar(100)	YES		NULL	
+schoolinfo	school_add	varchar(500)	YES		NULL	
+schoolinfo	school_level	varchar(20)	YES		NULL	
+schoolinfo	contract	varchar(20)	YES		NULL	
+schoolinfo	contract_time	date	YES		NULL	
+stu_all	id	int	NO	PRI	NULL	auto_increment
+stu_all	member_id	varchar(50)	NO		NULL	
+stu_all	school_id	varchar(45)	YES	MUL	NULL	
+stu_all	member_name	varchar(100)	NO		NULL	
+stu_all	point	int	YES		0	
+stu_all	member_school	varchar(200)	YES	MUL	NULL	
+stu_all	member_birth	date	YES		NULL	
+stu_all	member_tel	varchar(20)	YES		NULL	
+stu_all	class_grade	varchar(10)	YES	MUL	NULL	
+stu_all	class_no	varchar(10)	YES		NULL	
+stu_all	class_num	varchar(10)	YES		NULL	
+stu_all	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+stu_all	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+student_record	id	int	NO	PRI	NULL	auto_increment
+student_record	school_id	varchar(50)	YES		NULL	
+student_record	member_school	varchar(200)	YES		NULL	
+student_record	class_grade	int	YES		NULL	
+student_record	class_no	int	YES		NULL	
+student_record	class_num	int	YES		NULL	
+student_record	student_id	varchar(50)	YES		NULL	
+student_record	student_name	varchar(100)	YES		NULL	
+student_record	record_year	int	YES		NULL	
+student_record	record_semester	int	YES		NULL	
+student_record	behavior_record	text	YES		NULL	
+student_record	career_activity	text	YES		NULL	
+student_record	club_activity	text	YES		NULL	
+student_record	volunteer_activity	text	YES		NULL	
+student_record	award_record	text	YES		NULL	
+student_record	reading_record	text	YES		NULL	
+student_record	comprehensive_opinion	text	YES		NULL	
+student_record	teacher_id	varchar(50)	YES		NULL	
+student_record	teacher_name	varchar(100)	YES		NULL	
+student_record	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+student_record	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+subject_assignment	id	int	NO	PRI	NULL	auto_increment
+subject_assignment	school_id	varchar(50)	NO	MUL	NULL	
+subject_assignment	teacher_id	varchar(50)	NO		NULL	
+subject_assignment	teacher_name	varchar(100)	YES		NULL	
+subject_assignment	subject_name	varchar(100)	NO		NULL	
+subject_assignment	class_grade	varchar(10)	NO		NULL	
+subject_assignment	class_no	varchar(10)	NO		NULL	
+subject_assignment	record_year	varchar(4)	NO		NULL	
+subject_assignment	record_semester	varchar(1)	NO		NULL	
+subject_assignment	title	varchar(200)	NO		NULL	
+subject_assignment	description	text	YES		NULL	
+subject_assignment	due_date	date	YES		NULL	
+subject_assignment	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+subject_common_activity	id	int	NO	PRI	NULL	auto_increment
+subject_common_activity	school_id	varchar(50)	NO	MUL	NULL	
+subject_common_activity	member_school	varchar(100)	YES		NULL	
+subject_common_activity	teacher_id	varchar(50)	NO		NULL	
+subject_common_activity	teacher_name	varchar(100)	YES		NULL	
+subject_common_activity	subject_name	varchar(100)	NO		NULL	
+subject_common_activity	class_grade	varchar(10)	NO		NULL	
+subject_common_activity	class_no	varchar(10)	NO		NULL	
+subject_common_activity	record_year	varchar(4)	NO		NULL	
+subject_common_activity	record_semester	varchar(1)	NO		NULL	
+subject_common_activity	activity_type	varchar(50)	YES		NULL	
+subject_common_activity	activity_date	varchar(20)	YES		NULL	
+subject_common_activity	title	varchar(200)	NO		NULL	
+subject_common_activity	content	text	YES		NULL	
+subject_common_activity	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+subject_files	id	int	NO	PRI	NULL	auto_increment
+subject_files	school_id	varchar(50)	NO	MUL	NULL	
+subject_files	member_school	varchar(100)	YES		NULL	
+subject_files	teacher_id	varchar(50)	YES		NULL	
+subject_files	subject_name	varchar(100)	NO		NULL	
+subject_files	student_id	varchar(50)	YES		NULL	
+subject_files	student_name	varchar(100)	YES		NULL	
+subject_files	record_year	varchar(4)	NO		NULL	
+subject_files	record_semester	varchar(1)	NO		NULL	
+subject_files	file_name	varchar(255)	NO		NULL	
+subject_files	original_name	varchar(255)	NO		NULL	
+subject_files	file_path	varchar(500)	NO		NULL	
+subject_files	file_size	int	YES		0	
+subject_files	file_type	varchar(20)	YES		NULL	
+subject_files	uploaded_by	varchar(50)	YES		NULL	
+subject_files	uploaded_name	varchar(100)	YES		NULL	
+subject_files	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+subject_record	id	int	NO	PRI	NULL	auto_increment
+subject_record	school_id	varchar(50)	NO	MUL	NULL	
+subject_record	member_school	varchar(100)	YES		NULL	
+subject_record	teacher_id	varchar(50)	NO		NULL	
+subject_record	teacher_name	varchar(100)	YES		NULL	
+subject_record	subject_name	varchar(100)	NO		NULL	
+subject_record	class_grade	varchar(10)	NO		NULL	
+subject_record	class_no	varchar(10)	NO		NULL	
+subject_record	class_num	varchar(10)	YES		NULL	
+subject_record	student_id	varchar(50)	NO		NULL	
+subject_record	student_name	varchar(100)	YES		NULL	
+subject_record	record_year	varchar(4)	NO		NULL	
+subject_record	record_semester	varchar(1)	NO		NULL	
+subject_record	base_data	text	YES		NULL	
+subject_record	content	text	YES		NULL	
+subject_record	status	varchar(20)	YES		draft	
+subject_record	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+subject_record	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+subject_submission	id	int	NO	PRI	NULL	auto_increment
+subject_submission	assignment_id	int	NO	MUL	NULL	
+subject_submission	school_id	varchar(50)	NO	MUL	NULL	
+subject_submission	student_id	varchar(50)	NO		NULL	
+subject_submission	student_name	varchar(100)	YES		NULL	
+subject_submission	subject_name	varchar(100)	NO		NULL	
+subject_submission	class_grade	varchar(10)	YES		NULL	
+subject_submission	class_no	varchar(10)	YES		NULL	
+subject_submission	record_year	varchar(4)	NO		NULL	
+subject_submission	record_semester	varchar(1)	NO		NULL	
+subject_submission	file_name	varchar(255)	YES		NULL	
+subject_submission	file_path	varchar(500)	YES		NULL	
+subject_submission	file_size	int	YES		0	
+subject_submission	comment	text	YES		NULL	
+subject_submission	submitted_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+support_inquiries	id	int	NO	PRI	NULL	auto_increment
+support_inquiries	member_id	varchar(50)	YES	MUL	NULL	
+support_inquiries	member_name	varchar(100)	YES		NULL	
+support_inquiries	customer_email	varchar(100)	NO		NULL	
+support_inquiries	customer_phone	varchar(20)	YES		NULL	
+support_inquiries	type_code	varchar(20)	NO	MUL	NULL	
+support_inquiries	subject	varchar(200)	NO		NULL	
+support_inquiries	message	text	NO		NULL	
+support_inquiries	status	varchar(20)	YES	MUL	pending	
+support_inquiries	privacy_agreed	tinyint(1)	YES		0	
+support_inquiries	created_at	timestamp	YES	MUL	CURRENT_TIMESTAMP	DEFAULT_GENERATED
+support_inquiries	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+survey	id	int	NO	PRI	NULL	auto_increment
+survey	school_id	varchar(50)	NO	MUL	NULL	
+survey	title	varchar(200)	NO		NULL	
+survey	description	text	YES		NULL	
+survey	target_role	varchar(20)	NO		student	
+survey	target_grades	varchar(50)	NO		all	
+survey	status	varchar(20)	NO		draft	
+survey	created_by	varchar(50)	NO		NULL	
+survey	started_at	datetime	YES		NULL	
+survey	closed_at	datetime	YES		NULL	
+survey	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+survey	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+survey_answer	id	int	NO	PRI	NULL	auto_increment
+survey_answer	response_id	int	NO	MUL	NULL	
+survey_answer	question_id	int	NO	MUL	NULL	
+survey_answer	answer_value	text	YES		NULL	
+survey_question	id	int	NO	PRI	NULL	auto_increment
+survey_question	survey_id	int	NO	MUL	NULL	
+survey_question	question_order	int	NO		1	
+survey_question	question_text	text	NO		NULL	
+survey_question	question_type	varchar(20)	NO		NULL	
+survey_question	options	json	YES		NULL	
+survey_question	required	tinyint(1)	NO		1	
+survey_response	id	int	NO	PRI	NULL	auto_increment
+survey_response	survey_id	int	NO	MUL	NULL	
+survey_response	respondent_id	varchar(50)	NO		NULL	
+survey_response	respondent_role	varchar(20)	NO		NULL	
+survey_response	submitted_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+tea_all	id	int	NO	PRI	NULL	auto_increment
+tea_all	member_id	varchar(50)	NO		NULL	
+tea_all	school_id	varchar(45)	YES	MUL	NULL	
+tea_all	member_name	varchar(100)	NO		NULL	
+tea_all	point	varchar(10)	YES		NULL	
+tea_all	member_school	varchar(200)	YES	MUL	NULL	
+tea_all	member_birth	date	YES		NULL	
+tea_all	member_tel	varchar(20)	YES		NULL	
+tea_all	department	varchar(100)	YES		NULL	
+tea_all	department_position	varchar(50)	YES		NULL	
+tea_all	class_grade	varchar(10)	YES		NULL	
+tea_all	class_no	varchar(10)	YES		NULL	
+timetable	id	int	NO	PRI	NULL	auto_increment
+timetable	school_id	varchar(45)	YES		NULL	
+timetable	member_id	varchar(100)	YES		NULL	
+timetable	member_school	varchar(200)	YES	MUL	NULL	
+timetable	day_of_week	varchar(10)	YES	MUL	NULL	
+timetable	grade	varchar(10)	YES		NULL	
+timetable	class_no	varchar(10)	YES		NULL	
+timetable	period	varchar(10)	YES		NULL	
+timetable	subject	varchar(100)	YES		NULL	
+timetable	member_name	varchar(100)	YES		NULL	
+timetable	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+timetable	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+timetable_band_slots	id	int	NO	PRI	NULL	auto_increment
+timetable_band_slots	school_id	varchar(50)	YES	MUL	NULL	
+timetable_band_slots	grade	varchar(10)	YES		NULL	
+timetable_band_slots	band	varchar(5)	YES		NULL	
+timetable_band_slots	day_of_week	varchar(5)	YES		NULL	
+timetable_band_slots	period	varchar(5)	YES		NULL	
+timetable_changes	id	int	NO	PRI	NULL	auto_increment
+timetable_changes	school_id	varchar(50)	NO	MUL	NULL	
+timetable_changes	member_school	varchar(200)	YES		NULL	
+timetable_changes	change_date	date	NO		NULL	
+timetable_changes	day_of_week	varchar(10)	NO		NULL	
+timetable_changes	period	int	NO		NULL	
+timetable_changes	original_teacher	varchar(100)	YES		NULL	
+timetable_changes	original_subject	varchar(100)	YES		NULL	
+timetable_changes	original_grade	varchar(10)	YES		NULL	
+timetable_changes	original_class_no	varchar(10)	YES		NULL	
+timetable_changes	new_teacher	varchar(100)	YES		NULL	
+timetable_changes	new_subject	varchar(100)	YES		NULL	
+timetable_changes	change_reason	varchar(200)	YES		NULL	
+timetable_changes	changed_by	varchar(100)	YES		NULL	
+timetable_changes	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+timetable_changes	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+timetable_constraint	id	int	NO	PRI	NULL	auto_increment
+timetable_constraint	school_id	varchar(45)	YES	MUL	NULL	
+timetable_constraint	member_id	varchar(100)	YES		NULL	
+timetable_constraint	member_name	varchar(100)	YES		NULL	
+timetable_constraint	constraint_type	enum('day_off','period_off')	NO		NULL	
+timetable_constraint	day_of_week	varchar(10)	YES		NULL	
+timetable_constraint	period	int	YES		NULL	
+timetable_constraint	reason	varchar(200)	YES			
+timetable_constraint	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+timetable_constraint	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+timetable_data	id	int	NO	PRI	NULL	auto_increment
+timetable_data	school_id	varchar(45)	YES		NULL	
+timetable_data	member_school	varchar(200)	YES		NULL	
+timetable_data	subject	varchar(100)	NO		NULL	
+timetable_data	course_year	varchar(20)	YES		NULL	
+timetable_data	grade	varchar(10)	YES		NULL	
+timetable_data	subject_demand	varchar(20)	YES		NULL	
+timetable_data	subject_type	varchar(100)	YES		NULL	
+timetable_data	subject_depart	varchar(100)	YES		NULL	
+timetable_data	stu_count	varchar(20)	YES		NULL	
+timetable_data	class_demand	varchar(20)	YES		NULL	
+timetable_data	band_group	varchar(10)	YES		NULL	
+timetable_data	tea_demand	varchar(20)	YES		NULL	
+timetable_data	subject_type_tea_conclution	varchar(45)	YES		NULL	
+timetable_data	tea_1person	varchar(20)	YES		NULL	
+timetable_data	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+timetable_data	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+timetable_exchange	id	int	NO	PRI	NULL	auto_increment
+timetable_exchange	school_id	varchar(50)	NO	MUL	NULL	
+timetable_exchange	member_school	varchar(200)	YES		NULL	
+timetable_exchange	exchange_date	date	NO		NULL	
+timetable_exchange	requester_id	varchar(100)	NO	MUL	NULL	
+timetable_exchange	requester_name	varchar(100)	NO		NULL	
+timetable_exchange	requester_day	varchar(10)	NO		NULL	
+timetable_exchange	requester_period	int	NO		NULL	
+timetable_exchange	requester_subject	varchar(100)	YES		NULL	
+timetable_exchange	requester_grade	varchar(10)	YES		NULL	
+timetable_exchange	requester_class_no	varchar(10)	YES		NULL	
+timetable_exchange	target_id	varchar(100)	NO	MUL	NULL	
+timetable_exchange	target_name	varchar(100)	NO		NULL	
+timetable_exchange	target_day	varchar(10)	NO		NULL	
+timetable_exchange	target_period	int	NO		NULL	
+timetable_exchange	target_subject	varchar(100)	YES		NULL	
+timetable_exchange	target_grade	varchar(10)	YES		NULL	
+timetable_exchange	target_class_no	varchar(10)	YES		NULL	
+timetable_exchange	status	enum('pending','approved','rejected','cancelled')	YES		pending	
+timetable_exchange	reason	varchar(200)	YES			
+timetable_exchange	reject_reason	varchar(200)	YES			
+timetable_exchange	change_id_1	int	YES		NULL	
+timetable_exchange	change_id_2	int	YES		NULL	
+timetable_exchange	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+timetable_exchange	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+timetable_exchange	chain_id	varchar(50)	YES	MUL	NULL	
+timetable_exchange	chain_sequence	int	YES		0	
+timetable_exchange	chain_total	int	YES		0	
+timetable_fixed_subject	id	int	NO	PRI	NULL	auto_increment
+timetable_fixed_subject	school_id	varchar(50)	NO	MUL	NULL	
+timetable_fixed_subject	grade	varchar(10)	NO		NULL	
+timetable_fixed_subject	day_of_week	varchar(10)	NO		NULL	
+timetable_fixed_subject	period_start	int	NO		NULL	
+timetable_fixed_subject	period_count	int	NO		1	
+timetable_fixed_subject	subject	varchar(100)	NO		NULL	
+timetable_fixed_subject	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+timetable_fixed_subject	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+timetable_stu	id	int	NO	PRI	NULL	auto_increment
+timetable_stu	member_id	varchar(50)	YES		NULL	
+timetable_stu	school_id	varchar(50)	YES	MUL	NULL	
+timetable_stu	member_name	varchar(100)	YES	MUL	NULL	
+timetable_stu	member_birth	varchar(20)	YES		NULL	
+timetable_stu	member_school	varchar(200)	YES		NULL	
+timetable_stu	grade	varchar(10)	YES		NULL	
+timetable_stu	class_no	varchar(10)	YES		NULL	
+timetable_stu	student_num	varchar(10)	YES		NULL	
+timetable_stu	subject1	varchar(100)	YES		NULL	
+timetable_stu	subject2	varchar(100)	YES		NULL	
+timetable_stu	subject3	varchar(100)	YES		NULL	
+timetable_stu	subject4	varchar(100)	YES		NULL	
+timetable_stu	subject5	varchar(100)	YES		NULL	
+timetable_stu	subject6	varchar(100)	YES		NULL	
+timetable_stu	subject7	varchar(100)	YES		NULL	
+timetable_stu	subject8	varchar(100)	YES		NULL	
+timetable_stu	subject9	varchar(100)	YES		NULL	
+timetable_stu	subject10	varchar(100)	YES		NULL	
+timetable_stu	subject11	varchar(100)	YES		NULL	
+timetable_stu	subject12	varchar(100)	YES		NULL	
+timetable_stu	created_at	datetime	YES		NULL	
+timetable_stu	updated_at	datetime	YES		NULL	
+timetable_stu_group	id	int	NO	PRI	NULL	auto_increment
+timetable_stu_group	school_id	varchar(50)	YES	MUL	NULL	
+timetable_stu_group	member_id	varchar(50)	YES	MUL	NULL	
+timetable_stu_group	member_name	varchar(100)	YES		NULL	
+timetable_stu_group	grade	varchar(10)	YES		NULL	
+timetable_stu_group	homeroom_class	varchar(10)	YES		NULL	
+timetable_stu_group	student_num	varchar(10)	YES		NULL	
+timetable_stu_group	subject	varchar(100)	YES		NULL	
+timetable_stu_group	group_no	varchar(10)	YES		NULL	
+timetable_stu_group	band	varchar(5)	YES		NULL	
+timetable_stu_group	teacher_name	varchar(100)	YES		NULL	
+timetable_stu_group	teacher_id	varchar(50)	YES		NULL	
+timetable_stu_group	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+timetable_survey	id	int	NO	PRI	NULL	auto_increment
+timetable_survey	school_id	varchar(50)	NO	UNI	NULL	
+timetable_survey	member_school	varchar(200)	YES		NULL	
+timetable_survey	survey_start	date	YES		NULL	
+timetable_survey	survey_end	date	YES		NULL	
+timetable_survey	survey_status	varchar(20)	YES		inactive	
+timetable_survey	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+timetable_survey	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+timetable_tea	id	int	NO	PRI	NULL	auto_increment
+timetable_tea	school_id	varchar(45)	YES		NULL	
+timetable_tea	member_id	varchar(100)	YES		NULL	
+timetable_tea	member_school	varchar(200)	YES		NULL	
+timetable_tea	grade	varchar(10)	YES		NULL	
+timetable_tea	class_no	varchar(10)	YES		NULL	
+timetable_tea	class_conut	varchar(20)	YES		NULL	
+timetable_tea	day_of_week	varchar(10)	YES		NULL	
+timetable_tea	period	varchar(10)	YES		NULL	
+timetable_tea	subject	varchar(100)	YES		NULL	
+timetable_tea	member_name	varchar(100)	YES		NULL	
+timetable_tea	hours	int	YES		NULL	
+timetable_tea	member_birth	date	YES		NULL	
+timetable_tea	created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+timetable_tea	updated_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+universities	univ_id	int	NO	PRI	NULL	auto_increment
+universities	univ_name	varchar(100)	NO		NULL	
+universities	univ_name_en	varchar(150)	YES		NULL	
+universities	degree_type	varchar(20)	YES		NULL	
+universities	univ_type	varchar(30)	YES		NULL	
+universities	region	varchar(20)	YES		NULL	
+universities	address	varchar(200)	YES		NULL	
+universities	zipcode	char(5)	YES		NULL	
+universities	foundation	varchar(10)	YES		NULL	
+universities	campus_type	varchar(10)	YES		NULL	
+universities	status	varchar(10)	YES		NULL	
+universities	phone	varchar(20)	YES		NULL	
+universities	fax	varchar(20)	YES		NULL	
+universities	website	varchar(100)	YES		NULL	
+universities	data_year	year	YES		NULL	
+universities	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+universities	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+verification	id	int	NO	PRI	NULL	auto_increment
+verification	school_id	varchar(45)	YES		NULL	
+verification	member_school	varchar(45)	YES		NULL	
+verification	member_id	varchar(45)	YES		NULL	
+verification	timetable	varchar(45)	YES		NULL	
+verification	class_maker	varchar(45)	YES		NULL	
+verification	report	varchar(45)	YES		NULL	
+verification	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+verification	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+verification_student	id	int	NO	PRI	NULL	auto_increment
+verification_student	school_id	varchar(45)	NO	MUL	NULL	
+verification_student	member_school	varchar(45)	YES		NULL	
+verification_student	member_id	varchar(45)	NO	MUL	NULL	
+verification_student	student_id	varchar(45)	NO		NULL	
+verification_student	homeroom_record	varchar(10)	YES		NULL	
+verification_student	subject_record	varchar(10)	YES		NULL	
+verification_student	club_record	varchar(10)	YES		NULL	
+verification_student	created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+verification_student	updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP

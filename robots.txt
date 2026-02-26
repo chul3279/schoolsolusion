@@ -10,13 +10,13 @@ Disallow: /api/
 Disallow: /login_process
 Disallow: /*.json$
 
-# 학교별 대시보드 (로그인 필요 영역)
+# 로그인 필요 영역
 Disallow: /highschool/
 Disallow: /middleschool/
-Disallow: /academy/
 
-# 템플릿 페이지
+# 내부 전용
 Disallow: /templates/
+Disallow: /수정참조/
 
 # 사이트맵 위치
 Sitemap: https://www.schoolwithus.co.kr/sitemap.xml

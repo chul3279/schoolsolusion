@@ -182,6 +182,11 @@ def assign_electives():
 
         result = run_elective_pipeline(cursor, school_id, grade, seed=seed)
 
+        # 밴드 균형 오류 등 엔진에서 에러 반환 시
+        if result.get('status') == 'error':
+            conn.rollback()
+            return jsonify({'success': False, **result})
+
         if result.get('saved'):
             conn.commit()
         elif not result.get('skipped'):
