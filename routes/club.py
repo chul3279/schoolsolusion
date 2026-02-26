@@ -281,8 +281,16 @@ def add_club_student():
         record_year = sanitize_input(data.get('record_year'), 4)
         record_semester = sanitize_input(data.get('record_semester'), 1)
 
-        if not all([school_id, club_name, student_id]):
-            return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
+        missing = []
+        if not school_id: missing.append('학교ID')
+        if not club_name: missing.append('동아리명')
+        if not student_id: missing.append('학생ID')
+        if not teacher_id: missing.append('교사ID')
+        if not teacher_name: missing.append('교사명')
+        if not record_year: missing.append('학년도')
+        if not record_semester: missing.append('학기')
+        if missing:
+            return jsonify({'success': False, 'message': f'필수 정보가 누락되었습니다: {", ".join(missing)}'})
 
         conn = get_db_connection()
         if not conn:
@@ -1066,7 +1074,11 @@ def generate_club_record():
 - 동아리 활동 참여 계기 → 구체적 역할·참여 과정 → 성장/변화 → 잠재력·태도 평가 흐름으로 작성
 - 활동 과정에서의 시행착오와 이를 극복한 경험을 긍정적으로 서술
 - 또래와의 협력, 소통, 배려 등 공동체 역량이 구체적 행동 사례로 드러나도록 작성
-- 학생의 흥미, 적극성, 성실성, 성장 가능성이 자연스럽게 드러나도록 서술"""
+- 학생의 흥미, 적극성, 성실성, 성장 가능성이 자연스럽게 드러나도록 서술
+
+[중요 - 분량 규칙]
+- 반드시 지정된 분량을 최대한 채워서 작성하세요. 분량이 부족하면 활동 에피소드를 더 구체적으로 서술하세요.
+- 반드시 완전한 문장(명사형 어미: ~함, ~임, ~음)으로 끝내세요. 문장이 중간에 잘리지 않도록 주의하세요."""
         else:
             prompt = f"""당신은 대한민국 고등학교에서 20년 이상 근무한 베테랑 동아리 지도 교사입니다.
 학생부종합전형에서 높은 평가를 받는 '창의적 체험활동 - 동아리활동' 기록을 작성하는 전문가입니다.
@@ -1091,7 +1103,11 @@ def generate_club_record():
 - 동아리 활동 참여 계기 → 구체적 역할·기여 → 탐구/활동 결과물 → 역량·성장 평가 흐름으로 작성
 - 활동 과정에서의 문제 해결 과정과 자기주도적 노력을 구체적 에피소드로 서술
 - 동아리 활동을 통해 배운 내용을 교과 학습이나 진로 탐색과 연결하여 확장적으로 서술
-- 협력, 리더십, 의사소통 등 공동체 역량이 구체적 행동 사례로 드러나도록 작성"""
+- 협력, 리더십, 의사소통 등 공동체 역량이 구체적 행동 사례로 드러나도록 작성
+
+[중요 - 분량 규칙]
+- 반드시 지정된 분량을 최대한 채워서 작성하세요. 분량이 부족하면 활동 에피소드를 더 구체적으로 서술하세요.
+- 반드시 완전한 문장(명사형 어미: ~함, ~임, ~음)으로 끝내세요. 문장이 중간에 잘리지 않도록 주의하세요."""
 
         ai_text, err = call_gemini(prompt, file_parts=file_parts if file_parts else None)
         if err:
