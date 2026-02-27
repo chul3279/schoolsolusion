@@ -202,20 +202,14 @@ body { font-family: 'Noto Sans KR', sans-serif; }
 
         // 돌아가기
         function goBack() {
-            // 사용자 역할에 따라 다른 페이지로 이동
             const userStr = localStorage.getItem('schoolus_user');
             if (userStr) {
                 try {
                     const user = JSON.parse(userStr);
-                    if (user.member_roll === 'teacher') {
-                        window.location.href = '/highschool/tea.html';
-                    } else if (user.member_roll === 'student') {
-                        window.location.href = '/highschool/st.html';
-                    } else if (user.member_roll === 'parent') {
-                        window.location.href = '/highschool/fm.html';
-                    } else {
-                        window.location.href = '/';
-                    }
+                    const level = (user.school_level === '중학교') ? 'middleschool' : 'highschool';
+                    const roleMap = { teacher: 'tea', student: 'st', parent: 'fm' };
+                    const page = roleMap[user.member_roll];
+                    window.location.href = page ? `/${level}/${page}.html` : '/';
                 } catch (e) {
                     window.location.href = '/';
                 }

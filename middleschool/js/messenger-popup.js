@@ -381,9 +381,11 @@
             if(!data.success) return;
             _currentRoomType=data.room?.room_type||'direct';
             document.getElementById('msg-leave-text').textContent=_currentRoomType==='direct'?'대화방 삭제':'대화방 나가기';
-            let tt=data.room?.room_title;
-            if(!tt && data.members){const o=data.members.find(m=>m.member_id!==_myId); tt=o?o.member_name:'대화방';}
-            document.getElementById('msg-popup-title').textContent=tt||'대화방';
+            let tt;
+            if(data.room?.room_type&&['class','grade','school'].includes(data.room.room_type)&&data.room.room_title){tt=data.room.room_title;}
+            else if(data.members){const o=data.members.filter(m=>m.member_id!==_myId); tt=o.length?o.map(m=>m.member_name).join(', '):'대화방';}
+            else{tt=data.room?.room_title||'대화방';}
+            document.getElementById('msg-popup-title').textContent=tt;
             _renderMsgs(data.messages||[]);
             fetch('/api/message/read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({room_id:roomId})}).catch(()=>{});
             _stopPoll();
@@ -499,9 +501,11 @@
 
     /* ── 유틸 ── */
     function _roomTitle(r){
-        let t=r.room_title;
-        if(!t&&r.room_type==='direct'&&r.members){const o=r.members.find(m=>m.member_id!==_myId);t=o?o.member_name:null;}
-        return t||'대화방';
+        // class/grade/school 단체방은 고정 제목 사용
+        if(r.room_title&&r.room_type&&['class','grade','school'].includes(r.room_type)) return r.room_title;
+        // direct/group은 멤버에서 자신을 제외하고 동적 표시
+        if(r.members){const o=r.members.filter(m=>m.member_id!==_myId); if(o.length) return o.map(m=>m.member_name).join(', ');}
+        return r.room_title||'대화방';
     }
     function _fmtTime(t){if(!t)return '';const d=new Date(t.replace(' ','T'));const n=new Date();const df=n-d;if(df<60000)return '방금';if(df<3600000)return Math.floor(df/60000)+'분 전';if(df<86400000)return Math.floor(df/3600000)+'시간 전';if(df<604800000)return Math.floor(df/86400000)+'일 전';return(d.getMonth()+1)+'/'+d.getDate();}
     function _esc(s){if(!s)return '';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}

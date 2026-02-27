@@ -1832,7 +1832,10 @@ def create_timetable_exchange():
                 s_req_period = step.get('requester_period')
                 s_tgt_period = step.get('target_period')
 
-                if not s_req_id or not s_tgt_id:
+                if not s_req_id:
+                    continue
+                # __EMPTY__ target은 빈 슬롯 이동 (direct_move/bundle_move)
+                if not s_tgt_id:
                     continue
 
                 cursor.execute("""
@@ -2040,34 +2043,53 @@ def respond_timetable_exchange():
                 WHERE chain_id=%s ORDER BY chain_sequence""", (ex['chain_id'],))
             chain_records = cursor.fetchall()
             for rec in chain_records:
-                # 레코드1: 요청자 슬롯 → 대상자가 가르침
-                cursor.execute("""
-                    INSERT INTO timetable_changes
-                    (school_id, member_school, change_date, day_of_week, period,
-                     original_teacher, original_subject, original_grade, original_class_no,
-                     new_teacher, new_subject, change_reason, changed_by)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                """, (school_id, rec['member_school'], rec['exchange_date'],
-                      rec['requester_day'], rec['requester_period'],
-                      rec['requester_name'], rec['requester_subject'],
-                      rec['requester_grade'], rec['requester_class_no'],
-                      rec['target_name'], rec['requester_subject'],
-                      '교환수업', rec['target_name']))
-                cid1 = cursor.lastrowid
-                # 레코드2: 대상자 슬롯 → 요청자가 가르침
-                cursor.execute("""
-                    INSERT INTO timetable_changes
-                    (school_id, member_school, change_date, day_of_week, period,
-                     original_teacher, original_subject, original_grade, original_class_no,
-                     new_teacher, new_subject, change_reason, changed_by)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                """, (school_id, rec['member_school'], rec['exchange_date'],
-                      rec['target_day'], rec['target_period'],
-                      rec['target_name'], rec['target_subject'],
-                      rec['target_grade'], rec['target_class_no'],
-                      rec['requester_name'], rec['target_subject'],
-                      '교환수업', rec['target_name']))
-                cid2 = cursor.lastrowid
+                is_empty_move = (rec.get('target_id') == '__EMPTY__')
+
+                if is_empty_move:
+                    # 빈 슬롯 이동 (direct_move/bundle_move): 원래 교시만 자습 처리
+                    cursor.execute("""
+                        INSERT INTO timetable_changes
+                        (school_id, member_school, change_date, day_of_week, period,
+                         original_teacher, original_subject, original_grade, original_class_no,
+                         new_teacher, new_subject, change_reason, changed_by)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    """, (school_id, rec['member_school'], rec['exchange_date'],
+                          rec['requester_day'], rec['requester_period'],
+                          rec['requester_name'], rec['requester_subject'],
+                          rec['requester_grade'], rec['requester_class_no'],
+                          '자습', '자습',
+                          '묶음이동', rec['requester_name']))
+                    cid1 = cursor.lastrowid
+                    cid2 = None
+                else:
+                    # 레코드1: 요청자 슬롯 → 대상자가 가르침
+                    cursor.execute("""
+                        INSERT INTO timetable_changes
+                        (school_id, member_school, change_date, day_of_week, period,
+                         original_teacher, original_subject, original_grade, original_class_no,
+                         new_teacher, new_subject, change_reason, changed_by)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    """, (school_id, rec['member_school'], rec['exchange_date'],
+                          rec['requester_day'], rec['requester_period'],
+                          rec['requester_name'], rec['requester_subject'],
+                          rec['requester_grade'], rec['requester_class_no'],
+                          rec['target_name'], rec['requester_subject'],
+                          '교환수업', rec['target_name']))
+                    cid1 = cursor.lastrowid
+                    # 레코드2: 대상자 슬롯 → 요청자가 가르침
+                    cursor.execute("""
+                        INSERT INTO timetable_changes
+                        (school_id, member_school, change_date, day_of_week, period,
+                         original_teacher, original_subject, original_grade, original_class_no,
+                         new_teacher, new_subject, change_reason, changed_by)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    """, (school_id, rec['member_school'], rec['exchange_date'],
+                          rec['target_day'], rec['target_period'],
+                          rec['target_name'], rec['target_subject'],
+                          rec['target_grade'], rec['target_class_no'],
+                          rec['requester_name'], rec['target_subject'],
+                          '교환수업', rec['target_name']))
+                    cid2 = cursor.lastrowid
                 cursor.execute("""UPDATE timetable_exchange SET change_id_1=%s, change_id_2=%s
                     WHERE id=%s""", (cid1, cid2, rec['id']))
             conn.commit()

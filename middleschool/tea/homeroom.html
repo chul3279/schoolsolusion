@@ -53,6 +53,25 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
             .tab-btn { min-height: 48px; padding: 12px 16px !important; font-size: 14px !important; white-space: nowrap; }
         }
+
+        /* 출력 스타일 */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area {
+                position: absolute; left: 0; top: 0; width: 100%;
+                background: white; padding: 20px;
+            }
+            #print-area table { width: 100%; border-collapse: collapse; }
+            #print-area th, #print-area td {
+                border: 1px solid #333; padding: 8px 12px; text-align: left; font-size: 12px;
+            }
+            #print-area th { background: #f0f0f0; font-weight: bold; }
+            #print-area .print-header { text-align: center; margin-bottom: 20px; }
+            #print-area .print-header h2 { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+            #print-area .print-header p { font-size: 13px; color: #555; }
+            .no-print { display: none !important; }
+        }
     </style>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#3b82f6">
@@ -173,6 +192,9 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                         <button onclick="switchTab('students')" class="tab-btn active px-5 py-2.5 rounded-xl font-bold text-sm" id="tab-students">
                             <i class="fas fa-users mr-2"></i>학생 명단
                         </button>
+                        <button onclick="switchTab('parents')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200" id="tab-parents">
+                            <i class="fas fa-user-friends mr-2"></i>학부모 명단
+                        </button>
                         <button onclick="switchTab('notice')" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-slate-200" id="tab-notice">
                             <i class="fas fa-bullhorn mr-2"></i>학급 공지
                         </button>
@@ -215,6 +237,9 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                                         <a href="/api/homeroom/students/template" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold transition inline-flex items-center">
                                             <i class="fas fa-file-download mr-1"></i>양식 다운로드
                                         </a>
+                                        <button onclick="printStudentList()" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold transition no-print">
+                                            <i class="fas fa-print mr-1"></i>출력
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -226,13 +251,50 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                                             <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">이름</th>
                                             <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">생년월일</th>
                                             <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">연락처</th>
+                                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">학급자치</th>
                                             <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">상담</th>
                                             <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">기초자료</th>
                                             <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">관리</th>
                                         </tr>
                                     </thead>
                                     <tbody id="student-list">
-                                        <tr><td colspan="7" class="text-center py-12 text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>로딩 중...</td></tr>
+                                        <tr><td colspan="8" class="text-center py-12 text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>로딩 중...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ==================== 학부모 명단 탭 ==================== -->
+                    <div id="panel-parents" class="tab-panel hidden">
+                        <div class="glass-card rounded-2xl shadow-lg overflow-hidden">
+                            <div class="bg-gradient-to-r from-purple-500 to-violet-600 p-5 text-white">
+                                <div class="flex justify-between items-center flex-wrap gap-3">
+                                    <div>
+                                        <h3 class="font-bold text-lg"><i class="fas fa-user-friends mr-2"></i>학부모 명단</h3>
+                                        <p class="text-sm text-white/80" id="parent-count">총 0명</p>
+                                    </div>
+                                    <div class="flex gap-2 flex-wrap">
+                                        <button onclick="printParentList()" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold transition no-print">
+                                            <i class="fas fa-print mr-1"></i>출력
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-slate-50 border-b">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">번호</th>
+                                            <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">학부모 이름</th>
+                                            <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">연락처</th>
+                                            <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">자녀 이름</th>
+                                            <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">자녀 생년월일</th>
+                                            <th class="px-4 py-3 text-center text-xs font-bold text-slate-500">관리</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="parent-list">
+                                        <tr><td colspan="6" class="text-center py-12 text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>로딩 중...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -586,7 +648,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden">
             <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-5 text-white">
                 <button onclick="closeNoticeModal()" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-                <h3 class="font-bold text-lg"><i class="fas fa-bullhorn mr-2"></i>학급 공지 등록</h3>
+                <h3 class="font-bold text-lg" id="notice-modal-title"><i class="fas fa-bullhorn mr-2"></i>학급 공지 등록</h3>
             </div>
             <div class="p-6">
                 <div class="mb-4">
@@ -597,7 +659,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                     <label class="block text-xs font-bold text-slate-500 mb-2">내용</label>
                     <textarea id="notice-content" rows="5" placeholder="공지 내용" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-amber-500 outline-none resize-none"></textarea>
                 </div>
-                <button onclick="submitNotice()" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black py-4 rounded-xl">등록하기</button>
+                <button onclick="submitNotice()" id="notice-submit-btn" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black py-4 rounded-xl">등록하기</button>
             </div>
         </div>
     </div>
@@ -778,6 +840,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                     }
                     
                     loadStudents();
+                    loadParents();
                     loadNotices();
                     loadSchedules();
                     loadLogs();
@@ -818,14 +881,33 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                     
                     const tbody = document.getElementById('student-list');
                     if (studentList.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-12 text-slate-400">등록된 학생이 없습니다. 학생을 추가해주세요.</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-12 text-slate-400">등록된 학생이 없습니다. 학생을 추가해주세요.</td></tr>';
                     } else {
                         tbody.innerHTML = studentList.map(s => `
-                            <tr class="hover:bg-slate-50 transition">
-                                <td class="px-4 py-3 font-bold text-slate-800">${s.class_num || '-'}</td>
-                                <td class="px-4 py-3 font-medium">${s.member_name}</td>
-                                <td class="px-4 py-3 text-sm text-slate-600">${s.member_birth || '-'}</td>
-                                <td class="px-4 py-3 text-sm text-slate-600">${s.member_tel || '-'}</td>
+                            <tr class="hover:bg-slate-50 transition" id="stu-row-${s.id}">
+                                <td class="px-4 py-3 font-bold text-slate-800">
+                                    <span class="stu-view">${s.class_num || '-'}</span>
+                                    <input type="text" value="${s.class_num || ''}" class="stu-edit hidden w-12 text-xs text-center border border-slate-300 rounded px-1 py-0.5">
+                                </td>
+                                <td class="px-4 py-3 font-medium">
+                                    <span class="stu-view">${s.member_name}</span>
+                                    ${s.member_id ? '<button onclick="sendMessageTo(\'' + s.member_id + '\', \'' + s.member_name + '\')" class="stu-view ml-1 text-blue-400 hover:text-blue-600 transition no-print" title="메시지 보내기"><i class="fas fa-envelope text-xs"></i></button>' : ''}
+                                    <input type="text" value="${s.member_name || ''}" class="stu-edit hidden w-20 text-xs border border-slate-300 rounded px-1 py-0.5">
+                                </td>
+                                <td class="px-4 py-3 text-sm text-slate-600">
+                                    <span class="stu-view">${s.member_birth || '-'}</span>
+                                    <input type="date" value="${s.member_birth || ''}" class="stu-edit hidden text-xs border border-slate-300 rounded px-1 py-0.5">
+                                </td>
+                                <td class="px-4 py-3 text-sm text-slate-600">
+                                    <span class="stu-view">${s.member_tel || '-'}</span>
+                                    <input type="text" value="${s.member_tel || ''}" placeholder="010-0000-0000" class="stu-edit hidden w-28 text-xs border border-slate-300 rounded px-1 py-0.5">
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <input type="text" value="${s.class_role || ''}" placeholder="-"
+                                        onblur="saveClassRole(${s.id}, this.value)"
+                                        onkeydown="if(event.key==='Enter'){this.blur();}"
+                                        class="w-20 text-xs text-center border border-slate-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-green-400">
+                                </td>
                                 <td class="px-4 py-3 text-center">
                                     <button onclick="quickCounsel('${s.member_id}', '${s.member_name}', ${s.class_num || 0})" class="px-3 py-1 bg-blue-100 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-200 transition">
                                         <i class="fas fa-comments mr-1"></i>상담
@@ -836,8 +918,17 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                                         <i class="fas fa-database mr-1"></i>기초자료
                                     </button>
                                 </td>
-                                <td class="px-4 py-3 text-center">
-                                    <button onclick="removeStudent(${s.id}, '${s.member_name}')" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition">
+                                <td class="px-4 py-3 text-center whitespace-nowrap">
+                                    <button onclick="toggleStudentEdit(${s.id})" class="stu-view px-3 py-1 bg-amber-100 text-amber-600 rounded-lg text-xs font-bold hover:bg-amber-200 transition">
+                                        <i class="fas fa-pen mr-1"></i>수정
+                                    </button>
+                                    <button onclick="saveStudentEdit(${s.id})" class="stu-edit hidden px-3 py-1 bg-green-100 text-green-600 rounded-lg text-xs font-bold hover:bg-green-200 transition">
+                                        <i class="fas fa-check mr-1"></i>저장
+                                    </button>
+                                    <button onclick="cancelStudentEdit(${s.id})" class="stu-edit hidden px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 transition">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <button onclick="removeStudent(${s.id}, '${s.member_name}')" class="stu-view px-3 py-1 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition ml-1">
                                         <i class="fas fa-user-minus mr-1"></i>제거
                                     </button>
                                 </td>
@@ -849,6 +940,291 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             } catch (error) {
                 console.error('학생 로드 오류:', error);
             }
+        }
+
+        function printStudentList() {
+            if (!studentList || studentList.length === 0) {
+                alert('출력할 학생 데이터가 없습니다.');
+                return;
+            }
+            const schoolName = currentUser.member_school || '';
+            const classInfo = homeroomInfo ? `${homeroomInfo.class_grade}학년 ${homeroomInfo.class_no}반` : '';
+            const today = new Date().toLocaleDateString('ko-KR');
+
+            let html = `<div class="print-header">
+                <h2>${schoolName} ${classInfo} 학생 명단</h2>
+                <p>출력일: ${today} | 총 ${studentList.length}명</p>
+            </div>
+            <table>
+                <thead><tr>
+                    <th style="width:50px;text-align:center">번호</th>
+                    <th style="width:80px">이름</th>
+                    <th style="width:100px">생년월일</th>
+                    <th style="width:120px">연락처</th>
+                    <th style="width:80px;text-align:center">학급자치</th>
+                </tr></thead><tbody>`;
+
+            studentList.forEach(s => {
+                html += `<tr>
+                    <td style="text-align:center">${s.class_num || '-'}</td>
+                    <td>${s.member_name || '-'}</td>
+                    <td>${s.member_birth || '-'}</td>
+                    <td>${s.member_tel || '-'}</td>
+                    <td style="text-align:center">${s.class_role || '-'}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+
+            const printArea = document.getElementById('print-area');
+            printArea.innerHTML = html;
+            printArea.style.display = 'block';
+            window.print();
+            printArea.style.display = 'none';
+        }
+
+        async function sendMessageTo(targetMemberId, targetName) {
+            try {
+                const res = await fetch('/api/messenger/conversations/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        member_id: currentUser.member_id,
+                        school_id: currentUser.school_id,
+                        user_role: 'teacher',
+                        member_name: currentUser.member_name,
+                        target_ids: [targetMemberId],
+                        conv_type: 'direct'
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const level = (currentUser.school_level === '중학교') ? 'middleschool' : 'highschool';
+                    window.location.href = `/${level}/messenger.html?conv=${data.conversation_id}`;
+                } else {
+                    alert(data.message || '대화방 생성에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('메시지 보내기 오류:', error);
+                alert('메시지 기능 연결 중 오류가 발생했습니다.');
+            }
+        }
+
+        async function saveClassRole(id, role) {
+            try {
+                const response = await fetch('/api/homeroom/students/role', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, class_role: role })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const s = studentList.find(st => st.id === id);
+                    if (s) s.class_role = role;
+                }
+            } catch (error) {
+                console.error('학급자치 저장 오류:', error);
+            }
+        }
+
+        function toggleStudentEdit(id) {
+            const row = document.getElementById(`stu-row-${id}`);
+            row.querySelectorAll('.stu-view').forEach(el => el.classList.add('hidden'));
+            row.querySelectorAll('.stu-edit').forEach(el => el.classList.remove('hidden'));
+        }
+
+        function cancelStudentEdit(id) {
+            const row = document.getElementById(`stu-row-${id}`);
+            row.querySelectorAll('.stu-view').forEach(el => el.classList.remove('hidden'));
+            row.querySelectorAll('.stu-edit').forEach(el => el.classList.add('hidden'));
+            const s = studentList.find(st => st.id === id);
+            if (s) {
+                const inputs = row.querySelectorAll('.stu-edit');
+                inputs[0].value = s.class_num || '';
+                inputs[1].value = s.member_name || '';
+                inputs[2].value = s.member_birth || '';
+                inputs[3].value = s.member_tel || '';
+            }
+        }
+
+        async function saveStudentEdit(id) {
+            const row = document.getElementById(`stu-row-${id}`);
+            const inputs = row.querySelectorAll('.stu-edit');
+            const classNum = inputs[0].value.trim();
+            const memberName = inputs[1].value.trim();
+            const memberBirth = inputs[2].value.trim();
+            const memberTel = inputs[3].value.trim();
+            const s = studentList.find(st => st.id === id);
+            const classRole = s ? s.class_role || '' : '';
+
+            if (!memberName) { alert('이름은 필수입니다.'); return; }
+
+            try {
+                const response = await fetch('/api/homeroom/students/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, member_name: memberName, member_birth: memberBirth, member_tel: memberTel, class_num: classNum, class_role: classRole })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const s = studentList.find(st => st.id === id);
+                    if (s) { s.class_num = classNum; s.member_name = memberName; s.member_birth = memberBirth; s.member_tel = memberTel; s.class_role = classRole; }
+                    loadStudents();
+                } else {
+                    alert(data.message || '수정 실패');
+                }
+            } catch (error) {
+                console.error('학생 정보 수정 오류:', error);
+                alert('수정 중 오류가 발생했습니다.');
+            }
+        }
+
+        function toggleParentEdit(id) {
+            const row = document.getElementById(`par-row-${id}`);
+            row.querySelectorAll('.par-view').forEach(el => el.classList.add('hidden'));
+            row.querySelectorAll('.par-edit').forEach(el => el.classList.remove('hidden'));
+        }
+
+        function cancelParentEdit(id) {
+            const row = document.getElementById(`par-row-${id}`);
+            row.querySelectorAll('.par-view').forEach(el => el.classList.remove('hidden'));
+            row.querySelectorAll('.par-edit').forEach(el => el.classList.add('hidden'));
+            const p = parentList.find(pt => pt.id === id);
+            if (p) {
+                const inputs = row.querySelectorAll('.par-edit');
+                inputs[0].value = p.member_name || '';
+                inputs[1].value = p.member_tel || '';
+                inputs[2].value = p.child_name || '';
+                inputs[3].value = p.child_birth || '';
+            }
+        }
+
+        async function saveParentEdit(id) {
+            const row = document.getElementById(`par-row-${id}`);
+            const inputs = row.querySelectorAll('.par-edit');
+            const memberName = inputs[0].value.trim();
+            const memberTel = inputs[1].value.trim();
+            const childName = inputs[2].value.trim();
+            const childBirth = inputs[3].value.trim();
+
+            if (!memberName) { alert('이름은 필수입니다.'); return; }
+
+            try {
+                const response = await fetch('/api/homeroom/parents/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, member_name: memberName, member_tel: memberTel, child_name: childName, child_birth: childBirth })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const p = parentList.find(pt => pt.id === id);
+                    if (p) { p.member_name = memberName; p.member_tel = memberTel; p.child_name = childName; p.child_birth = childBirth; }
+                    loadParents();
+                } else {
+                    alert(data.message || '수정 실패');
+                }
+            } catch (error) {
+                console.error('학부모 정보 수정 오류:', error);
+                alert('수정 중 오류가 발생했습니다.');
+            }
+        }
+
+        // ==================== 학부모 명단 ====================
+        let parentList = [];
+
+        async function loadParents() {
+            try {
+                const params = getSchoolParams();
+                params.append('class_grade', homeroomInfo.class_grade);
+                params.append('class_no', homeroomInfo.class_no);
+                const response = await fetch(`/api/homeroom/parents?${params.toString()}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    parentList = data.parents || [];
+                    document.getElementById('parent-count').textContent = `총 ${parentList.length}명`;
+
+                    const tbody = document.getElementById('parent-list');
+                    if (parentList.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-slate-400">등록된 학부모가 없습니다.</td></tr>';
+                    } else {
+                        tbody.innerHTML = parentList.map(p => `
+                            <tr class="hover:bg-slate-50 transition" id="par-row-${p.id}">
+                                <td class="px-4 py-3 font-bold text-slate-800">${p.class_num || '-'}</td>
+                                <td class="px-4 py-3 font-medium">
+                                    <span class="par-view">${p.member_name}</span>
+                                    ${p.member_id ? '<button onclick="sendMessageTo(\'' + p.member_id + '\', \'' + p.member_name + '\')" class="par-view ml-1 text-blue-400 hover:text-blue-600 transition no-print" title="메시지 보내기"><i class="fas fa-envelope text-xs"></i></button>' : ''}
+                                    <input type="text" value="${p.member_name || ''}" class="par-edit hidden w-20 text-xs border border-slate-300 rounded px-1 py-0.5">
+                                </td>
+                                <td class="px-4 py-3 text-sm text-slate-600">
+                                    <span class="par-view">${p.member_tel || '-'}</span>
+                                    <input type="text" value="${p.member_tel || ''}" placeholder="010-0000-0000" class="par-edit hidden w-28 text-xs border border-slate-300 rounded px-1 py-0.5">
+                                </td>
+                                <td class="px-4 py-3 text-sm text-slate-600">
+                                    <span class="par-view">${p.child_name || '-'}</span>
+                                    <input type="text" value="${p.child_name || ''}" class="par-edit hidden w-20 text-xs border border-slate-300 rounded px-1 py-0.5">
+                                </td>
+                                <td class="px-4 py-3 text-sm text-slate-600">
+                                    <span class="par-view">${p.child_birth || '-'}</span>
+                                    <input type="date" value="${p.child_birth || ''}" class="par-edit hidden text-xs border border-slate-300 rounded px-1 py-0.5">
+                                </td>
+                                <td class="px-4 py-3 text-center whitespace-nowrap">
+                                    <button onclick="toggleParentEdit(${p.id})" class="par-view px-3 py-1 bg-amber-100 text-amber-600 rounded-lg text-xs font-bold hover:bg-amber-200 transition">
+                                        <i class="fas fa-pen mr-1"></i>수정
+                                    </button>
+                                    <button onclick="saveParentEdit(${p.id})" class="par-edit hidden px-3 py-1 bg-green-100 text-green-600 rounded-lg text-xs font-bold hover:bg-green-200 transition">
+                                        <i class="fas fa-check mr-1"></i>저장
+                                    </button>
+                                    <button onclick="cancelParentEdit(${p.id})" class="par-edit hidden px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 transition">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('학부모 로드 오류:', error);
+            }
+        }
+
+        function printParentList() {
+            if (!parentList || parentList.length === 0) {
+                alert('출력할 학부모 데이터가 없습니다.');
+                return;
+            }
+            const schoolName = currentUser.member_school || '';
+            const classInfo = homeroomInfo ? `${homeroomInfo.class_grade}학년 ${homeroomInfo.class_no}반` : '';
+            const today = new Date().toLocaleDateString('ko-KR');
+
+            let html = `<div class="print-header">
+                <h2>${schoolName} ${classInfo} 학부모 명단</h2>
+                <p>출력일: ${today} | 총 ${parentList.length}명</p>
+            </div>
+            <table>
+                <thead><tr>
+                    <th style="width:50px;text-align:center">번호</th>
+                    <th style="width:80px">학부모 이름</th>
+                    <th style="width:120px">연락처</th>
+                    <th style="width:80px">자녀 이름</th>
+                    <th style="width:100px">자녀 생년월일</th>
+                </tr></thead><tbody>`;
+
+            parentList.forEach(p => {
+                html += `<tr>
+                    <td style="text-align:center">${p.class_num || '-'}</td>
+                    <td>${p.member_name || '-'}</td>
+                    <td>${p.member_tel || '-'}</td>
+                    <td>${p.child_name || '-'}</td>
+                    <td>${p.child_birth || '-'}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+
+            const printArea = document.getElementById('print-area');
+            printArea.innerHTML = html;
+            printArea.style.display = 'block';
+            window.print();
+            printArea.style.display = 'none';
         }
 
         function updateStudentSelects() {
@@ -1126,7 +1502,10 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                                     <p class="text-sm text-slate-600 mt-1 whitespace-pre-wrap">${n.content}</p>
                                     <p class="text-xs text-slate-400 mt-2">${n.created_at} · ${n.teacher_name}</p>
                                 </div>
-                                <button onclick="deleteNotice(${n.id})" class="text-red-400 hover:text-red-600 p-2"><i class="fas fa-trash"></i></button>
+                                <div class="flex gap-1 flex-shrink-0">
+                                    <button onclick="openEditNotice(${n.id}, '${n.title.replace(/'/g,"\\'")}', \`${n.content.replace(/`/g,'\\`')}\`)" class="text-amber-400 hover:text-amber-600 p-2" title="수정"><i class="fas fa-pen"></i></button>
+                                    <button onclick="deleteNotice(${n.id})" class="text-red-400 hover:text-red-600 p-2" title="삭제"><i class="fas fa-trash"></i></button>
+                                </div>
                             </div>
                         </div>
                     `).join('');
@@ -1136,13 +1515,30 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             } catch (error) { console.error('공지 로드 오류:', error); }
         }
 
+        let editingNoticeId = null;
+
         function openNoticeModal() {
+            editingNoticeId = null;
             document.getElementById('notice-title').value = '';
             document.getElementById('notice-content').value = '';
+            document.getElementById('notice-modal-title').textContent = '학급 공지 등록';
+            document.getElementById('notice-submit-btn').textContent = '등록하기';
             document.getElementById('notice-modal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
+
+        function openEditNotice(id, title, content) {
+            editingNoticeId = id;
+            document.getElementById('notice-title').value = title;
+            document.getElementById('notice-content').value = content;
+            document.getElementById('notice-modal-title').textContent = '학급 공지 수정';
+            document.getElementById('notice-submit-btn').textContent = '수정하기';
+            document.getElementById('notice-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
         function closeNoticeModal() {
+            editingNoticeId = null;
             document.getElementById('notice-modal').classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
@@ -1152,20 +1548,28 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             const content = document.getElementById('notice-content').value.trim();
             if (!title || !content) return alert('제목과 내용을 입력해주세요.');
             try {
-                const response = await fetch('/api/homeroom/notice/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                let url, body;
+                if (editingNoticeId) {
+                    url = '/api/homeroom/notice/update';
+                    body = { id: editingNoticeId, title, content };
+                } else {
+                    url = '/api/homeroom/notice/create';
+                    body = {
                         school_id: currentUser.school_id, member_school: currentUser.member_school,
                         class_grade: homeroomInfo.class_grade, class_no: homeroomInfo.class_no,
                         teacher_id: currentUser.member_id, teacher_name: currentUser.member_name,
                         title, content
-                    })
+                    };
+                }
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
                 });
                 const data = await response.json();
                 if (data.success) { alert(data.message); closeNoticeModal(); loadNotices(); }
                 else alert(data.message);
-            } catch (error) { alert('등록 중 오류가 발생했습니다.'); }
+            } catch (error) { alert('처리 중 오류가 발생했습니다.'); }
         }
 
         async function deleteNotice(id) {
@@ -1973,6 +2377,9 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             this.classList.remove('active');
         };
     </script>
+<!-- 출력 영역 (화면에 안 보임, 인쇄 시만 표시) -->
+<div id="print-area" style="display:none;"></div>
+
 <script src="/static/js/help-modal.js" data-doc="homeroom"></script>
 </body>
 </html>

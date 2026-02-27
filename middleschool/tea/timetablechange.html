@@ -920,6 +920,27 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             } catch (e) { alert('전체 시간표 로드 실패: ' + e.message); return []; }
         }
 
+        // ★ 밴드 과목 감지: A_화학→"A", 일반과목→null
+        function getBandPrefix(subject) {
+            if (!subject) return null;
+            const m = subject.match(/^([A-E])[_\-]/);
+            return m ? m[1] : null;
+        }
+
+        // ★ 특정 교시에서 같은 밴드의 모든 교사+반 찾기
+        function findBandClasses(idx, period, bandPrefix) {
+            const results = [];
+            for (const [tid, periods] of Object.entries(idx.teacherToPeriod)) {
+                const classes = periods[period] || [];
+                for (const c of classes) {
+                    if (getBandPrefix(c.subject) === bandPrefix) {
+                        results.push({ teacherId: tid, teacherName: idx.teacherNames[tid] || tid, grade: c.grade, classNo: c.classNo, subject: c.subject, classKey: `${c.grade}-${c.classNo}` });
+                    }
+                }
+            }
+            return results;
+        }
+
         function buildDayIndex(timetable, dayName) {
             const classToPeriod = {};
             const teacherToPeriod = {};
@@ -1093,6 +1114,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
         }
 
         // --- 교차 요일 교환 알고리즘 (대상 요일 내 연쇄 포함) ---
+        // ★ 밴드 과목(A_~E_ 접두사)은 같은 교시의 밴드 전체가 하나의 묶음으로 함께 이동
         function findCrossDayChain(source, targetDayName, targetPeriod) {
             const srcIdx = dayIndices[source.dayName];
             const tgtIdx = dayIndices[targetDayName];
@@ -1102,33 +1124,84 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             const srcClasses = srcIdx.teacherToPeriod[myId]?.[source.period] || [];
             if (srcClasses.length === 0) return { valid: false, reason: '소스 교시에 수업이 없습니다.' };
 
-            // 대상 요일에서 내가 targetPeriod에 공강인지 확인
             const myTgtClasses = tgtIdx.teacherToPeriod[myId]?.[targetPeriod] || [];
             if (myTgtClasses.length > 0) return { valid: false, reason: '대상 요일 해당 교시에 이미 수업이 있습니다.' };
 
             const allSteps = [];
             const involvedTeachers = new Set([myId]);
+            const processedClasses = new Set();
+            const visitedTeachers = new Set([myId]);
+            const expandedBands = new Set();
 
-            for (const srcClass of srcClasses) {
+            // ★ 소스교시 밴드 확장: 같은 밴드 교사 전체 포함
+            const allSrcClasses = [...srcClasses];
+            for (const sc of srcClasses) {
+                const bp = getBandPrefix(sc.subject);
+                if (bp && !expandedBands.has(`${bp}:src:${source.period}`)) {
+                    expandedBands.add(`${bp}:src:${source.period}`);
+                    const bandClasses = findBandClasses(srcIdx, source.period, bp);
+                    for (const bc of bandClasses) {
+                        if (bc.teacherId === myId) continue;
+                        // 밴드 교사도 대상 요일 targetPeriod에 공강인지 확인
+                        const btClasses = tgtIdx.teacherToPeriod[bc.teacherId]?.[targetPeriod] || [];
+                        if (btClasses.length > 0) {
+                            return { valid: false, reason: `같은 밴드(${bp}) ${bc.teacherName} 선생님이 ${targetDayName}요일 ${targetPeriod}교시에 수업이 있어 교차 요일 교환이 어렵습니다.`, steps: [], teacherCount: 0, teachers: new Set(), crossDay: true };
+                        }
+                        if (!visitedTeachers.has(bc.teacherId)) { visitedTeachers.add(bc.teacherId); involvedTeachers.add(bc.teacherId); }
+                        allSrcClasses.push({ grade: bc.grade, classNo: bc.classNo, subject: bc.subject, teacherId: bc.teacherId, teacherName: bc.teacherName });
+                    }
+                }
+            }
+
+            for (const srcClass of allSrcClasses) {
                 const classKey = `${srcClass.grade}-${srcClass.classNo}`;
+                if (processedClasses.has(classKey)) continue;
+                processedClasses.add(classKey);
+                const srcTeacherId = srcClass.teacherId || myId;
+                const srcTeacherName = srcClass.teacherName || source.teacherName;
                 const cellAtTarget = tgtIdx.classToPeriod[classKey]?.[targetPeriod];
 
                 if (!cellAtTarget) {
-                    allSteps.push({ type: 'direct_move', classKey, teacherId: myId, teacherName: source.teacherName, subject: srcClass.subject, fromPeriod: source.period, toPeriod: targetPeriod, fromDay: source.dayName, toDay: targetDayName });
+                    allSteps.push({ type: 'direct_move', classKey, teacherId: srcTeacherId, teacherName: srcTeacherName, subject: srcClass.subject, fromPeriod: source.period, toPeriod: targetPeriod, fromDay: source.dayName, toDay: targetDayName });
                 } else {
                     const displacedId = cellAtTarget.teacherId;
                     const displacedName = cellAtTarget.teacherName;
                     const displacedSubject = cellAtTarget.subject;
                     involvedTeachers.add(displacedId);
 
-                    // 밀려나는 교사 → 대상 요일 내에서 빈 교시를 찾아 체인 연결
                     const displacedOnSrcDay = srcIdx.teacherToPeriod[displacedId]?.[source.period];
                     if (!displacedOnSrcDay || displacedOnSrcDay.length === 0) {
-                        allSteps.push({ type: 'swap', classKey, fromTeacherId: myId, fromTeacherName: source.teacherName, fromSubject: srcClass.subject, displacedTeacherId: displacedId, displacedTeacherName: displacedName, displacedSubject, period1: source.period, period2: targetPeriod, fromDay: source.dayName, toDay: targetDayName });
+                        allSteps.push({ type: 'swap', classKey, fromTeacherId: srcTeacherId, fromTeacherName: srcTeacherName, fromSubject: srcClass.subject, displacedTeacherId: displacedId, displacedTeacherName: displacedName, displacedSubject, period1: source.period, period2: targetPeriod, fromDay: source.dayName, toDay: targetDayName });
                     } else {
-                        // 밀려나는 교사가 소스요일 소스교시에도 수업 있음 → 교차요일 교환 불가, 이유 표시
-                        allSteps.push({ type: 'swap', classKey, fromTeacherId: myId, fromTeacherName: source.teacherName, fromSubject: srcClass.subject, displacedTeacherId: displacedId, displacedTeacherName: displacedName, displacedSubject, period1: source.period, period2: targetPeriod, fromDay: source.dayName, toDay: targetDayName });
+                        allSteps.push({ type: 'swap', classKey, fromTeacherId: srcTeacherId, fromTeacherName: srcTeacherName, fromSubject: srcClass.subject, displacedTeacherId: displacedId, displacedTeacherName: displacedName, displacedSubject, period1: source.period, period2: targetPeriod, fromDay: source.dayName, toDay: targetDayName });
                         return { valid: false, reason: `${displacedName} 선생님이 ${source.dayName}요일 ${source.period}교시에 수업(${displacedOnSrcDay.map(c=>c.subject+'('+c.grade+'-'+c.classNo+')').join(',')})이 있어 교차 요일 교환이 어렵습니다.`, steps: allSteps, teacherCount: involvedTeachers.size, teachers: involvedTeachers, crossDay: true };
+                    }
+
+                    // ★ 대상교시 밴드 확장: displaced teacher 과목이 밴드이면 같은 밴드 전체 처리
+                    const dBandPrefix = getBandPrefix(displacedSubject);
+                    if (dBandPrefix && !expandedBands.has(`${dBandPrefix}:tgt:${targetPeriod}`)) {
+                        expandedBands.add(`${dBandPrefix}:tgt:${targetPeriod}`);
+                        const bandClasses = findBandClasses(tgtIdx, targetPeriod, dBandPrefix);
+                        for (const bc of bandClasses) {
+                            if (processedClasses.has(bc.classKey)) continue;
+                            processedClasses.add(bc.classKey);
+                            const cellAtSrcForBand = srcIdx.classToPeriod[bc.classKey]?.[source.period];
+                            if (!cellAtSrcForBand) {
+                                if (!visitedTeachers.has(bc.teacherId)) { visitedTeachers.add(bc.teacherId); involvedTeachers.add(bc.teacherId); }
+                                allSteps.push({ type: 'bundle_move', classKey: bc.classKey, teacherId: bc.teacherId, teacherName: bc.teacherName, subject: bc.subject, fromPeriod: targetPeriod, toPeriod: source.period, fromDay: targetDayName, toDay: source.dayName });
+                            } else {
+                                const bSrcId = cellAtSrcForBand.teacherId;
+                                const bSrcOnSrcDay = srcIdx.teacherToPeriod[bSrcId]?.[source.period];
+                                if (!bSrcOnSrcDay || bSrcOnSrcDay.length === 0 || visitedTeachers.has(bSrcId)) {
+                                    if (!visitedTeachers.has(bc.teacherId)) { visitedTeachers.add(bc.teacherId); involvedTeachers.add(bc.teacherId); }
+                                    allSteps.push({ type: 'bundle_move', classKey: bc.classKey, teacherId: bc.teacherId, teacherName: bc.teacherName, subject: bc.subject, fromPeriod: targetPeriod, toPeriod: source.period, fromDay: targetDayName, toDay: source.dayName });
+                                } else {
+                                    involvedTeachers.add(bSrcId);
+                                    if (!visitedTeachers.has(bc.teacherId)) { visitedTeachers.add(bc.teacherId); involvedTeachers.add(bc.teacherId); }
+                                    allSteps.push({ type: 'swap', classKey: bc.classKey, fromTeacherId: bSrcId, fromTeacherName: cellAtSrcForBand.teacherName, fromSubject: cellAtSrcForBand.subject, displacedTeacherId: bc.teacherId, displacedTeacherName: bc.teacherName, displacedSubject: bc.subject, period1: source.period, period2: targetPeriod, fromDay: source.dayName, toDay: targetDayName });
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1137,23 +1210,37 @@ body { font-family: 'Noto Sans KR', sans-serif; }
         }
 
         // --- 핵심: 같은 날 연쇄 교환 알고리즘 (BFS 큐 기반) ---
-        // 밀려나는 교사의 모든 반(블록수업 포함)을 빠짐없이 추적
+        // ★ 밴드 과목(A_~E_ 접두사)은 같은 교시의 밴드 전체가 하나의 묶음으로 함께 이동
         function findExchangeChain(teacherId, srcPeriod, tgtPeriod, idx) {
             const myClasses = idx.teacherToPeriod[teacherId]?.[srcPeriod] || [];
             if (myClasses.length === 0) return { valid: false, reason: '소스 교시에 수업이 없습니다.' };
 
             const allSteps = [];
-            const visited = new Set([teacherId]);       // 방문한 교사 (체인에 포함됨)
+            const visited = new Set([teacherId]);
             const involvedTeachers = new Set([teacherId]);
-            const processedClasses = new Set();          // 처리한 classKey (중복 방지)
+            const processedClasses = new Set();
+            const expandedBands = new Set(); // "밴드:교시" 이미 확장됨
 
-            // BFS 큐: { classKey, subject, teacherId, teacherName }
             const queue = [];
+
+            // ① 내 수업을 큐에 추가
             for (const c of myClasses) {
                 const ck = `${c.grade}-${c.classNo}`;
                 if (!processedClasses.has(ck)) {
                     processedClasses.add(ck);
                     queue.push({ classKey: ck, subject: c.subject, teacherId, teacherName: idx.teacherNames[teacherId] || teacherId });
+                }
+                // ② ★ 소스교시 밴드 확장: 같은 밴드 교사 전체를 큐에 추가
+                const bp = getBandPrefix(c.subject);
+                if (bp && !expandedBands.has(`${bp}:${srcPeriod}`)) {
+                    expandedBands.add(`${bp}:${srcPeriod}`);
+                    const bandClasses = findBandClasses(idx, srcPeriod, bp);
+                    for (const bc of bandClasses) {
+                        if (processedClasses.has(bc.classKey)) continue;
+                        processedClasses.add(bc.classKey);
+                        if (!visited.has(bc.teacherId)) { visited.add(bc.teacherId); involvedTeachers.add(bc.teacherId); }
+                        queue.push({ classKey: bc.classKey, subject: bc.subject, teacherId: bc.teacherId, teacherName: bc.teacherName });
+                    }
                 }
             }
 
@@ -1162,11 +1249,9 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                 safety++;
                 const item = queue.shift();
 
-                // 대상 교시에 이 반을 누가 가르치는지
                 const cellAtTarget = idx.classToPeriod[item.classKey]?.[tgtPeriod];
 
                 if (!cellAtTarget) {
-                    // 대상 교시에 수업 없음 → 직접 이동
                     allSteps.push({ type: 'direct_move', classKey: item.classKey, teacherId: item.teacherId, teacherName: item.teacherName, subject: item.subject, fromPeriod: srcPeriod, toPeriod: tgtPeriod });
                     continue;
                 }
@@ -1175,32 +1260,60 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                 const dName = cellAtTarget.teacherName;
                 const dSubject = cellAtTarget.subject;
 
-                // 이미 체인에 포함된 교사 → 이 교사는 이미 이동 중이므로 슬롯이 비워짐
                 if (visited.has(dId)) {
                     allSteps.push({ type: 'direct_move', classKey: item.classKey, teacherId: item.teacherId, teacherName: item.teacherName, subject: item.subject, fromPeriod: srcPeriod, toPeriod: tgtPeriod });
                     continue;
                 }
 
-                // 밀려나는 교사가 소스 교시에 공강인지 확인
                 const dAtSrc = idx.teacherToPeriod[dId]?.[srcPeriod] || [];
 
                 if (dAtSrc.length === 0) {
-                    // 공강 → 교환 (체인 종료 지점)
                     allSteps.push({ type: 'swap', classKey: item.classKey, fromTeacherId: item.teacherId, fromTeacherName: item.teacherName, fromSubject: item.subject, displacedTeacherId: dId, displacedTeacherName: dName, displacedSubject: dSubject, period1: srcPeriod, period2: tgtPeriod });
                     visited.add(dId);
                     involvedTeachers.add(dId);
                 } else {
-                    // 소스 교시에도 수업 있음 → 체인 연결, 해당 교사의 모든 소스교시 반을 큐에 추가
                     allSteps.push({ type: 'chain_link', classKey: item.classKey, fromTeacherId: item.teacherId, fromTeacherName: item.teacherName, fromSubject: item.subject, displacedTeacherId: dId, displacedTeacherName: dName, displacedSubject: dSubject, period1: srcPeriod, period2: tgtPeriod });
                     visited.add(dId);
                     involvedTeachers.add(dId);
 
-                    // 밀려나는 교사의 모든 소스교시 반을 큐에 추가 (블록수업 대응)
                     for (const dc of dAtSrc) {
                         const ck = `${dc.grade}-${dc.classNo}`;
                         if (!processedClasses.has(ck)) {
                             processedClasses.add(ck);
                             queue.push({ classKey: ck, subject: dc.subject, teacherId: dId, teacherName: dName });
+                        }
+                        // ★ 밀려난 교사의 소스교시 과목이 밴드이면 같은 밴드 전체 추가
+                        const bp2 = getBandPrefix(dc.subject);
+                        if (bp2 && !expandedBands.has(`${bp2}:${srcPeriod}`)) {
+                            expandedBands.add(`${bp2}:${srcPeriod}`);
+                            const bandClasses = findBandClasses(idx, srcPeriod, bp2);
+                            for (const bc of bandClasses) {
+                                if (processedClasses.has(bc.classKey)) continue;
+                                processedClasses.add(bc.classKey);
+                                if (!visited.has(bc.teacherId)) { visited.add(bc.teacherId); involvedTeachers.add(bc.teacherId); }
+                                queue.push({ classKey: bc.classKey, subject: bc.subject, teacherId: bc.teacherId, teacherName: bc.teacherName });
+                            }
+                        }
+                    }
+                }
+
+                // ③ ★ 대상교시 밴드 확장: displaced teacher의 과목이 밴드이면 같은 밴드 전체도 처리
+                const dBandPrefix = getBandPrefix(dSubject);
+                if (dBandPrefix && !expandedBands.has(`${dBandPrefix}:${tgtPeriod}`)) {
+                    expandedBands.add(`${dBandPrefix}:${tgtPeriod}`);
+                    const bandClasses = findBandClasses(idx, tgtPeriod, dBandPrefix);
+                    for (const bc of bandClasses) {
+                        if (processedClasses.has(bc.classKey)) continue;
+                        processedClasses.add(bc.classKey);
+                        // 이 밴드 멤버의 반이 srcPeriod에 어떤 교사가 있는지 확인
+                        const cellAtSrc = idx.classToPeriod[bc.classKey]?.[srcPeriod];
+                        if (!cellAtSrc || visited.has(cellAtSrc.teacherId)) {
+                            // srcPeriod 빈 슬롯이거나 이미 이동 중 → 밴드멤버 직접 이동
+                            if (!visited.has(bc.teacherId)) { visited.add(bc.teacherId); involvedTeachers.add(bc.teacherId); }
+                            allSteps.push({ type: 'bundle_move', classKey: bc.classKey, teacherId: bc.teacherId, teacherName: bc.teacherName, subject: bc.subject, fromPeriod: tgtPeriod, toPeriod: srcPeriod });
+                        } else {
+                            // srcPeriod에 교사 있음 → 큐에 추가하여 BFS로 처리
+                            queue.push({ classKey: bc.classKey, subject: cellAtSrc.subject, teacherId: cellAtSrc.teacherId, teacherName: cellAtSrc.teacherName });
                         }
                     }
                 }
@@ -1245,8 +1358,9 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                 html += `<div class="chain-step"><div class="text-xs font-bold text-slate-500 mb-2"><i class="fas fa-users mr-1"></i>${g}학년 ${c}반</div>`;
                 for (const s of steps) {
                     const dayInfo = s.fromDay && s.toDay && s.fromDay !== s.toDay ? `<span class="text-purple-500 text-xs ml-1">${s.fromDay}→${s.toDay}</span>` : '';
-                    if (s.type === 'direct_move') {
-                        html += `<div class="swap-row"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold">${s.fromPeriod}교시</span><span class="font-bold">${s.teacherName}</span><span class="text-slate-400">(${s.subject})</span><span class="swap-arrow">→</span><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">${s.toPeriod}교시</span><span class="text-green-600 text-xs">이동</span>${dayInfo}</div>`;
+                    if (s.type === 'direct_move' || s.type === 'bundle_move') {
+                        const moveLabel = s.type === 'bundle_move' ? '<span class="text-orange-500 text-xs">묶음이동</span>' : '<span class="text-green-600 text-xs">이동</span>';
+                        html += `<div class="swap-row"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold">${s.fromPeriod}교시</span><span class="font-bold">${s.teacherName}</span><span class="text-slate-400">(${s.subject})</span><span class="swap-arrow">→</span><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">${s.toPeriod}교시</span>${moveLabel}${dayInfo}</div>`;
                     } else {
                         html += `<div class="swap-row"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold">${s.period1}교시</span><span class="font-bold">${s.fromTeacherName}</span><span class="text-slate-400">(${s.fromSubject})</span><span class="swap-arrow">↔</span><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">${s.period2}교시</span><span class="font-bold">${s.displacedTeacherName}</span><span class="text-slate-400">(${s.displacedSubject})</span>${s.type === 'swap' ? '<span class="text-green-600 text-xs ml-1">공강</span>' : '<span class="text-amber-500 text-xs ml-1">→연쇄</span>'}${dayInfo}</div>`;
                     }
@@ -1284,27 +1398,48 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             const chainSteps = [];
             let seq = 0;
             for (const s of exCurrentChain.steps) {
-                if (s.type === 'direct_move') continue;
-                chainSteps.push({
-                    requester_id: s.fromTeacherId || s.teacherId,
-                    requester_name: s.fromTeacherName || s.teacherName,
-                    requester_day: s.fromDay || srcDayName,
-                    requester_period: s.period1 || s.fromPeriod,
-                    requester_subject: s.fromSubject || s.subject,
-                    requester_grade: s.classKey.split('-')[0],
-                    requester_class_no: s.classKey.split('-')[1],
-                    target_id: s.displacedTeacherId,
-                    target_name: s.displacedTeacherName,
-                    target_day: s.toDay || targetDayName,
-                    target_period: s.period2 || s.toPeriod,
-                    target_subject: s.displacedSubject,
-                    target_grade: s.classKey.split('-')[0],
-                    target_class_no: s.classKey.split('-')[1],
-                    sequence: seq++
-                });
+                if (s.type === 'direct_move' || s.type === 'bundle_move') {
+                    // 빈 교시로 이동 (교환 상대 없음) — 해당 교시 자습 처리용
+                    chainSteps.push({
+                        requester_id: s.teacherId,
+                        requester_name: s.teacherName,
+                        requester_day: s.fromDay || srcDayName,
+                        requester_period: s.fromPeriod,
+                        requester_subject: s.subject,
+                        requester_grade: s.classKey.split('-')[0],
+                        requester_class_no: s.classKey.split('-')[1],
+                        target_id: '__EMPTY__',
+                        target_name: '자습',
+                        target_day: s.toDay || targetDayName,
+                        target_period: s.toPeriod,
+                        target_subject: '',
+                        target_grade: s.classKey.split('-')[0],
+                        target_class_no: s.classKey.split('-')[1],
+                        sequence: seq++,
+                        move_type: s.type
+                    });
+                } else {
+                    chainSteps.push({
+                        requester_id: s.fromTeacherId || s.teacherId,
+                        requester_name: s.fromTeacherName || s.teacherName,
+                        requester_day: s.fromDay || srcDayName,
+                        requester_period: s.period1 || s.fromPeriod,
+                        requester_subject: s.fromSubject || s.subject,
+                        requester_grade: s.classKey.split('-')[0],
+                        requester_class_no: s.classKey.split('-')[1],
+                        target_id: s.displacedTeacherId,
+                        target_name: s.displacedTeacherName,
+                        target_day: s.toDay || targetDayName,
+                        target_period: s.period2 || s.toPeriod,
+                        target_subject: s.displacedSubject,
+                        target_grade: s.classKey.split('-')[0],
+                        target_class_no: s.classKey.split('-')[1],
+                        sequence: seq++
+                    });
+                }
             }
 
-            if (chainSteps.length === 0) { alert('교환 대상이 없습니다 (빈 교시로의 단순 이동).'); return; }
+            if (chainSteps.length === 0) { alert('교환 대상이 없습니다.'); return; }
 
             try {
                 const body = chainSteps.length === 1 ? {

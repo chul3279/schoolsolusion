@@ -1407,13 +1407,16 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                     const lastMsg = r.last_message || '';
                     const preview = lastMsg.length > 20 ? lastMsg.substring(0,20)+'...' : lastMsg;
                     const time = r.last_msg_time ? formatMsgTime(r.last_msg_time) : '';
-                    // direct 방은 상대방 이름 표시
-                    let title = r.room_title;
-                    if(!title && r.room_type === 'direct' && r.members) {
-                        const other = r.members.find(m => m.member_id !== myId);
-                        title = other ? other.member_name : '대화방';
+                    // class/grade/school 단체방은 고정 제목, direct/group은 상대방 이름 표시
+                    let title;
+                    if(r.room_title && r.room_type && ['class','grade','school'].includes(r.room_type)) {
+                        title = r.room_title;
+                    } else if(r.members) {
+                        const others = r.members.filter(m => m.member_id !== myId);
+                        title = others.length ? others.map(m => m.member_name).join(', ') : '나';
+                    } else {
+                        title = r.room_title || '대화방';
                     }
-                    title = title || '대화방';
                     const badge = unread > 0 ? `<span class="shrink-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">${unread > 99 ? '99+' : unread}</span>` : '';
                     const boldCls = unread > 0 ? 'font-bold text-slate-900' : 'text-slate-400';
                     html += `<a href="#" onclick="openMsgChat(${r.id});return false" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 transition group">
@@ -1452,7 +1455,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
     loadDashMessages();
     setInterval(loadDashMessages, 30000);
     </script>
-    <script src="js/messenger-popup.js?v=20260223d"></script>
+    <script src="js/messenger-popup.js?v=20260227a"></script>
     <script>initMsgPopup();</script>
     <div id="toast" class="fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-[9999] bg-green-500 text-white">
         <span id="toastMessage"></span>

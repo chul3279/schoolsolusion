@@ -261,6 +261,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                     <li><a href="st_homeroom.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-users w-6 mr-3 text-green-400"></i> 학급활동</a></li>
                     <li><a href="st/lesson_activity.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-book-reader w-6 mr-3 text-purple-400"></i> 수업활동</a></li>
                     <li><a href="/highschool/admission/admission.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-graduation-cap w-6 mr-3 text-pink-400"></i> 입시상담</a></li>
+                    <li><a href="st/afterschool.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-school w-6 mr-3 text-amber-400"></i> 방과후학교</a></li>
                 </ul>
             </nav>
             
@@ -990,9 +991,10 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                     const lastMsg=r.last_message||'';
                     const preview=lastMsg.length>20?lastMsg.substring(0,20)+'...':lastMsg;
                     const time=r.last_msg_time?formatMsgTime(r.last_msg_time):'';
-                    let title=r.room_title;
-                    if(!title&&r.room_type==='direct'&&r.members){const other=r.members.find(m=>m.member_id!==myId);title=other?other.member_name:'대화방';}
-                    title=title||'대화방';
+                    let title;
+                    if(r.room_title&&r.room_type&&['class','grade','school'].includes(r.room_type)){title=r.room_title;}
+                    else if(r.members){const others=r.members.filter(m=>m.member_id!==myId);title=others.length?others.map(m=>m.member_name).join(', '):'나';}
+                    else{title=r.room_title||'대화방';}
                     const badge=unread>0?`<span class="shrink-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">${unread>99?'99+':unread}</span>`:'';
                     const boldCls=unread>0?'font-bold text-slate-900':'text-slate-400';
                     html+=`<a href="#" onclick="openMsgChat(${r.id});return false" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 transition">
@@ -1010,7 +1012,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
     function formatMsgTime(t){if(!t)return '';const d=new Date(t.replace(' ','T'));const now=new Date();const diff=now-d;if(diff<60000)return '방금';if(diff<3600000)return Math.floor(diff/60000)+'분 전';if(diff<86400000)return Math.floor(diff/3600000)+'시간 전';if(diff<604800000)return Math.floor(diff/86400000)+'일 전';return (d.getMonth()+1)+'/'+d.getDate();}
     loadDashMessages(); setInterval(loadDashMessages,30000);
     </script>
-    <script src="js/messenger-popup.js?v=20260223d"></script>
+    <script src="js/messenger-popup.js?v=20260227a"></script>
     <script>initMsgPopup();</script>
 <script src="/static/js/help-modal.js" data-doc="student-dashboard"></script>
 </body>

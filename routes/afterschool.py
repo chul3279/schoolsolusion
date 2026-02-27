@@ -504,7 +504,7 @@ def apply_program():
 
         # 학년 확인
         user_grade = session.get('class_grade', '')
-        if p['target_grades'] != 'all':
+        if p['target_grades'] not in ('all', '전체'):
             allowed = [g.strip() for g in p['target_grades'].split(',')]
             if user_grade not in allowed:
                 return jsonify({'success': False, 'message': '대상 학년이 아닙니다.'})

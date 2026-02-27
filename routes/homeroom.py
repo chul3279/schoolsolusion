@@ -133,19 +133,20 @@ def get_homeroom_students():
         
         if school_id:
             cursor.execute("""
-                SELECT id, member_id, member_name, member_birth, member_tel, class_num, point
-                FROM stu_all WHERE school_id = %s AND class_grade = %s AND class_no = %s ORDER BY class_num ASC
+                SELECT id, member_id, member_name, member_birth, member_tel, class_num, class_role, point
+                FROM stu_all WHERE school_id = %s AND class_grade = %s AND class_no = %s ORDER BY CAST(class_num AS UNSIGNED) ASC, class_num ASC
             """, (school_id, class_grade, class_no))
         else:
             cursor.execute("""
-                SELECT id, member_id, member_name, member_birth, member_tel, class_num, point
-                FROM stu_all WHERE member_school = %s AND class_grade = %s AND class_no = %s ORDER BY class_num ASC
+                SELECT id, member_id, member_name, member_birth, member_tel, class_num, class_role, point
+                FROM stu_all WHERE member_school = %s AND class_grade = %s AND class_no = %s ORDER BY CAST(class_num AS UNSIGNED) ASC, class_num ASC
             """, (member_school, class_grade, class_no))
-        
+
         students = cursor.fetchall()
         student_list = [{'id': s['id'], 'member_id': s['member_id'], 'member_name': s['member_name'],
-                         'member_birth': s['member_birth'], 'member_tel': s['member_tel'],
-                         'class_num': s['class_num'], 'point': s['point']} for s in students]
+                         'member_birth': str(s['member_birth']) if s['member_birth'] else '',
+                         'member_tel': s['member_tel'],
+                         'class_num': s['class_num'], 'class_role': s['class_role'] or '', 'point': s['point']} for s in students]
         
         return jsonify({'success': True, 'students': student_list, 'count': len(student_list)})
         
@@ -194,7 +195,8 @@ def search_school_students():
 
         students = cursor.fetchall()
         result = [{'id': s['id'], 'member_id': s['member_id'], 'member_name': s['member_name'],
-                   'member_birth': s['member_birth'], 'member_tel': s['member_tel'],
+                   'member_birth': str(s['member_birth']) if s['member_birth'] else '',
+                   'member_tel': s['member_tel'],
                    'class_grade': s['class_grade'], 'class_no': s['class_no'], 'class_num': s['class_num']} for s in students]
 
         return jsonify({'success': True, 'students': result})
@@ -480,6 +482,175 @@ def upload_students():
         if conn: conn.close()
 
 # ============================================
+# 학생 정보 수정 API
+# ============================================
+@homeroom_bp.route('/api/homeroom/students/update', methods=['POST'])
+def update_student_info():
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json()
+        student_db_id = data.get('id')
+        if not student_db_id:
+            return jsonify({'success': False, 'message': 'ID가 필요합니다.'})
+
+        member_name = sanitize_input(data.get('member_name'), 100)
+        member_birth = sanitize_input(data.get('member_birth'), 20)
+        member_tel = sanitize_input(data.get('member_tel'), 20)
+        class_num = sanitize_input(data.get('class_num'), 10)
+        class_role = sanitize_input(data.get('class_role'), 30)
+
+        if not member_name:
+            return jsonify({'success': False, 'message': '이름은 필수입니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE stu_all SET member_name = %s, member_birth = %s, member_tel = %s,
+            class_num = %s, class_role = %s, updated_at = NOW() WHERE id = %s
+        """, (member_name, member_birth or None, member_tel or None,
+              class_num or None, class_role or None, student_db_id))
+        conn.commit()
+        return jsonify({'success': True, 'message': '학생 정보가 수정되었습니다.'})
+
+    except Exception as e:
+        print(f"학생 정보 수정 오류: {e}")
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'message': '수정 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+# ============================================
+# 학부모 정보 수정 API
+# ============================================
+@homeroom_bp.route('/api/homeroom/parents/update', methods=['POST'])
+def update_parent_info():
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json()
+        parent_db_id = data.get('id')
+        if not parent_db_id:
+            return jsonify({'success': False, 'message': 'ID가 필요합니다.'})
+
+        member_name = sanitize_input(data.get('member_name'), 100)
+        member_tel = sanitize_input(data.get('member_tel'), 20)
+        child_name = sanitize_input(data.get('child_name'), 100)
+        child_birth = sanitize_input(data.get('child_birth'), 20)
+
+        if not member_name:
+            return jsonify({'success': False, 'message': '이름은 필수입니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE fm_all SET member_name = %s, member_tel = %s,
+            child_name = %s, child_birth = %s, updated_at = NOW() WHERE id = %s
+        """, (member_name, member_tel or None, child_name or None,
+              child_birth or None, parent_db_id))
+        conn.commit()
+        return jsonify({'success': True, 'message': '학부모 정보가 수정되었습니다.'})
+
+    except Exception as e:
+        print(f"학부모 정보 수정 오류: {e}")
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'message': '수정 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+# ============================================
+# 학급자치 역할 수정 API
+# ============================================
+@homeroom_bp.route('/api/homeroom/students/role', methods=['POST'])
+def update_student_role():
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json()
+        student_db_id = data.get('id')
+        class_role = sanitize_input(data.get('class_role'), 30)
+
+        if not student_db_id:
+            return jsonify({'success': False, 'message': 'ID가 필요합니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+
+        cursor = conn.cursor()
+        cursor.execute("UPDATE stu_all SET class_role = %s, updated_at = NOW() WHERE id = %s",
+                        (class_role or None, student_db_id))
+        conn.commit()
+        return jsonify({'success': True, 'message': '학급자치 역할이 수정되었습니다.'})
+
+    except Exception as e:
+        print(f"학급자치 역할 수정 오류: {e}")
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'message': '역할 수정 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+# ============================================
+# 학부모 명단 조회 API
+# ============================================
+@homeroom_bp.route('/api/homeroom/parents', methods=['GET'])
+def get_homeroom_parents():
+    conn = None
+    cursor = None
+    try:
+        school_id = sanitize_input(request.args.get('school_id'), 50)
+        member_school = sanitize_input(request.args.get('member_school'), 100)
+        class_grade = sanitize_input(request.args.get('class_grade'), 10)
+        class_no = sanitize_input(request.args.get('class_no'), 10)
+
+        if not class_grade or not class_no:
+            return jsonify({'success': False, 'message': '학급 정보가 필요합니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+
+        cursor = conn.cursor()
+
+        if school_id:
+            cursor.execute("""
+                SELECT id, member_id, member_name, member_tel, child_name, child_birth, class_num
+                FROM fm_all WHERE school_id = %s AND class_grade = %s AND class_no = %s
+                ORDER BY CAST(class_num AS UNSIGNED) ASC, class_num ASC
+            """, (school_id, class_grade, class_no))
+        else:
+            cursor.execute("""
+                SELECT id, member_id, member_name, member_tel, child_name, child_birth, class_num
+                FROM fm_all WHERE member_school = %s AND class_grade = %s AND class_no = %s
+                ORDER BY CAST(class_num AS UNSIGNED) ASC, class_num ASC
+            """, (member_school, class_grade, class_no))
+
+        parents = cursor.fetchall()
+        parent_list = [{'id': p['id'], 'member_id': p['member_id'], 'member_name': p['member_name'],
+                        'member_tel': p['member_tel'] or '',
+                        'child_name': p['child_name'] or '',
+                        'child_birth': str(p['child_birth']) if p['child_birth'] else '',
+                        'class_num': p['class_num'] or ''} for p in parents]
+
+        return jsonify({'success': True, 'parents': parent_list, 'count': len(parent_list)})
+
+    except Exception as e:
+        print(f"학부모 명단 조회 오류: {e}")
+        return jsonify({'success': False, 'message': '학부모 명단 조회 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+# ============================================
 # 학급 공지사항 목록 조회 API
 # ============================================
 @homeroom_bp.route('/api/homeroom/notice/list', methods=['GET'])
@@ -615,6 +786,49 @@ def delete_homeroom_notice():
         print(f"학급 공지사항 삭제 오류: {e}")
         if conn: conn.rollback()
         return jsonify({'success': False, 'message': '삭제 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+# ============================================
+# 학급 공지사항 수정 API
+# ============================================
+@homeroom_bp.route('/api/homeroom/notice/update', methods=['POST'])
+def update_homeroom_notice():
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json()
+        notice_id = sanitize_input(data.get('id'), 20)
+        title = sanitize_html(data.get('title', ''))
+        content = sanitize_html(data.get('content', ''))
+
+        if not notice_id:
+            return jsonify({'success': False, 'message': '공지사항 ID가 필요합니다.'})
+        if not title or not content:
+            return jsonify({'success': False, 'message': '제목과 내용을 입력해주세요.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT teacher_id FROM homeroom_notice WHERE id = %s", (notice_id,))
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'success': False, 'message': '데이터를 찾을 수 없습니다.'}), 404
+        if row['teacher_id'] != session.get('user_id'):
+            return jsonify({'success': False, 'message': '본인이 작성한 공지사항만 수정할 수 있습니다.'}), 403
+
+        cursor.execute("UPDATE homeroom_notice SET title = %s, content = %s WHERE id = %s",
+                        (title, content, notice_id))
+        conn.commit()
+        return jsonify({'success': True, 'message': '공지사항이 수정되었습니다.'})
+
+    except Exception as e:
+        print(f"학급 공지사항 수정 오류: {e}")
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'message': '수정 중 오류가 발생했습니다.'})
     finally:
         if cursor: cursor.close()
         if conn: conn.close()

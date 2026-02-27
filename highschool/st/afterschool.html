@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 방과후학교</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="/static/fontawesome/css/all.min.css" rel="stylesheet">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7LJ1TCE277"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7LJ1TCE277');</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+body { font-family: 'Noto Sans KR', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+        .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.8); }
+        .nav-item { position: relative; transition: all 0.3s ease; }
+        .nav-item::before { content:''; position:absolute; left:0; top:0; height:100%; width:0; background:linear-gradient(90deg,rgba(59,130,246,0.3),transparent); transition:width 0.3s ease; }
+        .nav-item:hover::before { width:100%; }
+        .nav-item.active { background:linear-gradient(90deg,rgba(59,130,246,0.2),transparent); border-left:3px solid #3b82f6; }
+        .avatar-ring { background:linear-gradient(135deg,#3b82f6,#8b5cf6,#ec4899); padding:3px; }
+        .main-tab { transition: all 0.2s; cursor: pointer; border-bottom: 3px solid transparent; padding-bottom: 12px; }
+        .main-tab.active { border-bottom-color: #f59e0b; color: #f59e0b; font-weight: 700; }
+        .main-tab:not(.active) { color: #94a3b8; }
+        .main-tab:not(.active):hover { color: #f59e0b; }
+        .prog-card { transition: all 0.2s; }
+        .prog-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .status-recruiting { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+        .status-confirmed { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+        .status-ongoing { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
+        .status-completed { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+        .enroll-applied { background: #fef3c7; color: #92400e; }
+        .enroll-approved { background: #dcfce7; color: #166534; }
+        .enroll-rejected { background: #fecaca; color: #991b1b; }
+        .enroll-withdrawn { background: #f1f5f9; color: #64748b; }
+
+        #mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        #mobile-overlay.active { display: block; }
+        #sidebar.mobile-open { display: flex !important; position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; z-index: 50 !important; flex-direction: column !important; }
+        @media (max-width: 767px) {
+            #sidebar.mobile-open { overflow-y: auto !important; }
+            .nav-item { min-height: 52px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 15px !important; }
+            #sidebar .space-y-1 > li { margin-bottom: 4px; }
+            #sidebar .p-4.border-t a { min-height: 48px; padding-top: 14px !important; padding-bottom: 14px !important; font-size: 14px !important; }
+        }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SchoolUs">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <script src="/static/js/pwa-install.js" defer></script>
+    <script src="/static/js/pwa-push.js" defer></script>
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 text-slate-800">
+    <div class="flex h-screen overflow-hidden">
+        <div id="mobile-overlay"></div>
+        <aside id="sidebar" class="w-72 sidebar-gradient text-slate-300 hidden md:flex flex-col flex-shrink-0 shadow-2xl">
+            <div class="p-6 border-b border-slate-700/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-school text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-black text-2xl text-white tracking-tight">SchoolUs</span>
+                        <p class="text-xs text-slate-400 font-medium">스마트 교육 플랫폼</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 border-b border-slate-700/50 bg-slate-800/30">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center">
+                        <i class="fas fa-building text-white text-sm"></i>
+                    </div>
+                    <div id="school-name-display" class="text-sm font-bold text-white truncate">-</div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="avatar-ring rounded-full">
+                        <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-white font-black text-xl" id="user-avatar">S</div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white font-bold text-lg truncate" id="user-name">-</p>
+                        <p class="text-xs text-slate-400 truncate" id="user-info">-</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-4">
+                <ul class="space-y-1 px-3 mb-4">
+                    <li><a href="../st.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-desktop w-6 mr-3 text-blue-400"></i> 대시보드</a></li>
+                </ul>
+                <ul class="space-y-1 px-3">
+                    <li><a href="../st_homeroom.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-users w-6 mr-3 text-green-400"></i> 학급활동</a></li>
+                    <li><a href="lesson_activity.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-book-reader w-6 mr-3 text-purple-400"></i> 수업활동</a></li>
+                    <li><a href="/highschool/admission/admission.html" class="nav-item flex items-center px-4 py-3 rounded-xl hover:text-white font-medium"><i class="fas fa-graduation-cap w-6 mr-3 text-pink-400"></i> 입시상담</a></li>
+                    <li><a href="afterschool.html" class="nav-item active flex items-center px-4 py-3 rounded-xl text-white font-medium"><i class="fas fa-school w-6 mr-3 text-amber-400"></i> 방과후학교</a></li>
+                </ul>
+            </nav>
+            <div class="p-4 border-t border-slate-700/50 space-y-2">
+                <a href="../mypage.html" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-blue-500/20 hover:text-blue-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-user-cog mr-2"></i> 회원정보 수정</a>
+                <a href="#" onclick="handleLogout()" class="flex items-center justify-center w-full py-3 bg-slate-800/50 hover:bg-red-500/20 hover:text-red-400 rounded-xl text-sm font-medium transition-all"><i class="fas fa-sign-out-alt mr-2"></i> 로그아웃</a>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col h-screen overflow-hidden">
+            <header class="bg-white/80 backdrop-blur-lg h-16 border-b border-slate-200/50 flex items-center justify-between px-6 shadow-sm z-10">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars text-xl"></i></button>
+                    <div class="flex items-center text-slate-500">
+                        <span class="text-sm font-medium">나의 대시보드</span>
+                        <i class="fas fa-chevron-right mx-2 text-xs text-slate-300"></i>
+                        <span class="text-sm font-bold text-amber-600">방과후학교</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-slate-500">
+                    <i class="fas fa-user-graduate text-amber-400"></i>
+                    <span id="header-student-info">-</span>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="mb-6">
+                    <h1 class="text-2xl font-black text-slate-800"><i class="fas fa-school text-amber-500 mr-2"></i>방과후학교</h1>
+                    <p class="text-slate-500 text-sm mt-1">모집중인 방과후 프로그램을 확인하고 신청할 수 있습니다.</p>
+                </div>
+
+                <!-- 탭 -->
+                <div class="flex gap-6 border-b border-slate-200 mb-6">
+                    <button class="main-tab active text-base" onclick="switchTab('programs', this)">
+                        <i class="fas fa-list mr-1.5"></i>모집중 프로그램
+                    </button>
+                    <button class="main-tab text-base" onclick="switchTab('my', this)">
+                        <i class="fas fa-bookmark mr-1.5"></i>내 수강 내역
+                    </button>
+                </div>
+
+                <!-- 모집중 프로그램 -->
+                <div id="tab-programs">
+                    <div id="programs-loading" class="text-center py-12">
+                        <i class="fas fa-spinner fa-spin text-3xl text-amber-400 mb-3"></i>
+                        <p class="text-slate-400">프로그램을 불러오는 중...</p>
+                    </div>
+                    <div id="programs-list" class="space-y-4 hidden"></div>
+                    <div id="programs-empty" class="text-center py-12 hidden">
+                        <i class="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
+                        <p class="text-slate-400 font-bold">현재 모집중인 프로그램이 없습니다.</p>
+                    </div>
+                </div>
+
+                <!-- 내 수강 내역 -->
+                <div id="tab-my" class="hidden">
+                    <div id="my-loading" class="text-center py-12">
+                        <i class="fas fa-spinner fa-spin text-3xl text-amber-400 mb-3"></i>
+                        <p class="text-slate-400">내 수강 내역을 불러오는 중...</p>
+                    </div>
+                    <div id="my-list" class="space-y-4 hidden"></div>
+                    <div id="my-empty" class="text-center py-12 hidden">
+                        <i class="fas fa-bookmark text-4xl text-slate-300 mb-3"></i>
+                        <p class="text-slate-400 font-bold">신청한 프로그램이 없습니다.</p>
+                        <p class="text-slate-400 text-sm mt-1">"모집중 프로그램" 탭에서 신청해보세요!</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUser();
+            loadPrograms();
+        });
+
+        function loadUser() {
+            const u = localStorage.getItem('schoolus_user');
+            if (!u) { window.location.href = '/'; return; }
+            currentUser = JSON.parse(u);
+            document.getElementById('school-name-display').textContent = currentUser.member_school || '-';
+            document.getElementById('user-name').textContent = currentUser.member_name || '-';
+            document.getElementById('user-avatar').textContent = (currentUser.member_name || 'S').charAt(0);
+            const info = `${currentUser.class_grade || ''}학년 ${currentUser.class_no || ''}반 ${currentUser.class_num || ''}번`;
+            document.getElementById('user-info').textContent = info;
+            document.getElementById('header-student-info').textContent = `${currentUser.member_name || ''} (${info})`;
+        }
+
+        // 탭 전환
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.main-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('tab-programs').classList.toggle('hidden', tab !== 'programs');
+            document.getElementById('tab-my').classList.toggle('hidden', tab !== 'my');
+            if (tab === 'my') loadMyPrograms();
+            if (tab === 'programs') loadPrograms();
+        }
+
+        // 모집중 프로그램 로드
+        async function loadPrograms() {
+            const list = document.getElementById('programs-list');
+            const loading = document.getElementById('programs-loading');
+            const empty = document.getElementById('programs-empty');
+            list.classList.add('hidden'); empty.classList.add('hidden'); loading.classList.remove('hidden');
+
+            try {
+                const res = await fetch(`/api/afterschool/list?school_id=${encodeURIComponent(currentUser.school_id)}&status=recruiting`);
+                const data = await res.json();
+                loading.classList.add('hidden');
+
+                if (!data.success || !data.programs?.length) {
+                    empty.classList.remove('hidden');
+                    return;
+                }
+
+                list.innerHTML = data.programs.map(p => renderProgramCard(p)).join('');
+                list.classList.remove('hidden');
+            } catch (e) {
+                loading.classList.add('hidden');
+                empty.classList.remove('hidden');
+                console.error(e);
+            }
+        }
+
+        function renderProgramCard(p) {
+            const targetLabel = (p.target_grades === 'all' || p.target_grades === '전체') ? '전체 학년' : p.target_grades + '학년';
+            const spots = p.max_students - p.enrolled_count;
+            const spotsColor = spots <= 3 ? 'text-red-500' : 'text-emerald-600';
+            return `
+            <div class="prog-card bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-lg text-slate-800 truncate">${p.program_name}</h3>
+                        <p class="text-sm text-slate-500 mt-0.5">${p.description || ''}</p>
+                    </div>
+                    <span class="status-recruiting text-xs font-bold px-2.5 py-1 rounded-full ml-3 whitespace-nowrap">모집중</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-sm mb-4">
+                    <div class="flex items-center text-slate-600"><i class="fas fa-chalkboard-teacher w-5 text-slate-400"></i>${p.instructor_name || '-'}</div>
+                    <div class="flex items-center text-slate-600"><i class="fas fa-user-friends w-5 text-slate-400"></i>${targetLabel}</div>
+                    <div class="flex items-center text-slate-600"><i class="fas fa-calendar-day w-5 text-slate-400"></i>${p.day_of_week || '-'} ${p.time_slot || ''}</div>
+                    <div class="flex items-center ${spotsColor} font-bold"><i class="fas fa-users w-5"></i>${p.enrolled_count}/${p.max_students}명 (잔여 ${spots}석)</div>
+                    <div class="flex items-center text-slate-500 text-xs col-span-2"><i class="fas fa-calendar-alt w-5 text-slate-400"></i>${p.start_date} ~ ${p.end_date}</div>
+                </div>
+                <button onclick="applyProgram(${p.id}, '${p.program_name.replace(/'/g, "\\'")}')" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm">
+                    <i class="fas fa-hand-pointer mr-1.5"></i>신청하기
+                </button>
+            </div>`;
+        }
+
+        // 내 수강 내역
+        async function loadMyPrograms() {
+            const list = document.getElementById('my-list');
+            const loading = document.getElementById('my-loading');
+            const empty = document.getElementById('my-empty');
+            list.classList.add('hidden'); empty.classList.add('hidden'); loading.classList.remove('hidden');
+
+            try {
+                const res = await fetch(`/api/afterschool/my-programs?school_id=${encodeURIComponent(currentUser.school_id)}`);
+                const data = await res.json();
+                loading.classList.add('hidden');
+
+                if (!data.success || !data.programs?.length) {
+                    empty.classList.remove('hidden');
+                    return;
+                }
+
+                list.innerHTML = data.programs.map(p => renderMyCard(p)).join('');
+                list.classList.remove('hidden');
+            } catch (e) {
+                loading.classList.add('hidden');
+                empty.classList.remove('hidden');
+                console.error(e);
+            }
+        }
+
+        function renderMyCard(p) {
+            const statusMap = {
+                applied: { label: '승인 대기', cls: 'enroll-applied', icon: 'fa-clock' },
+                approved: { label: '승인 완료', cls: 'enroll-approved', icon: 'fa-check-circle' },
+                rejected: { label: '거절됨', cls: 'enroll-rejected', icon: 'fa-times-circle' },
+                withdrawn: { label: '취소됨', cls: 'enroll-withdrawn', icon: 'fa-ban' }
+            };
+            const progStatusMap = {
+                recruiting: '모집중', confirmed: '확정', ongoing: '진행중', completed: '완료'
+            };
+            const s = statusMap[p.enrollment_status] || { label: p.enrollment_status, cls: '', icon: 'fa-question-circle' };
+            const canCancel = ['applied', 'approved'].includes(p.enrollment_status) && ['recruiting', 'confirmed'].includes(p.program_status);
+
+            return `
+            <div class="prog-card bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-lg text-slate-800 truncate">${p.program_name}</h3>
+                        <p class="text-sm text-slate-500">${p.instructor_name || ''} | ${p.day_of_week || ''} ${p.time_slot || ''}</p>
+                    </div>
+                    <span class="${s.cls} text-xs font-bold px-2.5 py-1 rounded-full ml-3 whitespace-nowrap">
+                        <i class="fas ${s.icon} mr-1"></i>${s.label}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <div class="text-slate-500">
+                        <span class="mr-3"><i class="fas fa-calendar-alt mr-1"></i>${p.start_date} ~ ${p.end_date}</span>
+                        <span class="status-${p.program_status} text-xs px-2 py-0.5 rounded-full">${progStatusMap[p.program_status] || p.program_status}</span>
+                    </div>
+                    ${canCancel ? `<button onclick="cancelProgram(${p.id}, '${p.program_name.replace(/'/g, "\\'")}')" class="px-4 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-100 transition"><i class="fas fa-times mr-1"></i>취소</button>` : ''}
+                </div>
+                <div class="text-xs text-slate-400 mt-2">신청일: ${p.applied_at}</div>
+            </div>`;
+        }
+
+        // 신청
+        async function applyProgram(programId, name) {
+            if (!confirm(`"${name}" 프로그램에 신청하시겠습니까?`)) return;
+            try {
+                const res = await fetch('/api/afterschool/apply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ program_id: programId })
+                });
+                const data = await res.json();
+                alert(data.message);
+                if (data.success) loadPrograms();
+            } catch (e) {
+                alert('신청 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 취소
+        async function cancelProgram(programId, name) {
+            if (!confirm(`"${name}" 신청을 취소하시겠습니까?`)) return;
+            try {
+                const res = await fetch('/api/afterschool/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ program_id: programId })
+                });
+                const data = await res.json();
+                alert(data.message);
+                if (data.success) loadMyPrograms();
+            } catch (e) {
+                alert('취소 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 사이드바
+        function toggleMobileSidebar() {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+            document.getElementById('mobile-overlay').classList.toggle('active');
+        }
+        document.getElementById('mobile-overlay').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('mobile-open');
+            document.getElementById('mobile-overlay').classList.remove('active');
+        });
+
+        // 로그아웃
+        function handleLogout() {
+            if (!confirm('로그아웃 하시겠습니까?')) return;
+            fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+                localStorage.removeItem('schoolus_user');
+                window.location.href = '/';
+            });
+        }
+    </script>
+</body>
+</html>
