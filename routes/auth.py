@@ -14,21 +14,33 @@ def index():
 def signup_page():
     return render_template('signup.html')
 
+import time as _time
+
+_schools_cache = {'data': None, 'ts': 0}
+
 @auth_bp.route('/api/schools', methods=['GET'])
 def get_schools():
+    # 학교 목록은 거의 바뀌지 않으므로 10분 캐싱
+    now = _time.time()
+    if _schools_cache['data'] and now - _schools_cache['ts'] < 600:
+        return _schools_cache['data']
+
     conn = None
     cursor = None
     try:
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
-        
+
         cursor = conn.cursor()
         cursor.execute("SELECT school_id, member_school, region, school_level FROM schoolinfo ORDER BY member_school")
         schools = cursor.fetchall()
-        
-        return jsonify({'success': True, 'schools': schools})
-        
+
+        resp = jsonify({'success': True, 'schools': schools})
+        _schools_cache['data'] = resp
+        _schools_cache['ts'] = now
+        return resp
+
     except Exception as e:
         return jsonify({'success': False, 'message': '학교 목록 조회 중 오류가 발생했습니다.'})
     finally:
@@ -120,9 +132,10 @@ def signup():
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
-        
+
         cursor = conn.cursor()
-        
+        conn.begin()  # 트랜잭션 시작 — 모든 INSERT를 하나로 묶음
+
         cursor.execute("SELECT member_id FROM member WHERE member_id = %s", (login_id,))
         if cursor.fetchone():
             return jsonify({'success': False, 'message': '이미 사용중인 아이디입니다.'})
@@ -243,11 +256,20 @@ def signup():
         return jsonify({'success': True, 'message': '회원가입이 완료되었습니다.'})
         
     except Exception as e:
-        if conn: conn.rollback()
-        return jsonify({'success': False, 'message': '회원가입 처리 중 오류가 발생했습니다.'})
+        if conn:
+            try: conn.rollback()
+            except: pass
+        import traceback
+        print(f"[SIGNUP ERROR] member_id={login_id}, error={e}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'회원가입 처리 중 오류가 발생했습니다. ({type(e).__name__})'})
     finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
+        if cursor:
+            try: cursor.close()
+            except: pass
+        if conn:
+            try: conn.close()
+            except: pass
 
 # ============================================
 # 아이디 찾기 API

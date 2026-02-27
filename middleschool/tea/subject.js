@@ -6,6 +6,10 @@ let currentPoint = 0;
 let swSelectedStudent = null;
 let cwSelectedStudent = null;
 let _allSubjectOptions = [];
+let _allSubjectOptionsFull = [];
+let _subjectSource = 'timetable';
+let _subjectDomains = [];
+let _activeDomain = '';
 
 document.addEventListener('DOMContentLoaded', () => {
     const userStr = localStorage.getItem('schoolus_user');
@@ -56,8 +60,63 @@ async function loadSubjectOptions() {
                 if (val) sel.value = val;
             });
             _allSubjectOptions = data.subjects.map(name => ({ value: name, text: name }));
+            _allSubjectOptionsFull = [..._allSubjectOptions];
+            _subjectSource = data.source || 'timetable';
+            _subjectDomains = data.domains || [];
+            if (_subjectSource === 'curriculum' && _subjectDomains.length > 0) {
+                renderDomainFilters();
+            }
         }
     } catch (e) { console.error('과목 목록 로드 오류:', e); }
+}
+
+// ===== 영역별 과목 필터 (교육과정 소스일 때) =====
+function renderDomainFilters() {
+    ['hw-domain-filter', 'sb-domain-filter', 'sw-domain-filter'].forEach(containerId => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        let html = '<span class="text-xs font-bold text-slate-500 mr-1 self-center">영역:</span>';
+        html += `<button type="button" onclick="filterByDomain('')" class="domain-chip px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-blue-500 text-white shadow-sm" data-domain="">전체</button>`;
+        _subjectDomains.forEach(d => {
+            html += `<button type="button" onclick="filterByDomain('${d.name.replace(/'/g, "\\'")}')" class="domain-chip px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-700" data-domain="${d.name}">${d.name} <span class="text-slate-400">${d.subjects.length}</span></button>`;
+        });
+        container.innerHTML = html;
+        container.classList.remove('hidden');
+    });
+}
+
+function filterByDomain(domain) {
+    _activeDomain = domain;
+    if (!domain) {
+        _allSubjectOptions = [..._allSubjectOptionsFull];
+    } else {
+        const domainData = _subjectDomains.find(d => d.name === domain);
+        if (domainData) {
+            _allSubjectOptions = domainData.subjects.map(name => ({ value: name, text: name }));
+        }
+    }
+    document.querySelectorAll('.domain-chip').forEach(chip => {
+        if (chip.dataset.domain === domain) {
+            chip.className = 'domain-chip px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-blue-500 text-white shadow-sm';
+        } else {
+            chip.className = 'domain-chip px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-700';
+        }
+    });
+    ['hw-subject', 'sb-subject', 'sw-subject'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const val = sel.value;
+        sel.innerHTML = '<option value="">과목 선택</option>';
+        _allSubjectOptions.forEach(o => { const opt = document.createElement('option'); opt.value = o.value; opt.textContent = o.text; sel.appendChild(opt); });
+        if (val) sel.value = val;
+    });
+    ['hw-subject-search', 'sb-subject-search', 'sw-subject-search'].forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.value = '';
+            input.dataset.selectedValue = '';
+        }
+    });
 }
 
 function initYearSelects() {

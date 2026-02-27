@@ -410,6 +410,24 @@ def get_teacher_timetable():
             """, (member_name, member_school, today))
         timetable = cursor.fetchall()
 
+        # 1-b) timetable에 없으면 timetable_tea(교사 수동 입력)에서 조회
+        if not timetable and member_name:
+            if school_id:
+                cursor.execute("""
+                    SELECT period, subject, grade, class_no
+                    FROM timetable_tea
+                    WHERE member_name = %s AND school_id = %s AND day_of_week = %s
+                    ORDER BY period
+                """, (member_name, school_id, today))
+            else:
+                cursor.execute("""
+                    SELECT period, subject, grade, class_no
+                    FROM timetable_tea
+                    WHERE member_name = %s AND member_school = %s AND day_of_week = %s
+                    ORDER BY period
+                """, (member_name, member_school, today))
+            timetable = cursor.fetchall()
+
         # 2) 오늘자 변경사항 조회 (이 교사가 원래 담당이던 수업)
         change_where = "school_id = %s" if school_id else "member_school = %s"
         change_param = school_id or member_school
@@ -536,6 +554,26 @@ def get_class_timetable():
             """, (member_school, grade, class_no, today))
         timetable = cursor.fetchall()
 
+        # 1-b) timetable에 없으면 timetable_tea(교사 수동 입력)에서 조회
+        if not timetable:
+            if school_id:
+                cursor.execute("""
+                    SELECT period, subject, member_name, grade, class_no
+                    FROM timetable_tea
+                    WHERE school_id = %s AND grade = %s AND class_no = %s
+                      AND day_of_week = %s
+                    ORDER BY period
+                """, (school_id, grade, class_no, today))
+            else:
+                cursor.execute("""
+                    SELECT period, subject, member_name, grade, class_no
+                    FROM timetable_tea
+                    WHERE member_school = %s AND grade = %s AND class_no = %s
+                      AND day_of_week = %s
+                    ORDER BY period
+                """, (member_school, grade, class_no, today))
+            timetable = cursor.fetchall()
+
         # 2) 오늘자 해당 학급 변경사항 조회
         change_where = "school_id = %s" if school_id else "member_school = %s"
         change_param = school_id or member_school
@@ -611,6 +649,16 @@ def get_student_timetable():
             ORDER BY CAST(period AS UNSIGNED)
         """, (school_id, grade, class_no, day))
         base_timetable = cursor.fetchall()
+
+        # 1-b) timetable에 없으면 timetable_tea(교사 수동 입력)에서 조회
+        if not base_timetable:
+            cursor.execute("""
+                SELECT period, subject, member_name, day_of_week
+                FROM timetable_tea
+                WHERE school_id=%s AND grade=%s AND class_no=%s AND day_of_week=%s
+                ORDER BY CAST(period AS UNSIGNED)
+            """, (school_id, grade, class_no, day))
+            base_timetable = cursor.fetchall()
 
         # 2) 학생의 선택과목 교육반 배정
         cursor.execute("""
@@ -1059,7 +1107,7 @@ def get_teacher_week_timetable():
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
         cursor = conn.cursor()
 
-        # timetable 테이블에서 실제 시간표 조회 (timetable_tea는 배정 데이터만 있음)
+        # timetable 테이블에서 시간표 조회, 없으면 timetable_tea(수동 입력)에서 조회
         if query_member_id:
             id_col = "school_id" if school_id else "member_school"
             id_val = school_id or member_school
@@ -1088,6 +1136,26 @@ def get_teacher_week_timetable():
             """, (member_school, member_name))
 
         timetable = cursor.fetchall()
+
+        # timetable에 없으면 timetable_tea(교사 수동 입력)에서 조회
+        if not timetable and member_name:
+            if school_id:
+                cursor.execute("""
+                    SELECT day_of_week, period, subject, grade, class_no, member_name
+                    FROM timetable_tea
+                    WHERE school_id = %s AND member_name = %s
+                      AND day_of_week IN ('월','화','수','목','금')
+                    ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
+                """, (school_id, member_name))
+            else:
+                cursor.execute("""
+                    SELECT day_of_week, period, subject, grade, class_no, member_name
+                    FROM timetable_tea
+                    WHERE member_school = %s AND member_name = %s
+                      AND day_of_week IN ('월','화','수','목','금')
+                    ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
+                """, (member_school, member_name))
+            timetable = cursor.fetchall()
 
         # 해당 날짜 변경사항 조회
         changes = []
@@ -1158,6 +1226,26 @@ def get_class_week_timetable():
 
         timetable = cursor.fetchall()
 
+        # timetable에 없으면 timetable_tea(교사 수동 입력)에서 조회
+        if not timetable:
+            if school_id:
+                cursor.execute("""
+                    SELECT day_of_week, period, subject, grade, class_no, member_name
+                    FROM timetable_tea
+                    WHERE school_id = %s AND grade = %s AND class_no = %s
+                      AND day_of_week IN ('월','화','수','목','금')
+                    ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
+                """, (school_id, grade, class_no))
+            else:
+                cursor.execute("""
+                    SELECT day_of_week, period, subject, grade, class_no, member_name
+                    FROM timetable_tea
+                    WHERE member_school = %s AND grade = %s AND class_no = %s
+                      AND day_of_week IN ('월','화','수','목','금')
+                    ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
+                """, (member_school, grade, class_no))
+            timetable = cursor.fetchall()
+
         # 해당 날짜 변경사항 조회
         changes = []
         if change_date:
@@ -1210,6 +1298,16 @@ def get_school_all_timetable():
             ORDER BY grade, class_no, FIELD(day_of_week,'월','화','수','목','금'), period
         """, (school_id,))
         timetable = cursor.fetchall()
+
+        # timetable에 없으면 timetable_tea(교사 수동 입력)에서 조회
+        if not timetable:
+            cursor.execute("""
+                SELECT day_of_week, period, subject, grade, class_no, member_name, member_id
+                FROM timetable_tea
+                WHERE school_id = %s AND day_of_week IN ('월','화','수','목','금')
+                ORDER BY grade, class_no, FIELD(day_of_week,'월','화','수','목','금'), period
+            """, (school_id,))
+            timetable = cursor.fetchall()
 
         # 교사 목록 (부서 포함)
         cursor.execute("""

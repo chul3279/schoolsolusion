@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SchoolUs - 메시지</title>
     <script src="/static/js/tailwindcss.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/fontawesome/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -315,12 +315,15 @@ body { font-family: 'Noto Sans KR', sans-serif; }
     }
 
     function getRoomTitle(room) {
-        if (room.room_title) return room.room_title;
+        if (room.room_title && room.room_type && ['class','grade','school'].includes(room.room_type)) {
+            return room.room_title;
+        }
         if (room.members) {
             const others = room.members.filter(m => m.member_id !== memberId);
             if (others.length === 0) return '나';
             return others.map(m => m.member_name).join(', ');
         }
+        if (room.room_title) return room.room_title;
         return '대화';
     }
 
@@ -372,7 +375,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             const msgs = data.messages || [];
 
             // 헤더 설정
-            const title = currentRoom.room_title || members.filter(m => m.member_id !== memberId).map(m => m.member_name).join(', ') || '대화';
+            const title = (currentRoom.room_type && ['class','grade','school'].includes(currentRoom.room_type) && currentRoom.room_title) ? currentRoom.room_title : (members.filter(m => m.member_id !== memberId).map(m => m.member_name).join(', ') || '대화');
             document.getElementById('chatTitle').textContent = title;
             const memberCount = members.length;
             document.getElementById('chatSubtitle').textContent = memberCount > 2 ? `${memberCount}명 참여 중` : (members.find(m => m.member_id !== memberId)?.member_role === 'teacher' ? '교사' : members.find(m => m.member_id !== memberId)?.member_role === 'student' ? '학생' : '학부모');

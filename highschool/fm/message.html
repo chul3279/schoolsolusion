@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SchoolUs - 메시지</title>
     <script src="/static/js/tailwindcss.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/fontawesome/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -209,7 +209,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             return `<div class="room-item ${isActive?'active':''}" onclick="openRoom(${r.id})"><div class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-rose-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">${title.charAt(0)}</div><div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-1"><span class="font-bold text-sm text-slate-800 truncate">${escHtml(title)}</span><span class="text-xs text-slate-400 flex-shrink-0 ml-2">${time}</span></div><div class="flex items-center justify-between"><span class="text-xs text-slate-500 truncate">${escHtml(lastMsg)}</span>${unread>0?`<span class="badge-red flex-shrink-0 ml-2">${unread>99?'99+':unread}</span>`:''}</div></div></div>`;
         }).join('');
     }
-    function getRoomTitle(room) { if(room.room_title) return room.room_title; if(room.members){ const o=room.members.filter(m=>m.member_id!==memberId); return o.length?o.map(m=>m.member_name).join(', '):'나'; } return '대화'; }
+    function getRoomTitle(room) { if(room.room_title&&room.room_type&&['class','grade','school'].includes(room.room_type)) return room.room_title; if(room.members){ const o=room.members.filter(m=>m.member_id!==memberId); return o.length?o.map(m=>m.member_name).join(', '):'나'; } if(room.room_title) return room.room_title; return '대화'; }
     document.getElementById('roomSearch').addEventListener('input', function(){ const q=this.value.trim().toLowerCase(); if(!q){renderRooms(allRooms);return;} renderRooms(allRooms.filter(r=>getRoomTitle(r).toLowerCase().includes(q))); });
 
     async function openRoom(roomId) {
@@ -232,7 +232,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             if(!data.success) return;
             currentRoom = data.room;
             const members = data.members||[], msgs = data.messages||[];
-            const title = currentRoom.room_title || members.filter(m=>m.member_id!==memberId).map(m=>m.member_name).join(', ')||'대화';
+            const title = (currentRoom.room_type&&['class','grade','school'].includes(currentRoom.room_type)&&currentRoom.room_title) ? currentRoom.room_title : (members.filter(m=>m.member_id!==memberId).map(m=>m.member_name).join(', ')||'대화');
             document.getElementById('chatTitle').textContent = title;
             const other = members.find(m=>m.member_id!==memberId);
             document.getElementById('chatSubtitle').textContent = members.length>2 ? `${members.length}명 참여 중` : roleLabel(other?.member_role);

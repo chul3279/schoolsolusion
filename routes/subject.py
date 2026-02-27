@@ -753,6 +753,8 @@ def get_subject_options():
 
         cursor = conn.cursor()
         subjects = set()
+        source = 'timetable'
+        domains = []
 
         # 1순위: timetable_data (학교별 실제 편성 과목)
         cursor.execute(
@@ -773,30 +775,43 @@ def get_subject_options():
                 )
                 for row in cursor.fetchall():
                     subjects.add(row['subj'])
+            if subjects:
+                source = 'student_selection'
 
         # 3순위: 둘 다 없으면 cours_subject 교육과정에서 가져오기 (학교급 자동 판별)
         if not subjects:
+            source = 'curriculum'
             # schoolinfo에서 학교급 조회
             sl = '고등'
             cursor.execute("SELECT school_level FROM schoolinfo WHERE school_id = %s", (school_id,))
             si_row = cursor.fetchone()
             if si_row and si_row.get('school_level'):
                 level_val = si_row['school_level']
-                if level_val in ('middle', '중', '중학교'):
+                if level_val in ('middle', '중', '중학교', 'mid'):
                     sl = '중학교'
                 elif level_val in ('elementary', '초', '초등', '초등학교'):
                     sl = '초등'
             cursor.execute(
-                "SELECT DISTINCT subject FROM cours_subject "
+                "SELECT DISTINCT domain, subject FROM cours_subject "
                 "WHERE school_level = %s AND subject IS NOT NULL AND subject != '' "
-                "ORDER BY subject",
+                "ORDER BY domain, subject",
                 (sl,)
             )
+            domain_map = {}
             for row in cursor.fetchall():
                 subjects.add(row['subject'])
+                d = row['domain']
+                if d not in domain_map:
+                    domain_map[d] = []
+                if row['subject'] not in domain_map[d]:
+                    domain_map[d].append(row['subject'])
+            domains = [{'name': k, 'subjects': v} for k, v in sorted(domain_map.items())]
 
         sorted_subjects = sorted(subjects)
-        return jsonify({'success': True, 'subjects': sorted_subjects})
+        result = {'success': True, 'subjects': sorted_subjects, 'source': source}
+        if domains:
+            result['domains'] = domains
+        return jsonify(result)
 
     except Exception as e:
         print(f"과목 목록 조회 오류: {e}")

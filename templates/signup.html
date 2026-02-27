@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원가입 - SchoolUs</title>
     <script src="/static/js/tailwindcss.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/fontawesome/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -103,8 +103,9 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                     <label class="block text-xs font-black text-slate-600 mb-2 ml-1 uppercase">아이디 *</label>
                     <div class="relative group">
                         <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><i class="fas fa-at"></i></span>
-                        <input id="login_id" type="text" required placeholder="영문, 숫자 조합 4자 이상" class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none font-medium text-sm text-slate-700">
+                        <input id="login_id" type="text" required placeholder="영문, 숫자, 언더스코어(_) 4자 이상" oninput="validateLoginId()" class="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 border-2 border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none font-medium text-sm text-slate-700">
                     </div>
+                    <p id="login-id-hint" class="text-xs text-slate-500 mt-1 ml-1">영문, 숫자, 언더스코어(_)만 사용 가능 (4~50자)</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
@@ -491,6 +492,35 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             const day = (document.getElementById(dayId)?.value || '').padStart(2, '0');
             if (year && month !== '00' && day !== '00') return `${year}-${month}-${day}`;
             return '';
+        }
+
+        function validateLoginId() {
+            const input = document.getElementById('login_id');
+            const hint = document.getElementById('login-id-hint');
+            const val = input.value;
+            if (!val) {
+                hint.textContent = '영문, 숫자, 언더스코어(_)만 사용 가능 (4~50자)';
+                hint.className = 'text-xs text-slate-500 mt-1 ml-1';
+                input.classList.remove('border-red-400', 'border-green-400');
+                input.classList.add('border-slate-200');
+                return;
+            }
+            const valid = /^[a-zA-Z0-9_]+$/.test(val);
+            if (!valid) {
+                hint.textContent = '영문, 숫자, 언더스코어(_)만 사용 가능합니다 (한글, 특수문자 불가)';
+                hint.className = 'text-xs text-red-500 mt-1 ml-1 font-medium';
+                input.classList.remove('border-slate-200', 'border-green-400');
+                input.classList.add('border-red-400');
+            } else if (val.length < 4) {
+                hint.textContent = '4자 이상 입력해주세요 (현재 ' + val.length + '자)';
+                hint.className = 'text-xs text-yellow-600 mt-1 ml-1 font-medium';
+                input.classList.remove('border-slate-200', 'border-green-400', 'border-red-400');
+            } else {
+                hint.textContent = '사용 가능한 아이디 형식입니다';
+                hint.className = 'text-xs text-green-600 mt-1 ml-1 font-medium';
+                input.classList.remove('border-slate-200', 'border-red-400');
+                input.classList.add('border-green-400');
+            }
         }
 
         function checkPasswordStrength() {

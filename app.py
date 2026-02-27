@@ -423,6 +423,7 @@ from routes.message import message_bp
 from routes.survey import survey_bp
 from routes.afterschool import afterschool_bp
 from routes.timetable_pipeline import timetable_pipeline_bp
+from routes.messenger import messenger_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(teacher_bp)
@@ -449,6 +450,7 @@ app.register_blueprint(message_bp)
 app.register_blueprint(survey_bp)
 app.register_blueprint(afterschool_bp)
 app.register_blueprint(timetable_pipeline_bp)
+app.register_blueprint(messenger_bp)
 
 
 # ============================================

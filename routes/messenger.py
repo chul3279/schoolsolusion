@@ -1,5 +1,5 @@
 """
-SchoolUs 내부 메신저 API
+SchoolUs 내부 메신저 API (message_rooms / messages 통합)
 - /api/messenger/conversations          : 대화방 목록
 - /api/messenger/conversations/create    : 대화방 생성
 - /api/messenger/messages                : 메시지 목록
@@ -23,12 +23,12 @@ import traceback
 messenger_bp = Blueprint('messenger', __name__)
 
 
-def _check_member_in_conversation(cursor, conversation_id, member_id):
+def _check_member_in_room(cursor, room_id, member_id):
     """대화방 참여자 여부 확인"""
     cursor.execute("""
-        SELECT id FROM conversation_members
-        WHERE conversation_id = %s AND member_id = %s AND is_active = 1
-    """, (conversation_id, member_id))
+        SELECT id FROM message_room_members
+        WHERE room_id = %s AND member_id = %s AND is_active = 1
+    """, (room_id, member_id))
     return cursor.fetchone() is not None
 
 
@@ -46,62 +46,68 @@ def get_conversations():
         if not all([member_id, school_id]):
             return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
 
-        page = int(request.args.get('page', 1))
-        limit = 30
-        offset = (page - 1) * limit
-
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'message': 'DB 연결 오류'})
         cursor = conn.cursor()
 
+        # direct/group 방만 조회 (class/grade/school 단체방은 message.html에서 관리)
         cursor.execute("""
-            SELECT c.id, c.conv_type, c.title, c.updated_at,
+            SELECT r.id, r.room_type, r.room_title, r.created_at,
                    (SELECT content FROM messages
-                    WHERE conversation_id = c.id AND is_deleted = 0
+                    WHERE room_id = r.id AND is_deleted = 0
                     ORDER BY created_at DESC LIMIT 1) AS last_message,
                    (SELECT created_at FROM messages
-                    WHERE conversation_id = c.id AND is_deleted = 0
+                    WHERE room_id = r.id AND is_deleted = 0
                     ORDER BY created_at DESC LIMIT 1) AS last_msg_time,
-                   (SELECT m2.member_name FROM messages msg
-                    JOIN member m2 ON msg.sender_id = m2.member_id
-                    WHERE msg.conversation_id = c.id AND msg.is_deleted = 0
-                    ORDER BY msg.created_at DESC LIMIT 1) AS last_sender_name,
-                   (SELECT COUNT(*) FROM messages msg2
-                    WHERE msg2.conversation_id = c.id
-                      AND msg2.created_at > COALESCE(cm.last_read_at, '1970-01-01')
-                      AND msg2.sender_id != %s
-                      AND msg2.is_deleted = 0) AS unread_count
-            FROM conversations c
-            JOIN conversation_members cm ON cm.conversation_id = c.id
-                 AND cm.member_id = %s AND cm.is_active = 1
-            WHERE c.school_id = %s
-            ORDER BY c.updated_at DESC
-            LIMIT %s OFFSET %s
-        """, (member_id, member_id, school_id, limit, offset))
+                   (SELECT sender_name FROM messages
+                    WHERE room_id = r.id AND is_deleted = 0
+                    ORDER BY created_at DESC LIMIT 1) AS last_sender_name,
+                   (SELECT COUNT(*) FROM messages msg
+                    WHERE msg.room_id = r.id
+                      AND msg.created_at > COALESCE(rm.last_read_at, rm.joined_at, r.created_at)
+                      AND msg.sender_id != %s
+                      AND msg.is_deleted = 0) AS unread_count
+            FROM message_rooms r
+            JOIN message_room_members rm ON rm.room_id = r.id
+                 AND rm.member_id = %s AND rm.is_active = 1
+            WHERE r.school_id = %s AND r.is_active = 1
+              AND r.room_type IN ('direct', 'group')
+            ORDER BY COALESCE(
+                (SELECT created_at FROM messages WHERE room_id = r.id AND is_deleted = 0
+                 ORDER BY created_at DESC LIMIT 1),
+                r.created_at
+            ) DESC
+            LIMIT 50
+        """, (member_id, member_id, school_id))
 
         conversations = []
         for r in cursor.fetchall():
-            # 대화 상대방 이름 조회
+            # 대화 상대방 정보 조회
             cursor.execute("""
-                SELECT cm2.member_id, m.member_name, cm2.member_role
-                FROM conversation_members cm2
-                JOIN member m ON cm2.member_id = m.member_id
-                WHERE cm2.conversation_id = %s AND cm2.is_active = 1 AND cm2.member_id != %s
-                LIMIT 5
+                SELECT member_id, member_name, member_role
+                FROM message_room_members
+                WHERE room_id = %s AND is_active = 1 AND member_id != %s
+                LIMIT 10
             """, (r['id'], member_id))
             partners = [{'id': p['member_id'], 'name': p['member_name'], 'role': p['member_role']} for p in cursor.fetchall()]
 
+            # 제목: direct/group은 상대방 이름, 고정 제목이 있으면 사용
+            if r['room_type'] in ('direct', 'group'):
+                title = ', '.join(p['name'] for p in partners) if partners else '(알 수 없음)'
+            else:
+                title = r['room_title'] or '대화'
+
             conversations.append({
                 'id': r['id'],
-                'conv_type': r['conv_type'],
-                'title': r['title'] or (', '.join(p['name'] for p in partners) if partners else '(알 수 없음)'),
+                'conv_type': r['room_type'],
+                'title': title,
                 'partners': partners,
                 'last_message': r['last_message'] or '',
                 'last_msg_time': r['last_msg_time'].strftime('%Y-%m-%d %H:%M') if r['last_msg_time'] else '',
                 'last_sender_name': r['last_sender_name'] or '',
                 'unread_count': r['unread_count'] or 0,
-                'updated_at': r['updated_at'].strftime('%Y-%m-%d %H:%M') if r['updated_at'] else ''
+                'updated_at': r['created_at'].strftime('%Y-%m-%d %H:%M') if r['created_at'] else ''
             })
 
         return jsonify({'success': True, 'conversations': conversations})
@@ -126,7 +132,8 @@ def create_conversation():
         creator_id = session.get('user_id') or sanitize_input(data.get('member_id'), 50)
         school_id = session.get('school_id') or sanitize_input(data.get('school_id'), 50)
         creator_role = session.get('user_role') or sanitize_input(data.get('user_role'), 20)
-        target_ids = data.get('target_ids', [])  # list of member_id strings
+        creator_name = session.get('user_name') or sanitize_input(data.get('member_name'), 50)
+        target_ids = data.get('target_ids', [])
         conv_type = sanitize_input(data.get('conv_type', 'direct'), 10)
         title = sanitize_html(data.get('title', ''))
 
@@ -136,32 +143,26 @@ def create_conversation():
         if not target_ids or not isinstance(target_ids, list):
             return jsonify({'success': False, 'message': '대화 상대를 선택해주세요.'})
 
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': 'DB 연결 오류'})
+        cursor = conn.cursor()
+
         # 1:1 대화는 기존 대화 재사용
         if conv_type == 'direct' and len(target_ids) == 1:
-            conn = get_db_connection()
-            if not conn:
-                return jsonify({'success': False, 'message': 'DB 연결 오류'})
-            cursor = conn.cursor()
-
             cursor.execute("""
-                SELECT cm1.conversation_id
-                FROM conversation_members cm1
-                JOIN conversation_members cm2 ON cm1.conversation_id = cm2.conversation_id
-                JOIN conversations c ON c.id = cm1.conversation_id
-                WHERE cm1.member_id = %s AND cm1.is_active = 1
-                  AND cm2.member_id = %s AND cm2.is_active = 1
-                  AND c.conv_type = 'direct' AND c.school_id = %s
+                SELECT rm1.room_id
+                FROM message_room_members rm1
+                JOIN message_room_members rm2 ON rm1.room_id = rm2.room_id
+                JOIN message_rooms r ON r.id = rm1.room_id
+                WHERE rm1.member_id = %s AND rm1.is_active = 1
+                  AND rm2.member_id = %s AND rm2.is_active = 1
+                  AND r.room_type = 'direct' AND r.school_id = %s AND r.is_active = 1
                 LIMIT 1
             """, (creator_id, target_ids[0], school_id))
             existing = cursor.fetchone()
             if existing:
-                return jsonify({'success': True, 'conversation_id': existing['conversation_id'], 'reused': True})
-
-        if not conn:
-            conn = get_db_connection()
-            if not conn:
-                return jsonify({'success': False, 'message': 'DB 연결 오류'})
-            cursor = conn.cursor()
+                return jsonify({'success': True, 'conversation_id': existing['room_id'], 'reused': True})
 
         # 권한 검증: 대상이 같은 학교인지 확인
         format_str = ','.join(['%s'] * len(target_ids))
@@ -173,7 +174,7 @@ def create_conversation():
         if invalid:
             return jsonify({'success': False, 'message': '같은 학교 소속이 아닌 사용자가 포함되어 있습니다.'})
 
-        # 학생 권한 검증: 교사에게만 메시지 가능
+        # 학생 권한: 교사에게만 메시지 가능
         if creator_role == 'student':
             cursor.execute(f"""
                 SELECT member_id FROM tea_all WHERE member_id IN ({format_str}) AND school_id = %s
@@ -182,7 +183,7 @@ def create_conversation():
             if not all(tid in teacher_ids for tid in target_ids):
                 return jsonify({'success': False, 'message': '학생은 교사에게만 메시지를 보낼 수 있습니다.'})
 
-        # 학부모 권한 검증: 자녀의 교사에게만
+        # 학부모 권한: 자녀의 교사에게만
         if creator_role == 'parent':
             cursor.execute("""
                 SELECT ta.member_id
@@ -196,31 +197,32 @@ def create_conversation():
                 return jsonify({'success': False, 'message': '학부모는 자녀의 교사에게만 메시지를 보낼 수 있습니다.'})
 
         # 대화방 생성
+        room_type = 'group' if len(target_ids) > 1 else 'direct'
         cursor.execute("""
-            INSERT INTO conversations (school_id, conv_type, title, created_by)
+            INSERT INTO message_rooms (school_id, room_type, room_title, created_by)
             VALUES (%s, %s, %s, %s)
-        """, (school_id, conv_type, title or None, creator_id))
-        conv_id = cursor.lastrowid
+        """, (school_id, room_type, title or None, creator_id))
+        room_id = cursor.lastrowid
 
         # 생성자 추가
         cursor.execute("""
-            INSERT INTO conversation_members (conversation_id, member_id, member_role, last_read_at)
-            VALUES (%s, %s, %s, NOW())
-        """, (conv_id, creator_id, creator_role))
+            INSERT INTO message_room_members (room_id, member_id, member_name, member_role, last_read_at)
+            VALUES (%s, %s, %s, %s, NOW())
+        """, (room_id, creator_id, creator_name or '', creator_role))
 
         # 대상 추가
         for tid in target_ids:
-            # 대상의 역할 조회
-            cursor.execute("SELECT member_roll FROM member WHERE member_id = %s", (tid,))
+            cursor.execute("SELECT member_name, member_roll FROM member WHERE member_id = %s", (tid,))
             t_row = cursor.fetchone()
+            t_name = t_row['member_name'] if t_row else ''
             t_role = t_row['member_roll'] if t_row else 'student'
             cursor.execute("""
-                INSERT INTO conversation_members (conversation_id, member_id, member_role)
-                VALUES (%s, %s, %s)
-            """, (conv_id, tid, t_role))
+                INSERT INTO message_room_members (room_id, member_id, member_name, member_role)
+                VALUES (%s, %s, %s, %s)
+            """, (room_id, tid, t_name, t_role))
 
         conn.commit()
-        return jsonify({'success': True, 'conversation_id': conv_id, 'reused': False})
+        return jsonify({'success': True, 'conversation_id': room_id, 'reused': False})
     except Exception as e:
         if conn: conn.rollback()
         print(f"[Messenger] create_conversation error: {e}")
@@ -240,12 +242,12 @@ def get_messages():
     cursor = None
     try:
         member_id = session.get('user_id') or sanitize_input(request.args.get('member_id'), 50)
-        conv_id = int(request.args.get('conversation_id', 0))
+        room_id = int(request.args.get('conversation_id', 0))
         page = int(request.args.get('page', 1))
         limit = 50
         offset = (page - 1) * limit
 
-        if not member_id or not conv_id:
+        if not member_id or not room_id:
             return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
 
         conn = get_db_connection()
@@ -253,19 +255,17 @@ def get_messages():
             return jsonify({'success': False, 'message': 'DB 연결 오류'})
         cursor = conn.cursor()
 
-        if not _check_member_in_conversation(cursor, conv_id, member_id):
+        if not _check_member_in_room(cursor, room_id, member_id):
             return jsonify({'success': False, 'message': '대화 참여 권한이 없습니다.'})
 
         cursor.execute("""
-            SELECT msg.id, msg.sender_id, msg.content, msg.file_path, msg.file_name,
-                   msg.created_at, msg.is_deleted,
-                   m.member_name AS sender_name
-            FROM messages msg
-            JOIN member m ON msg.sender_id = m.member_id
-            WHERE msg.conversation_id = %s
-            ORDER BY msg.created_at ASC
+            SELECT id, sender_id, sender_name, content, file_name, file_path,
+                   created_at, is_deleted
+            FROM messages
+            WHERE room_id = %s
+            ORDER BY created_at ASC
             LIMIT %s OFFSET %s
-        """, (conv_id, limit, offset))
+        """, (room_id, limit, offset))
 
         messages = []
         for r in cursor.fetchall():
@@ -276,16 +276,16 @@ def get_messages():
                 'content': '삭제된 메시지입니다.' if r['is_deleted'] else r['content'],
                 'file_name': r['file_name'] if not r['is_deleted'] else None,
                 'has_file': bool(r['file_path']) and not r['is_deleted'],
-                'created_at': r['created_at'].strftime('%Y-%m-%d %H:%M:%S'),
+                'created_at': r['created_at'].strftime('%Y-%m-%d %H:%M:%S') if r['created_at'] else '',
                 'is_deleted': bool(r['is_deleted']),
                 'is_mine': r['sender_id'] == member_id
             })
 
-        # 읽음 처리 자동 수행
+        # 읽음 처리
         cursor.execute("""
-            UPDATE conversation_members SET last_read_at = NOW()
-            WHERE conversation_id = %s AND member_id = %s
-        """, (conv_id, member_id))
+            UPDATE message_room_members SET last_read_at = NOW()
+            WHERE room_id = %s AND member_id = %s
+        """, (room_id, member_id))
         conn.commit()
 
         return jsonify({'success': True, 'messages': messages})
@@ -308,10 +308,11 @@ def send_message():
     try:
         member_id = session.get('user_id')
         member_name = session.get('user_name', '')
+        member_role = session.get('user_role', 'teacher')
         content = request.form.get('content', '').strip()
-        conv_id = int(request.form.get('conversation_id', 0))
+        room_id = int(request.form.get('conversation_id', 0))
 
-        if not member_id or not conv_id:
+        if not member_id or not room_id:
             return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
 
         if not content and 'file' not in request.files:
@@ -324,58 +325,56 @@ def send_message():
             return jsonify({'success': False, 'message': 'DB 연결 오류'})
         cursor = conn.cursor()
 
-        if not _check_member_in_conversation(cursor, conv_id, member_id):
+        if not _check_member_in_room(cursor, room_id, member_id):
             return jsonify({'success': False, 'message': '대화 참여 권한이 없습니다.'})
 
         # 파일 첨부 처리
         file_path = None
         file_name = None
+        msg_type = 'text'
         uploaded_file = request.files.get('file')
         if uploaded_file and uploaded_file.filename:
             if not allowed_file(uploaded_file.filename):
                 return jsonify({'success': False, 'message': '허용되지 않는 파일 형식입니다.'})
 
             file_name = uploaded_file.filename
-            # school_id 조회
-            cursor.execute("SELECT school_id FROM conversations WHERE id = %s", (conv_id,))
-            conv_row = cursor.fetchone()
-            s_id = conv_row['school_id'] if conv_row else 'unknown'
+            cursor.execute("SELECT school_id FROM message_rooms WHERE id = %s", (room_id,))
+            room_row = cursor.fetchone()
+            s_id = room_row['school_id'] if room_row else 'unknown'
 
             import time
             ts = int(time.time())
-            remote_path = f'/schoolus/messenger/{s_id}/{conv_id}/{ts}_{file_name}'
+            remote_path = f'/schoolus/messenger/{s_id}/{room_id}/{ts}_{file_name}'
             local_tmp = os.path.join(tempfile.gettempdir(), f'msg_{ts}_{file_name}')
             uploaded_file.save(local_tmp)
             try:
                 sftp_upload_file(local_tmp, remote_path)
                 file_path = remote_path
+                msg_type = 'file'
             finally:
                 if os.path.exists(local_tmp):
                     os.remove(local_tmp)
 
         # 메시지 저장
         cursor.execute("""
-            INSERT INTO messages (conversation_id, sender_id, content, file_path, file_name)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (conv_id, member_id, content, file_path, file_name))
+            INSERT INTO messages (room_id, sender_id, sender_name, sender_role, content, message_type, file_path, file_name)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (room_id, member_id, member_name, member_role, content, msg_type, file_path, file_name))
         msg_id = cursor.lastrowid
-
-        # 대화방 updated_at 갱신
-        cursor.execute("UPDATE conversations SET updated_at = NOW() WHERE id = %s", (conv_id,))
 
         # 발신자 읽음 처리
         cursor.execute("""
-            UPDATE conversation_members SET last_read_at = NOW()
-            WHERE conversation_id = %s AND member_id = %s
-        """, (conv_id, member_id))
+            UPDATE message_room_members SET last_read_at = NOW()
+            WHERE room_id = %s AND member_id = %s
+        """, (room_id, member_id))
 
         conn.commit()
 
         # 상대방 푸시 알림
         cursor.execute("""
-            SELECT member_id FROM conversation_members
-            WHERE conversation_id = %s AND member_id != %s AND is_active = 1
-        """, (conv_id, member_id))
+            SELECT member_id FROM message_room_members
+            WHERE room_id = %s AND member_id != %s AND is_active = 1
+        """, (room_id, member_id))
         for row in cursor.fetchall():
             try:
                 preview = content[:30] + '...' if len(content) > 30 else content
@@ -385,7 +384,7 @@ def send_message():
                     row['member_id'],
                     f'{member_name}님의 메시지',
                     preview or '새 메시지가 도착했습니다.',
-                    f'/highschool/messenger.html?conv={conv_id}'
+                    f'/highschool/messenger.html?conv={room_id}'
                 )
             except Exception:
                 pass
@@ -449,9 +448,9 @@ def mark_read():
     try:
         data = request.get_json()
         member_id = session.get('user_id') or sanitize_input(data.get('member_id'), 50)
-        conv_id = int(data.get('conversation_id', 0))
+        room_id = int(data.get('conversation_id', 0))
 
-        if not member_id or not conv_id:
+        if not member_id or not room_id:
             return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
 
         conn = get_db_connection()
@@ -460,9 +459,9 @@ def mark_read():
         cursor = conn.cursor()
 
         cursor.execute("""
-            UPDATE conversation_members SET last_read_at = NOW()
-            WHERE conversation_id = %s AND member_id = %s AND is_active = 1
-        """, (conv_id, member_id))
+            UPDATE message_room_members SET last_read_at = NOW()
+            WHERE room_id = %s AND member_id = %s AND is_active = 1
+        """, (room_id, member_id))
         conn.commit()
 
         return jsonify({'success': True})
@@ -495,9 +494,11 @@ def unread_count():
 
         cursor.execute("""
             SELECT COUNT(*) AS total_unread FROM messages msg
-            JOIN conversation_members cm ON cm.conversation_id = msg.conversation_id
-                AND cm.member_id = %s AND cm.is_active = 1
-            WHERE msg.created_at > COALESCE(cm.last_read_at, '1970-01-01')
+            JOIN message_room_members rm ON rm.room_id = msg.room_id
+                AND rm.member_id = %s AND rm.is_active = 1
+            JOIN message_rooms r ON r.id = msg.room_id
+                AND r.room_type IN ('direct', 'group') AND r.is_active = 1
+            WHERE msg.created_at > COALESCE(rm.last_read_at, rm.joined_at, '1970-01-01')
               AND msg.sender_id != %s AND msg.is_deleted = 0
         """, (member_id, member_id))
         row = cursor.fetchone()
@@ -536,7 +537,6 @@ def get_contacts():
         contacts = []
 
         if user_role == 'teacher':
-            # 교사: 같은 학교 모든 사용자 (본인 제외)
             if not role_filter or role_filter == 'teacher':
                 q = """SELECT m.member_id, m.member_name, 'teacher' AS role,
                               ta.class_grade, ta.class_no, ta.department
@@ -589,7 +589,6 @@ def get_contacts():
                     })
 
         elif user_role == 'student':
-            # 학생: 같은 학교 교사만
             q = """SELECT m.member_id, m.member_name, 'teacher' AS role,
                           ta.class_grade, ta.class_no, ta.department
                    FROM tea_all ta JOIN member m ON ta.member_id = m.member_id
@@ -607,7 +606,6 @@ def get_contacts():
                 })
 
         elif user_role == 'parent':
-            # 학부모: 자녀의 교사만
             q = """SELECT DISTINCT m.member_id, m.member_name, 'teacher' AS role,
                           ta.class_grade, ta.class_no, ta.department
                    FROM tea_all ta
@@ -647,9 +645,9 @@ def leave_conversation():
     try:
         data = request.get_json()
         member_id = session.get('user_id') or sanitize_input(data.get('member_id'), 50)
-        conv_id = int(data.get('conversation_id', 0))
+        room_id = int(data.get('conversation_id', 0))
 
-        if not member_id or not conv_id:
+        if not member_id or not room_id:
             return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
 
         conn = get_db_connection()
@@ -658,9 +656,9 @@ def leave_conversation():
         cursor = conn.cursor()
 
         cursor.execute("""
-            UPDATE conversation_members SET is_active = 0
-            WHERE conversation_id = %s AND member_id = %s
-        """, (conv_id, member_id))
+            UPDATE message_room_members SET is_active = 0
+            WHERE room_id = %s AND member_id = %s
+        """, (room_id, member_id))
         conn.commit()
 
         return jsonify({'success': True})
@@ -693,15 +691,15 @@ def download_file():
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT msg.file_path, msg.file_name, msg.conversation_id
-            FROM messages msg
-            WHERE msg.id = %s AND msg.is_deleted = 0 AND msg.file_path IS NOT NULL
+            SELECT file_path, file_name, room_id
+            FROM messages
+            WHERE id = %s AND is_deleted = 0 AND file_path IS NOT NULL
         """, (msg_id,))
         row = cursor.fetchone()
         if not row:
             return jsonify({'success': False, 'message': '파일을 찾을 수 없습니다.'})
 
-        if not _check_member_in_conversation(cursor, row['conversation_id'], member_id):
+        if not _check_member_in_room(cursor, row['room_id'], member_id):
             return jsonify({'success': False, 'message': '권한이 없습니다.'})
 
         local_tmp = os.path.join(tempfile.gettempdir(), f'dl_{msg_id}_{row["file_name"]}')
