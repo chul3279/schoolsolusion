@@ -209,14 +209,22 @@ def signup():
         if 'student' in roles:
             cursor.execute("SELECT id FROM stu_all WHERE member_id = %s", (login_id,))
             existing = cursor.fetchone()
+            if not existing and school_id and stu_grade and stu_class and stu_number:
+                cursor.execute("""
+                    SELECT id FROM stu_all
+                    WHERE school_id = %s AND class_grade = %s AND class_no = %s AND class_num = %s
+                      AND (member_id = '' OR member_id IS NULL)
+                    LIMIT 1
+                """, (school_id, stu_grade, stu_class, stu_number))
+                existing = cursor.fetchone()
             if existing:
                 cursor.execute("""
-                    UPDATE stu_all SET member_name = %s, member_school = %s, school_id = %s,
+                    UPDATE stu_all SET member_id = %s, member_name = %s, member_school = %s, school_id = %s,
                         member_birth = %s, member_tel = %s,
                         class_grade = %s, class_no = %s, class_num = %s
-                    WHERE member_id = %s
-                """, (member_name, member_school, school_id, member_birth, member_tel,
-                      stu_grade, stu_class, stu_number, login_id))
+                    WHERE id = %s
+                """, (login_id, member_name, member_school, school_id, member_birth, member_tel,
+                      stu_grade, stu_class, stu_number, existing['id']))
             else:
                 cursor.execute("""
                     INSERT INTO stu_all (member_id, member_name, member_school, school_id, member_birth, member_tel,

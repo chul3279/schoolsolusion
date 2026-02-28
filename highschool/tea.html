@@ -809,7 +809,9 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                                 const isCover = lesson.change_type === 'cover';
                                 const badgeText = isCancel ? lesson.change_reason || '변경' : (isCover ? '보강' : '변경');
                                 const subInfo = type === 'my' ? `${lesson.grade}-${lesson.class_no}반` : (lesson.member_name || '');
-                                html += `<div class="flex items-center gap-3 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200"><div class="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center font-bold text-sm">${i}</div><div class="flex-1"><p class="font-bold text-orange-700">${lesson.subject} <span class="text-xs font-normal bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full ml-1">${badgeText}</span></p><p class="text-xs text-orange-400">${subInfo}</p></div></div>`;
+                                const origSubj = lesson.original_subject && lesson.original_subject !== lesson.subject ? `<span class="line-through text-orange-300 mr-1">${lesson.original_subject}</span>→ ` : '';
+                                const coverInfo = isCover && lesson.original_teacher ? ` <span class="text-orange-300">(원래: ${lesson.original_teacher})</span>` : '';
+                                html += `<div class="flex items-center gap-3 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200"><div class="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center font-bold text-sm">${i}</div><div class="flex-1"><p class="font-bold text-orange-700">${origSubj}${lesson.subject} <span class="text-xs font-normal bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full ml-1">${badgeText}</span></p><p class="text-xs text-orange-400">${subInfo}${coverInfo}</p></div></div>`;
                             } else {
                                 html += `<div class="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100"><div class="w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold text-sm">${i}</div><div class="flex-1"><p class="font-bold text-slate-800">${lesson.subject}</p><p class="text-xs text-slate-500">${type === 'my' ? `${lesson.grade}-${lesson.class_no}반` : (lesson.member_name || '')}</p></div></div>`;
                             }
@@ -1369,6 +1371,8 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                 alert('저장 중 오류가 발생했습니다.');
             }
         }
+
+        function openSettingsPopup() { location.href = 'mypage.html'; }
 
         function handleLogout() { if (confirm('로그아웃 하시겠습니까?')) { clearInterval(notificationInterval); localStorage.removeItem('schoolus_user'); window.location.href = '/'; } }
 

@@ -48,6 +48,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
         .ex-cell.free-active { border-color: #22c55e; background: #f0fdf4; cursor: pointer; animation: pulse-green 1.5s ease-in-out infinite; }
         .ex-cell.free-active:hover { background: #dcfce7; box-shadow: 0 0 0 3px rgba(34,197,94,0.3); }
         .ex-cell.free-hovered { border-color: #16a34a; background: #dcfce7; box-shadow: 0 0 0 3px rgba(34,197,94,0.4); }
+        .ex-cell.target-selected { border-color: #16a34a; background: #dcfce7; box-shadow: 0 0 0 3px rgba(34,197,94,0.4); animation: none !important; }
         .ex-cell.impossible { border-color: #fca5a5; background: #fef2f2; opacity: 0.7; }
         @keyframes pulse-green { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); } 50% { box-shadow: 0 0 0 8px rgba(34,197,94,0); } }
         .chain-badge-simple { background: #dcfce7; color: #15803d; padding: 4px 12px; border-radius: 20px; }
@@ -437,6 +438,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
         let dayIndices = {};            // { '월': buildDayIndex(), '화': ..., }  요일별 인덱스
         let exWeekMonday = null;        // 현재 선택된 주의 월요일 Date
         let exSelectedSource = null;    // { period, dayName, classes, teacherId }
+        let exSelectedTarget = null;    // { period, dayName } — 클릭으로 고정된 타겟
         let exCurrentChain = null;      // 현재 계산된 체인 결과
         let exMode = 'exchange';        // 'exchange' | 'substitute'
 
@@ -518,6 +520,23 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                 document.getElementById('exTargetTeacher').dataset.memberId = t.member_id || '';
                 document.getElementById('exTargetDropdown').classList.add('hidden');
                 exTargetInfo = { member_id: t.member_id, member_name: t.member_name };
+            });
+
+            // ESC 키: 타겟 → 소스 순서로 해제
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && exMode === 'exchange') {
+                    if (exSelectedTarget) {
+                        exSelectedTarget = null;
+                        exCurrentChain = null;
+                        document.getElementById('chainResultCard').classList.add('hidden');
+                        renderWeekGrid();
+                    } else if (exSelectedSource) {
+                        exSelectedSource = null;
+                        exCurrentChain = null;
+                        document.getElementById('chainResultCard').classList.add('hidden');
+                        renderWeekGrid();
+                    }
+                }
             });
 
             // pending 배지 로드
@@ -884,6 +903,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
         function setExMode(mode) {
             exMode = mode;
             exSelectedSource = null;
+            exSelectedTarget = null;
             exCurrentChain = null;
             document.getElementById('chainResultCard').classList.add('hidden');
             document.getElementById('substituteCard').classList.add('hidden');
@@ -973,7 +993,8 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             dayIndices = {};
             DAYS.forEach(d => { dayIndices[d] = buildDayIndex(tt, d); });
 
-            exSelectedSource = null;
+            // 소스 선택 유지 (교차 주간 교환 지원), 타겟만 초기화
+            exSelectedTarget = null;
             exCurrentChain = null;
             document.getElementById('chainResultCard').classList.add('hidden');
             document.getElementById('substituteCard').classList.add('hidden');
@@ -1002,13 +1023,17 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                     const hasClass = classes.length > 0;
 
                     const isSource = exSelectedSource && exSelectedSource.period === p && exSelectedSource.dayName === dayName;
-                    const isFreeActive = exMode === 'exchange' && exSelectedSource && !hasClass && !isSource;
+                    const isTarget = exSelectedTarget && exSelectedTarget.period === p && exSelectedTarget.dayName === dayName;
+                    const isFreeActive = exMode === 'exchange' && exSelectedSource && !hasClass && !isSource && !isTarget;
 
                     let cellCls = 'tt-cell';
                     let extraStyle = '';
                     if (isSource) {
                         cellCls += ' source-selected';
                         extraStyle = 'border:2px solid #6366f1; background:#eef2ff; box-shadow:0 0 0 3px rgba(99,102,241,0.3);';
+                    } else if (isTarget) {
+                        cellCls += ' target-selected';
+                        extraStyle = 'border:2px solid #16a34a; background:#dcfce7; box-shadow:0 0 0 3px rgba(34,197,94,0.4);';
                     } else if (isFreeActive) {
                         cellCls += ' free-active';
                         extraStyle = 'border:2px solid #22c55e; background:#f0fdf4; cursor:pointer; animation:pulse-green 1.5s ease-in-out infinite;';
@@ -1024,6 +1049,10 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                             <span class="subject-tag">${c.subject}</span>
                             <span class="class-tag">${classLabel}</span>
                         </div>`;
+                    } else if (isTarget) {
+                        html += `<div class="${cellCls}" id="${cellId}" style="${extraStyle}" onclick="onExCellClick('${dayName}',${p},false)">
+                            <span class="text-xs font-bold" style="color:#16a34a;">이동 대상</span>
+                        </div>`;
                     } else {
                         const freeLabel = isFreeActive ? '여기로 이동' : '공강';
                         const freeEvents = isFreeActive
@@ -1036,6 +1065,54 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                 }
             }
             body.innerHTML = html;
+
+            // 선택 상태 배지 렌더링
+            renderSelectionBadge();
+        }
+
+        function renderSelectionBadge() {
+            let badgeEl = document.getElementById('exSelectionBadge');
+            if (!badgeEl) {
+                const wrap = document.getElementById('exWeekGridWrap');
+                badgeEl = document.createElement('div');
+                badgeEl.id = 'exSelectionBadge';
+                badgeEl.style.cssText = 'margin-bottom:8px; min-height:36px;';
+                wrap.insertBefore(badgeEl, wrap.firstChild);
+            }
+            if (!exSelectedSource) {
+                badgeEl.innerHTML = '';
+                return;
+            }
+            const srcClass = exSelectedSource.classes?.[0];
+            const srcLabel = srcClass ? `${exSelectedSource.dayName} ${exSelectedSource.period}교시 ${srcClass.subject}` : `${exSelectedSource.dayName} ${exSelectedSource.period}교시`;
+            let html = `<span style="display:inline-flex;align-items:center;gap:6px;background:#eef2ff;color:#4338ca;border:1px solid #a5b4fc;padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:600;">
+                <i class="fas fa-hand-pointer"></i>${srcLabel} 선택됨
+                <button onclick="clearExSource()" style="background:none;border:none;color:#6366f1;cursor:pointer;font-size:0.85rem;padding:0 2px;" title="소스 해제">&times;</button>
+            </span>`;
+            if (exSelectedTarget) {
+                html += ` <span style="display:inline-flex;align-items:center;gap:4px;color:#64748b;font-size:0.8rem;font-weight:600;"><i class="fas fa-arrow-right"></i></span> `;
+                html += `<span style="display:inline-flex;align-items:center;gap:6px;background:#dcfce7;color:#15803d;border:1px solid #86efac;padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:600;">
+                    <i class="fas fa-map-marker-alt"></i>${exSelectedTarget.dayName} ${exSelectedTarget.period}교시
+                    <button onclick="clearExTarget()" style="background:none;border:none;color:#16a34a;cursor:pointer;font-size:0.85rem;padding:0 2px;" title="타겟 해제">&times;</button>
+                </span>`;
+            } else {
+                html += ` <span style="font-size:0.75rem;color:#94a3b8;margin-left:4px;">— 이동할 빈 시간을 클릭하세요</span>`;
+            }
+            badgeEl.innerHTML = html;
+        }
+
+        function clearExSource() {
+            exSelectedSource = null;
+            exSelectedTarget = null;
+            exCurrentChain = null;
+            document.getElementById('chainResultCard').classList.add('hidden');
+            renderWeekGrid();
+        }
+        function clearExTarget() {
+            exSelectedTarget = null;
+            exCurrentChain = null;
+            document.getElementById('chainResultCard').classList.add('hidden');
+            renderWeekGrid();
         }
 
         // --- 셀 클릭 핸들러 ---
@@ -1062,6 +1139,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             if (!myPeriods[period]) return;
 
             exSelectedSource = { period, dayName, classes: myPeriods[period], teacherId: myId, teacherName: currentUser.member_name };
+            exSelectedTarget = null;
             exCurrentChain = null;
             document.getElementById('chainResultCard').classList.add('hidden');
             document.getElementById('substituteCard').classList.add('hidden');
@@ -1108,6 +1186,9 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             exCurrentChain = chain;
             exCurrentChain.targetPeriod = targetPeriod;
             exCurrentChain.dayName = dayName;
+            // 타겟 고정
+            exSelectedTarget = { dayName, period: targetPeriod };
+            renderWeekGrid();
             renderChainVisualization(chain, exSelectedSource.period, targetPeriod, idx);
         }
 

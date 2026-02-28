@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session
-from datetime import datetime
+from datetime import datetime, timedelta
 from utils.db import get_db_connection, sanitize_input
 
 timetable_bp = Blueprint('timetable', __name__)
@@ -384,34 +384,9 @@ def get_teacher_timetable():
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
         cursor = conn.cursor()
 
-        # 1) 원본 시간표 조회 — member_id 우선, 없으면 member_name 폴백
-        if query_member_id:
-            id_col = "school_id" if school_id else "member_school"
-            id_val = school_id or member_school
-            cursor.execute(f"""
-                SELECT period, subject, grade, class_no
-                FROM timetable
-                WHERE member_id = %s AND {id_col} = %s AND day_of_week = %s
-                ORDER BY period
-            """, (query_member_id, id_val, today))
-        elif school_id:
-            cursor.execute("""
-                SELECT period, subject, grade, class_no
-                FROM timetable
-                WHERE member_name = %s AND school_id = %s AND day_of_week = %s
-                ORDER BY period
-            """, (member_name, school_id, today))
-        else:
-            cursor.execute("""
-                SELECT period, subject, grade, class_no
-                FROM timetable
-                WHERE member_name = %s AND member_school = %s AND day_of_week = %s
-                ORDER BY period
-            """, (member_name, member_school, today))
-        timetable = cursor.fetchall()
-
-        # 1-b) timetable에 없으면 timetable_tea(교사 수동 입력)에서 조회
-        if not timetable and member_name:
+        # 1) 교사 시간표 조회 — timetable_tea 우선 (밴드 수업 포함), 없으면 timetable 폴백
+        timetable = []
+        if member_name:
             if school_id:
                 cursor.execute("""
                     SELECT period, subject, grade, class_no
@@ -423,6 +398,33 @@ def get_teacher_timetable():
                 cursor.execute("""
                     SELECT period, subject, grade, class_no
                     FROM timetable_tea
+                    WHERE member_name = %s AND member_school = %s AND day_of_week = %s
+                    ORDER BY period
+                """, (member_name, member_school, today))
+            timetable = cursor.fetchall()
+
+        # 1-b) timetable_tea에 없으면 timetable에서 조회
+        if not timetable:
+            if query_member_id:
+                id_col = "school_id" if school_id else "member_school"
+                id_val = school_id or member_school
+                cursor.execute(f"""
+                    SELECT period, subject, grade, class_no
+                    FROM timetable
+                    WHERE member_id = %s AND {id_col} = %s AND day_of_week = %s
+                    ORDER BY period
+                """, (query_member_id, id_val, today))
+            elif school_id:
+                cursor.execute("""
+                    SELECT period, subject, grade, class_no
+                    FROM timetable
+                    WHERE member_name = %s AND school_id = %s AND day_of_week = %s
+                    ORDER BY period
+                """, (member_name, school_id, today))
+            else:
+                cursor.execute("""
+                    SELECT period, subject, grade, class_no
+                    FROM timetable
                     WHERE member_name = %s AND member_school = %s AND day_of_week = %s
                     ORDER BY period
                 """, (member_name, member_school, today))
@@ -742,6 +744,268 @@ def get_student_timetable():
 
     except Exception as e:
         print(f"학생 개인 시간표 조회 오류: {e}")
+        return jsonify({'success': False, 'message': '시간표 조회 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 학생 개인 시간표 주간 조회 API (인쇄용 - 5일 전체)
+# ============================================
+@timetable_bp.route('/api/timetable/student/week', methods=['GET'])
+def get_student_timetable_week():
+    """학생 개인 시간표: 월~금 전체 (원반 시간표 + 선택과목 교육반 오버레이)"""
+    conn = None
+    cursor = None
+    try:
+        school_id = sanitize_input(request.args.get('school_id'), 50)
+        grade = sanitize_input(request.args.get('grade'), 10)
+        class_no = sanitize_input(request.args.get('class_no'), 10)
+        member_id = sanitize_input(request.args.get('member_id'), 50)
+        stu_id = sanitize_input(request.args.get('stu_id'), 20)
+
+        if not all([school_id, grade, class_no]) or (not member_id and not stu_id):
+            return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        # stu_id로 조회 시 member_id와 이름 조회
+        student_name = ''
+        if stu_id and not member_id:
+            cursor.execute("SELECT member_id, member_name FROM stu_all WHERE id=%s AND school_id=%s LIMIT 1", (stu_id, school_id))
+            stu_row = cursor.fetchone()
+            if stu_row:
+                member_id = stu_row['member_id'] or ''
+                student_name = stu_row['member_name']
+
+        days = ['월', '화', '수', '목', '금']
+
+        # 1) 원반 시간표 (월~금 전체)
+        cursor.execute("""
+            SELECT period, subject, member_name, day_of_week
+            FROM timetable
+            WHERE school_id=%s AND grade=%s AND class_no=%s AND day_of_week IN ('월','화','수','목','금')
+            ORDER BY day_of_week, CAST(period AS UNSIGNED)
+        """, (school_id, grade, class_no))
+        base_rows = cursor.fetchall()
+
+        if not base_rows:
+            cursor.execute("""
+                SELECT period, subject, member_name, day_of_week
+                FROM timetable_tea
+                WHERE school_id=%s AND grade=%s AND class_no=%s AND day_of_week IN ('월','화','수','목','금')
+                ORDER BY day_of_week, CAST(period AS UNSIGNED)
+            """, (school_id, grade, class_no))
+            base_rows = cursor.fetchall()
+
+        # 2) 학생의 선택과목 교육반 배정 (member_id가 있는 경우만)
+        stu_groups = {}
+        if member_id:
+            cursor.execute("""
+                SELECT subject, group_no, band, teacher_name
+                FROM timetable_stu_group
+                WHERE school_id=%s AND grade=%s AND member_id=%s
+            """, (school_id, grade, member_id))
+            stu_groups = {r['band']: r for r in cursor.fetchall()}
+
+        # 3) 밴드→시간대 매핑 (전체 요일)
+        period_band_map = {}
+        if stu_groups:
+            cursor.execute("""
+                SELECT band, period, day_of_week
+                FROM timetable_band_slots
+                WHERE school_id=%s AND grade=%s AND day_of_week IN ('월','화','수','목','금')
+            """, (school_id, grade))
+            for r in cursor.fetchall():
+                period_band_map[f"{r['day_of_week']}_{r['period']}"] = r['band']
+
+        # 4) 오버레이 적용
+        result = []
+        for item in base_rows:
+            entry = {
+                'period': item['period'],
+                'subject': item['subject'],
+                'member_name': item['member_name'] or '',
+                'day_of_week': item['day_of_week'],
+                'is_elective': False
+            }
+            p = str(item['period'])
+            day = item['day_of_week']
+            band = period_band_map.get(f"{day}_{p}")
+            if band and band in stu_groups:
+                sg = stu_groups[band]
+                entry['subject'] = sg['subject']
+                entry['member_name'] = sg['teacher_name']
+                entry['group_no'] = sg['group_no']
+                entry['band'] = band
+                entry['is_elective'] = True
+
+            result.append(entry)
+
+        # 학생 이름 조회 (stu_id로 이미 조회하지 않은 경우)
+        if not student_name and member_id:
+            cursor.execute("SELECT member_name FROM stu_all WHERE school_id=%s AND member_id=%s LIMIT 1", (school_id, member_id))
+            stu_row = cursor.fetchone()
+            student_name = stu_row['member_name'] if stu_row else ''
+
+        return jsonify({
+            'success': True,
+            'timetable': result,
+            'student_name': student_name,
+            'grade': grade,
+            'class_no': class_no
+        })
+
+    except Exception as e:
+        print(f"학생 주간 시간표 조회 오류: {e}")
+        return jsonify({'success': False, 'message': '시간표 조회 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 학생 시간표 배치 조회 (같은 반 여러 학생 한번에)
+# ============================================
+@timetable_bp.route('/api/timetable/student/week-batch', methods=['POST'])
+def get_student_timetable_week_batch():
+    """같은 반 학생 여러 명의 시간표를 한 번에 반환"""
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json() or {}
+        school_id = sanitize_input(data.get('school_id'), 50)
+        grade = sanitize_input(data.get('grade'), 10)
+        class_no = sanitize_input(data.get('class_no'), 10)
+        students = data.get('students', [])
+
+        if not all([school_id, grade, class_no]) or not students:
+            return jsonify({'success': False, 'message': '필수 정보가 누락되었습니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        # 1) 원반 시간표 (한 번만 조회 - 같은 반)
+        cursor.execute("""
+            SELECT period, subject, member_name, day_of_week
+            FROM timetable
+            WHERE school_id=%s AND grade=%s AND class_no=%s AND day_of_week IN ('월','화','수','목','금')
+            ORDER BY day_of_week, CAST(period AS UNSIGNED)
+        """, (school_id, grade, class_no))
+        base_rows = cursor.fetchall()
+
+        if not base_rows:
+            cursor.execute("""
+                SELECT period, subject, member_name, day_of_week
+                FROM timetable_tea
+                WHERE school_id=%s AND grade=%s AND class_no=%s AND day_of_week IN ('월','화','수','목','금')
+                ORDER BY day_of_week, CAST(period AS UNSIGNED)
+            """, (school_id, grade, class_no))
+            base_rows = cursor.fetchall()
+
+        # 2) 밴드→시간대 매핑 (한 번만 조회)
+        cursor.execute("""
+            SELECT band, period, day_of_week
+            FROM timetable_band_slots
+            WHERE school_id=%s AND grade=%s AND day_of_week IN ('월','화','수','목','금')
+        """, (school_id, grade))
+        period_band_map = {}
+        for r in cursor.fetchall():
+            period_band_map[f"{r['day_of_week']}_{r['period']}"] = r['band']
+
+        # 3) stu_id 목록에서 member_id, 이름 일괄 조회
+        stu_ids = [str(s.get('stu_id', '')) for s in students if s.get('stu_id')]
+        member_ids_input = [s.get('member_id', '') for s in students if s.get('member_id')]
+
+        stu_info = {}
+        if stu_ids:
+            placeholders = ','.join(['%s'] * len(stu_ids))
+            cursor.execute(f"SELECT id, member_id, member_name FROM stu_all WHERE id IN ({placeholders}) AND school_id=%s",
+                           (*stu_ids, school_id))
+            for r in cursor.fetchall():
+                stu_info[str(r['id'])] = {'member_id': r['member_id'] or '', 'name': r['member_name']}
+
+        # 4) 이동수업 그룹 일괄 조회
+        all_member_ids = set()
+        for s in students:
+            mid = s.get('member_id', '')
+            if not mid:
+                si = stu_info.get(str(s.get('stu_id', '')))
+                if si:
+                    mid = si['member_id']
+            if mid:
+                all_member_ids.add(mid)
+
+        all_stu_groups = {}
+        if all_member_ids:
+            placeholders = ','.join(['%s'] * len(all_member_ids))
+            mids = list(all_member_ids)
+            cursor.execute(f"""
+                SELECT member_id, subject, group_no, band, teacher_name
+                FROM timetable_stu_group
+                WHERE school_id=%s AND grade=%s AND member_id IN ({placeholders})
+            """, (school_id, grade, *mids))
+            for r in cursor.fetchall():
+                if r['member_id'] not in all_stu_groups:
+                    all_stu_groups[r['member_id']] = {}
+                all_stu_groups[r['member_id']][r['band']] = r
+
+        # 5) 각 학생별 시간표 생성
+        results = []
+        for s in students:
+            mid = s.get('member_id', '')
+            sid = str(s.get('stu_id', ''))
+            name = s.get('name', '')
+
+            if not mid and sid in stu_info:
+                mid = stu_info[sid]['member_id']
+                if not name:
+                    name = stu_info[sid]['name']
+            if not name and mid:
+                for si in stu_info.values():
+                    if si['member_id'] == mid:
+                        name = si['name']
+                        break
+
+            stu_groups = all_stu_groups.get(mid, {})
+            timetable = []
+            for item in base_rows:
+                entry = {
+                    'period': item['period'],
+                    'subject': item['subject'],
+                    'member_name': item['member_name'] or '',
+                    'day_of_week': item['day_of_week'],
+                    'is_elective': False
+                }
+                p = str(item['period'])
+                day = item['day_of_week']
+                band = period_band_map.get(f"{day}_{p}")
+                if band and band in stu_groups:
+                    sg = stu_groups[band]
+                    entry['subject'] = sg['subject']
+                    entry['member_name'] = sg['teacher_name']
+                    entry['group_no'] = sg['group_no']
+                    entry['band'] = band
+                    entry['is_elective'] = True
+                timetable.append(entry)
+
+            results.append({
+                'student_name': name,
+                'class_num': s.get('class_num', ''),
+                'timetable': timetable
+            })
+
+        return jsonify({'success': True, 'results': results, 'grade': grade, 'class_no': class_no})
+
+    except Exception as e:
+        print(f"학생 배치 시간표 조회 오류: {e}")
+        import traceback; traceback.print_exc()
         return jsonify({'success': False, 'message': '시간표 조회 중 오류가 발생했습니다.'})
     finally:
         if cursor: cursor.close()
@@ -1107,38 +1371,9 @@ def get_teacher_week_timetable():
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
         cursor = conn.cursor()
 
-        # timetable 테이블에서 시간표 조회, 없으면 timetable_tea(수동 입력)에서 조회
-        if query_member_id:
-            id_col = "school_id" if school_id else "member_school"
-            id_val = school_id or member_school
-            cursor.execute(f"""
-                SELECT day_of_week, period, subject, grade, class_no, member_name
-                FROM timetable
-                WHERE {id_col} = %s AND member_id = %s
-                  AND day_of_week IN ('월','화','수','목','금')
-                ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
-            """, (id_val, query_member_id))
-        elif school_id:
-            cursor.execute("""
-                SELECT day_of_week, period, subject, grade, class_no, member_name
-                FROM timetable
-                WHERE school_id = %s AND member_name = %s
-                  AND day_of_week IN ('월','화','수','목','금')
-                ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
-            """, (school_id, member_name))
-        else:
-            cursor.execute("""
-                SELECT day_of_week, period, subject, grade, class_no, member_name
-                FROM timetable
-                WHERE member_school = %s AND member_name = %s
-                  AND day_of_week IN ('월','화','수','목','금')
-                ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
-            """, (member_school, member_name))
-
-        timetable = cursor.fetchall()
-
-        # timetable에 없으면 timetable_tea(교사 수동 입력)에서 조회
-        if not timetable and member_name:
+        # timetable_tea 우선 조회 (밴드 수업 포함), 없으면 timetable 폴백
+        timetable = []
+        if member_name:
             if school_id:
                 cursor.execute("""
                     SELECT day_of_week, period, subject, grade, class_no, member_name
@@ -1151,6 +1386,36 @@ def get_teacher_week_timetable():
                 cursor.execute("""
                     SELECT day_of_week, period, subject, grade, class_no, member_name
                     FROM timetable_tea
+                    WHERE member_school = %s AND member_name = %s
+                      AND day_of_week IN ('월','화','수','목','금')
+                    ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
+                """, (member_school, member_name))
+            timetable = cursor.fetchall()
+
+        # timetable_tea에 없으면 timetable에서 조회
+        if not timetable:
+            if query_member_id:
+                id_col = "school_id" if school_id else "member_school"
+                id_val = school_id or member_school
+                cursor.execute(f"""
+                    SELECT day_of_week, period, subject, grade, class_no, member_name
+                    FROM timetable
+                    WHERE {id_col} = %s AND member_id = %s
+                      AND day_of_week IN ('월','화','수','목','금')
+                    ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
+                """, (id_val, query_member_id))
+            elif school_id:
+                cursor.execute("""
+                    SELECT day_of_week, period, subject, grade, class_no, member_name
+                    FROM timetable
+                    WHERE school_id = %s AND member_name = %s
+                      AND day_of_week IN ('월','화','수','목','금')
+                    ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
+                """, (school_id, member_name))
+            else:
+                cursor.execute("""
+                    SELECT day_of_week, period, subject, grade, class_no, member_name
+                    FROM timetable
                     WHERE member_school = %s AND member_name = %s
                       AND day_of_week IN ('월','화','수','목','금')
                     ORDER BY FIELD(day_of_week,'월','화','수','목','금'), period
@@ -1309,6 +1574,15 @@ def get_school_all_timetable():
             """, (school_id,))
             timetable = cursor.fetchall()
 
+        # 교사별 시간표 (timetable_tea — 밴드 수업 포함)
+        cursor.execute("""
+            SELECT day_of_week, period, subject, grade, class_no, member_name, member_id
+            FROM timetable_tea
+            WHERE school_id = %s AND day_of_week IN ('월','화','수','목','금')
+            ORDER BY member_name, FIELD(day_of_week,'월','화','수','목','금'), period
+        """, (school_id,))
+        teacher_timetable = cursor.fetchall()
+
         # 교사 목록 (부서 포함)
         cursor.execute("""
             SELECT member_id, member_name, department
@@ -1319,6 +1593,7 @@ def get_school_all_timetable():
         return jsonify({
             'success': True,
             'timetable': timetable,
+            'teacher_timetable': teacher_timetable,
             'teachers': teachers,
             'count': len(timetable)
         })
@@ -1990,6 +2265,19 @@ def list_timetable_exchange():
         if conn: conn.close()
 
 
+def _compute_change_date(exchange_date_str, day_of_week):
+    """exchange_date가 속한 주(월~금)에서 day_of_week에 해당하는 실제 날짜 반환.
+    교차 요일 교환 시 각 요일의 정확한 날짜를 계산하기 위해 사용."""
+    DAY_MAP = {'월': 0, '화': 1, '수': 2, '목': 3, '금': 4}
+    target_wd = DAY_MAP.get(day_of_week)
+    if target_wd is None:
+        return exchange_date_str
+    base = datetime.strptime(exchange_date_str, '%Y-%m-%d')
+    base_monday = base - timedelta(days=base.weekday())
+    result = base_monday + timedelta(days=target_wd)
+    return result.strftime('%Y-%m-%d')
+
+
 # ============================================
 # 수업 교환 요청 응답 (승인/거절) API
 # ============================================
@@ -2053,7 +2341,8 @@ def respond_timetable_exchange():
                          original_teacher, original_subject, original_grade, original_class_no,
                          new_teacher, new_subject, change_reason, changed_by)
                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                    """, (school_id, rec['member_school'], rec['exchange_date'],
+                    """, (school_id, rec['member_school'],
+                          _compute_change_date(rec['exchange_date'], rec['requester_day']),
                           rec['requester_day'], rec['requester_period'],
                           rec['requester_name'], rec['requester_subject'],
                           rec['requester_grade'], rec['requester_class_no'],
@@ -2069,7 +2358,8 @@ def respond_timetable_exchange():
                          original_teacher, original_subject, original_grade, original_class_no,
                          new_teacher, new_subject, change_reason, changed_by)
                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                    """, (school_id, rec['member_school'], rec['exchange_date'],
+                    """, (school_id, rec['member_school'],
+                          _compute_change_date(rec['exchange_date'], rec['requester_day']),
                           rec['requester_day'], rec['requester_period'],
                           rec['requester_name'], rec['requester_subject'],
                           rec['requester_grade'], rec['requester_class_no'],
@@ -2083,7 +2373,8 @@ def respond_timetable_exchange():
                          original_teacher, original_subject, original_grade, original_class_no,
                          new_teacher, new_subject, change_reason, changed_by)
                         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                    """, (school_id, rec['member_school'], rec['exchange_date'],
+                    """, (school_id, rec['member_school'],
+                          _compute_change_date(rec['exchange_date'], rec['target_day']),
                           rec['target_day'], rec['target_period'],
                           rec['target_name'], rec['target_subject'],
                           rec['target_grade'], rec['target_class_no'],
@@ -2103,7 +2394,8 @@ def respond_timetable_exchange():
              original_teacher, original_subject, original_grade, original_class_no,
              new_teacher, new_subject, change_reason, changed_by)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (school_id, ex['member_school'], ex['exchange_date'],
+        """, (school_id, ex['member_school'],
+              _compute_change_date(ex['exchange_date'], ex['requester_day']),
               ex['requester_day'], ex['requester_period'],
               ex['requester_name'], ex['requester_subject'],
               ex['requester_grade'], ex['requester_class_no'],
@@ -2111,19 +2403,23 @@ def respond_timetable_exchange():
               '교환수업', ex['target_name']))
         change_id_1 = cursor.lastrowid
 
-        cursor.execute("""
-            INSERT INTO timetable_changes
-            (school_id, member_school, change_date, day_of_week, period,
-             original_teacher, original_subject, original_grade, original_class_no,
-             new_teacher, new_subject, change_reason, changed_by)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (school_id, ex['member_school'], ex['exchange_date'],
-              ex['target_day'], ex['target_period'],
-              ex['target_name'], ex['target_subject'],
-              ex['target_grade'], ex['target_class_no'],
-              ex['requester_name'], ex['target_subject'],
-              '교환수업', ex['target_name']))
-        change_id_2 = cursor.lastrowid
+        # Record 2: 대강이 아닌 경우만 생성 (대강은 같은 교시/반에 중복 레코드 방지)
+        change_id_2 = None
+        if ex.get('reason') != '대강':
+            cursor.execute("""
+                INSERT INTO timetable_changes
+                (school_id, member_school, change_date, day_of_week, period,
+                 original_teacher, original_subject, original_grade, original_class_no,
+                 new_teacher, new_subject, change_reason, changed_by)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (school_id, ex['member_school'],
+                  _compute_change_date(ex['exchange_date'], ex['target_day']),
+                  ex['target_day'], ex['target_period'],
+                  ex['target_name'], ex['target_subject'],
+                  ex['target_grade'], ex['target_class_no'],
+                  ex['requester_name'], ex['target_subject'],
+                  '교환수업', ex['target_name']))
+            change_id_2 = cursor.lastrowid
 
         cursor.execute("""UPDATE timetable_exchange
             SET change_id_1=%s, change_id_2=%s

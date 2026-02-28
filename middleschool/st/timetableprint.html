@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolUs - 나의 시간표 출력</title>
+    <script src="/static/js/tailwindcss.js"></script>
+    <link href="/static/fontawesome/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+
+        .tt-grid {
+            display: grid; grid-template-columns: 42px repeat(5, 1fr);
+            border: 2px solid #94a3b8; background: #fff; border-radius: 6px; overflow: hidden;
+        }
+        .tt-head {
+            background: linear-gradient(135deg, #475569, #334155); color: #fff;
+            font-weight: 700; text-align: center; padding: 8px 4px;
+            border-bottom: 2px solid #94a3b8; border-right: 1px solid #64748b; font-size: 0.8rem;
+        }
+        .tt-head:first-child { background: #334155; }
+        .tt-cell {
+            border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;
+            min-height: 52px; position: relative; padding: 4px 3px;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            font-size: 0.73rem; transition: background 0.1s;
+        }
+        .tt-cell:hover { background: #f8fafc; }
+        .tt-cell:nth-child(6n) { border-right: none; }
+        .tt-cell.empty-cell { background: #fafafa; }
+        .period-badge {
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0); color: #64748b;
+            font-weight: 800; display: flex; align-items: center; justify-content: center;
+            border-right: 2px solid #94a3b8; border-bottom: 1px solid #e2e8f0; font-size: 0.8rem;
+        }
+        .subject-name { font-weight: 700; font-size: 0.73rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; line-height: 1.3; }
+        .sub-info { font-size: 0.6rem; color: #64748b; margin-top: 1px; }
+
+        .subj-lang { color: #b91c1c; } .subj-math { color: #1d4ed8; } .subj-eng { color: #7c3aed; }
+        .subj-sci { color: #047857; } .subj-soc { color: #b45309; } .subj-art { color: #be185d; }
+        .subj-pe { color: #0369a1; } .subj-etc { color: #374151; }
+
+        .tt-cell.elective-cell { background: linear-gradient(135deg, #faf5ff, #f3e8ff); border-left: 2px solid #a855f7; }
+        .elective-tag { font-size: 0.5rem; color: #7c3aed; background: #ede9fe; padding: 0px 4px; border-radius: 4px; font-weight: 700; margin-top: 1px; }
+
+        .print-card { break-inside: avoid; page-break-inside: avoid; margin-bottom: 20px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+        .print-card-header { padding: 10px 14px; background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .print-card-name { font-size: 0.95rem; font-weight: 800; color: #1e293b; }
+        .print-card-badge { font-size: 0.7rem; color: #64748b; background: #e2e8f0; padding: 2px 10px; border-radius: 20px; font-weight: 600; }
+        .print-card-footer { padding: 6px 14px; background: #fafafa; border-top: 1px solid #f1f5f9; font-size: 0.65rem; color: #94a3b8; }
+
+        @media print {
+            .no-print { display: none !important; }
+            @page { margin: 8mm; size: A4 portrait; }
+            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .tt-grid { border: 2px solid #333; }
+            .tt-head { background: #4a5568 !important; color: #fff !important; }
+            .period-badge { background: #edf2f7 !important; }
+            .print-card { box-shadow: none; border: 1.5px solid #999; }
+            .print-card-header { background: #f0f0f0 !important; }
+            .print-title-bar { display: block !important; text-align: center; margin-bottom: 10px; font-size: 1.2rem; font-weight: 800; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+    <div class="no-print bg-white border-b px-6 py-3 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+            <button onclick="history.back()" class="text-slate-500 hover:text-slate-700 transition"><i class="fas fa-arrow-left text-lg"></i></button>
+            <h2 class="text-lg font-bold text-slate-800"><i class="fas fa-print mr-2 text-blue-500"></i>나의 시간표 출력</h2>
+            <span id="schoolBadge" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold"></span>
+        </div>
+        <button onclick="window.print()" class="bg-blue-600 text-white hover:bg-blue-700 px-5 py-1.5 rounded-lg text-sm font-bold transition shadow-sm">
+            <i class="fas fa-print mr-1"></i> 인쇄
+        </button>
+    </div>
+
+    <div class="p-6">
+        <div class="print-title-bar hidden" id="printTitle"></div>
+        <div id="printContent" class="text-center text-slate-400 py-20">
+            <i class="fas fa-spinner fa-spin text-4xl mb-4 block text-blue-400"></i>
+            <p class="text-base font-bold">시간표를 불러오는 중...</p>
+        </div>
+    </div>
+
+<script>
+const DAYS = ['월', '화', '수', '목', '금'];
+const DAY_MAP = {'월': 0, '화': 1, '수': 2, '목': 3, '금': 4};
+const MAX_PERIOD = 7;
+
+const SUBJ_COLORS = {
+    '국어': 'subj-lang', '공통국어': 'subj-lang', '공통국어1': 'subj-lang', '문학': 'subj-lang', '독서': 'subj-lang',
+    '수학': 'subj-math', '공통수학': 'subj-math', '공통수학1': 'subj-math', '확률과통계': 'subj-math', '미적분': 'subj-math',
+    '영어': 'subj-eng', '공통영어': 'subj-eng', '공통영어1': 'subj-eng', '영어회화': 'subj-eng',
+    '물리학': 'subj-sci', '화학': 'subj-sci', '생명과학': 'subj-sci', '지구과학': 'subj-sci',
+    '통합과학': 'subj-sci', '통합과학1': 'subj-sci', '과학탐구실험': 'subj-sci', '과학탐구실험1': 'subj-sci',
+    '통합사회': 'subj-soc', '통합사회1': 'subj-soc', '한국사': 'subj-soc', '한국사1': 'subj-soc',
+    '세계사': 'subj-soc', '세계시민과 지리': 'subj-soc', '현대사회와 윤리': 'subj-soc', '사회와 문화': 'subj-soc',
+    '음악': 'subj-art', '미술': 'subj-art',
+    '체육': 'subj-pe', '체육1': 'subj-pe',
+};
+function getSubjColor(s) {
+    if (SUBJ_COLORS[s]) return SUBJ_COLORS[s];
+    for (const [k, v] of Object.entries(SUBJ_COLORS)) { if (s.includes(k)) return v; }
+    return 'subj-etc';
+}
+
+function truncate(s, max) { return s && s.length > max ? s.substring(0, max) : s || ''; }
+
+function buildGrid(rows) {
+    const map = {};
+    rows.forEach(r => {
+        const di = DAY_MAP[r.day_of_week];
+        if (di === undefined) return;
+        map[`${di}_${r.period}`] = r;
+    });
+
+    let html = '<div class="tt-grid">';
+    html += '<div class="tt-head"></div>';
+    DAYS.forEach(d => { html += `<div class="tt-head">${d}</div>`; });
+
+    for (let p = 1; p <= MAX_PERIOD; p++) {
+        html += `<div class="period-badge">${p}</div>`;
+        for (let d = 0; d < 5; d++) {
+            const e = map[`${d}_${p}`];
+            if (!e) {
+                html += '<div class="tt-cell empty-cell"></div>';
+            } else if (e.is_elective) {
+                const color = getSubjColor(e.subject);
+                html += `<div class="tt-cell elective-cell">
+                    <span class="subject-name ${color}">${truncate(e.subject, 7)}</span>
+                    <span class="sub-info">${e.member_name || ''}</span>
+                    <span class="elective-tag">${e.group_no || ''}반 이동</span>
+                </div>`;
+            } else {
+                const color = getSubjColor(e.subject);
+                html += `<div class="tt-cell">
+                    <span class="subject-name ${color}">${truncate(e.subject, 7)}</span>
+                    <span class="sub-info">${e.member_name || ''}</span>
+                </div>`;
+            }
+        }
+    }
+    html += '</div>';
+    return html;
+}
+
+function buildSummary(rows) {
+    const subjects = {};
+    rows.forEach(r => { subjects[r.subject] = (subjects[r.subject] || 0) + 1; });
+    return '과목: ' + Object.entries(subjects).sort((a, b) => b[1] - a[1]).map(([s, h]) => `${s}(${h})`).join(', ');
+}
+
+async function init() {
+    try {
+        const userStr = localStorage.getItem('schoolus_user');
+        if (!userStr) { alert('로그인이 필요합니다.'); location.href = '/'; return; }
+        const currentUser = JSON.parse(userStr);
+        const schoolId = currentUser.school_id || '';
+        const memberSchool = currentUser.member_school || '';
+        document.getElementById('schoolBadge').textContent = memberSchool;
+
+        // URL 파라미터에서 정보 가져오기 (학부모용)
+        const urlParams = new URLSearchParams(location.search);
+        let grade = urlParams.get('grade') || '';
+        let classNo = urlParams.get('class_no') || '';
+        let memberId = urlParams.get('member_id') || '';
+        let studentName = urlParams.get('name') || '';
+
+        // 파라미터 없으면 본인 정보 (학생용)
+        if (!grade || !classNo || !memberId) {
+            grade = currentUser.class_grade || '';
+            classNo = currentUser.class_no || '';
+            memberId = currentUser.member_id || '';
+            studentName = currentUser.member_name || '';
+        }
+
+        if (!grade || !classNo || !memberId) {
+            document.getElementById('printContent').innerHTML = '<div class="py-20 text-center"><i class="fas fa-exclamation-triangle text-4xl text-amber-400 mb-4 block"></i><p class="text-slate-600 font-bold">학급 정보가 없습니다.</p></div>';
+            return;
+        }
+
+        const res = await fetch(`/api/timetable/student/week?school_id=${encodeURIComponent(schoolId)}&grade=${grade}&class_no=${classNo}&member_id=${encodeURIComponent(memberId)}`);
+        const data = await res.json();
+
+        if (!data.success) {
+            document.getElementById('printContent').innerHTML = `<div class="py-20 text-center"><i class="fas fa-exclamation-triangle text-4xl text-amber-400 mb-4 block"></i><p class="text-slate-600 font-bold">${data.message}</p></div>`;
+            return;
+        }
+
+        const rows = data.timetable || [];
+        const name = data.student_name || studentName || '학생';
+        document.getElementById('printTitle').textContent = `${memberSchool} — ${grade}학년 ${classNo}반 ${name} 시간표`;
+
+        if (rows.length === 0) {
+            document.getElementById('printContent').innerHTML = '<div class="py-20 text-center"><i class="fas fa-calendar-times text-5xl text-slate-300 mb-4 block"></i><p class="text-lg font-bold text-slate-500">시간표 데이터가 없습니다.</p></div>';
+            return;
+        }
+
+        const electiveCount = rows.filter(r => r.is_elective).length;
+        document.getElementById('printContent').innerHTML = `
+            <div class="max-w-3xl mx-auto">
+                <div class="print-card">
+                    <div class="print-card-header">
+                        <div>
+                            <span class="print-card-name"><i class="fas fa-user-graduate mr-2 text-purple-500"></i>${grade}학년 ${classNo}반 ${name}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${electiveCount > 0 ? `<span class="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full font-bold">이동수업 ${electiveCount}시간</span>` : ''}
+                            <span class="print-card-badge">주 ${rows.length}시간</span>
+                        </div>
+                    </div>
+                    ${buildGrid(rows)}
+                    <div class="print-card-footer">${buildSummary(rows)}</div>
+                </div>
+            </div>`;
+    } catch (e) {
+        console.error(e);
+        document.getElementById('printContent').innerHTML = `<div class="py-20 text-center"><i class="fas fa-exclamation-circle text-4xl text-red-400 mb-4 block"></i><p class="text-red-600 font-bold">시간표 로드 실패: ${e.message}</p></div>`;
+    }
+}
+
+init();
+</script>
+</body>
+</html>

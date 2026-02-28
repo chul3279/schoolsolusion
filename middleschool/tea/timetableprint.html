@@ -51,6 +51,10 @@ body { font-family: 'Noto Sans KR', sans-serif; }
         .subj-pe { color: #0369a1; }
         .subj-etc { color: #374151; }
 
+        /* 이동수업 (선택과목) */
+        .tt-cell.elective-cell { background: linear-gradient(135deg, #faf5ff, #f3e8ff); border-left: 2px solid #a855f7; }
+        .elective-tag { font-size: 0.5rem; color: #7c3aed; background: #ede9fe; padding: 0px 4px; border-radius: 4px; font-weight: 700; margin-top: 1px; }
+
         /* 카드 */
         .print-card { break-inside: avoid; page-break-inside: avoid; margin-bottom: 20px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
         .print-card-header {
@@ -176,6 +180,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                 <button onclick="switchTab('teacherAll')" id="tab-teacherAll" class="tab-btn"><i class="fas fa-users mr-1"></i>교사 전체</button>
                 <button onclick="switchTab('class')" id="tab-class" class="tab-btn"><i class="fas fa-chalkboard mr-1"></i>학급별</button>
                 <button onclick="switchTab('grade')" id="tab-grade" class="tab-btn"><i class="fas fa-layer-group mr-1"></i>학년별</button>
+                <button onclick="switchTab('student')" id="tab-student" class="tab-btn"><i class="fas fa-user-graduate mr-1"></i>학생별</button>
             </div>
             <div class="flex-1"></div>
             <div id="filter-teacher" class="flex items-center gap-2">
@@ -196,6 +201,22 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                     <option value="3">3학년</option>
                     <option value="all">전체 학년</option>
                 </select>
+            </div>
+            <div id="filter-student" class="hidden flex items-center gap-2">
+                <select id="selStuGrade" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium" onchange="onStuGradeChange()">
+                    <option value="">학년...</option>
+                    <option value="1">1학년</option>
+                    <option value="2">2학년</option>
+                    <option value="3">3학년</option>
+                </select>
+                <select id="selStuClass" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium" onchange="onStuClassChange()">
+                    <option value="">반...</option>
+                </select>
+                <button onclick="toggleAllStudents()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-bold transition">전체선택</button>
+                <button onclick="reRender()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-sm font-bold transition"><i class="fas fa-search mr-1"></i>불러오기</button>
+                <span id="selStudentCount" class="text-xs text-slate-500 font-bold"></span>
+            </div>
+            <div id="studentCheckList" class="hidden bg-white border border-slate-200 rounded-lg p-3 mx-4 mt-1 max-h-48 overflow-y-auto grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1 text-sm">
             </div>
         </div>
 
@@ -233,6 +254,7 @@ function getSubjColor(s) {
 }
 
 let allData = [];
+let teacherData = [];
 let teacherInfo = {};
 let currentTab = 'teacher';
 let schoolId = '';
@@ -261,6 +283,7 @@ async function init() {
         }
 
         allData = data.timetable || [];
+        teacherData = data.teacher_timetable || [];
         (data.teachers || []).forEach(t => {
             teacherInfo[t.member_id] = { name: t.member_name, dept: t.department || '' };
         });
@@ -290,7 +313,8 @@ async function init() {
 // ========== 필터 ==========
 function buildFilters() {
     const teacherMap = {};
-    allData.forEach(r => {
+    const srcData = teacherData.length > 0 ? teacherData : allData;
+    srcData.forEach(r => {
         const mid = r.member_id || r.member_name;
         if (!mid || mid === '-') return;
         if (!teacherMap[mid]) teacherMap[mid] = { name: r.member_name, dept: (teacherInfo[mid] || {}).dept || '' };
@@ -325,12 +349,14 @@ function buildFilters() {
 // ========== 탭 ==========
 function switchTab(tab) {
     currentTab = tab;
-    ['teacher', 'teacherAll', 'class', 'grade'].forEach(t => {
+    ['teacher', 'teacherAll', 'class', 'grade', 'student'].forEach(t => {
         document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
     });
     document.getElementById('filter-teacher').classList.toggle('hidden', tab !== 'teacher');
     document.getElementById('filter-class').classList.toggle('hidden', tab !== 'class');
     document.getElementById('filter-grade').classList.toggle('hidden', tab !== 'grade');
+    document.getElementById('filter-student').classList.toggle('hidden', tab !== 'student');
+    document.getElementById('studentCheckList').classList.toggle('hidden', tab !== 'student' || !document.querySelectorAll('.stu-check').length);
     reRender();
 }
 
@@ -342,6 +368,7 @@ function reRender() {
         case 'teacherAll': renderTeacherAll(area, titleEl); break;
         case 'class': renderClassSingle(area, titleEl); break;
         case 'grade': renderGradeAll(area, titleEl); break;
+        case 'student': renderStudentSingle(area, titleEl); break;
     }
 }
 
@@ -350,7 +377,8 @@ function renderTeacherSingle(area, titleEl) {
     const mid = document.getElementById('selTeacher').value;
     if (!mid) { area.innerHTML = '<p class="text-slate-400 py-20 text-center"><i class="fas fa-hand-pointer text-3xl mb-3 block"></i>교사를 선택하세요.</p>'; return; }
 
-    const rows = allData.filter(r => (r.member_id || r.member_name) === mid);
+    const srcData = teacherData.length > 0 ? teacherData : allData;
+    const rows = srcData.filter(r => (r.member_id || r.member_name) === mid);
     const name = rows.length > 0 ? rows[0].member_name : mid;
     const dept = (teacherInfo[mid] || {}).dept || '';
     const deptStr = dept ? ` (${dept})` : '';
@@ -386,8 +414,9 @@ function renderTeacherSingle(area, titleEl) {
 function renderTeacherAll(area, titleEl) {
     titleEl.textContent = `${memberSchool} — 교사별 시간표`;
 
+    const srcData = teacherData.length > 0 ? teacherData : allData;
     const teacherRows = {};
-    allData.forEach(r => {
+    srcData.forEach(r => {
         const mid = r.member_id || r.member_name;
         if (!mid || mid === '-') return;
         if (!teacherRows[mid]) teacherRows[mid] = [];
@@ -501,6 +530,162 @@ function renderGradeAll(area, titleEl) {
     });
     html += '</div>';
     area.innerHTML = html;
+}
+
+// ========== 학생별 ==========
+function onStuGradeChange() {
+    const grade = document.getElementById('selStuGrade').value;
+    const selClass = document.getElementById('selStuClass');
+    selClass.innerHTML = '<option value="">반...</option>';
+    document.getElementById('studentCheckList').innerHTML = '';
+    document.getElementById('studentCheckList').classList.add('hidden');
+    document.getElementById('selStudentCount').textContent = '';
+    if (!grade) return;
+
+    const classNos = [...new Set(allData.filter(r => String(r.grade) === grade).map(r => String(r.class_no)))].sort((a, b) => Number(a) - Number(b));
+    classNos.forEach(cn => {
+        const opt = document.createElement('option');
+        opt.value = cn;
+        opt.textContent = `${cn}반`;
+        selClass.appendChild(opt);
+    });
+}
+
+async function onStuClassChange() {
+    const grade = document.getElementById('selStuGrade').value;
+    const classNo = document.getElementById('selStuClass').value;
+    const checkList = document.getElementById('studentCheckList');
+    checkList.innerHTML = '';
+    checkList.classList.add('hidden');
+    document.getElementById('selStudentCount').textContent = '';
+    if (!grade || !classNo) return;
+
+    try {
+        const res = await fetch(`/api/subject/students?school_id=${encodeURIComponent(schoolId)}&class_grade=${grade}&class_no=${classNo}`);
+        const data = await res.json();
+        if (data.success && data.students) {
+            data.students.forEach(s => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center gap-1 cursor-pointer hover:bg-blue-50 rounded px-1.5 py-1 transition';
+                label.innerHTML = `<input type="checkbox" class="stu-check accent-blue-600" value="${s.id}" data-member-id="${s.member_id || ''}" data-name="${s.member_name}" data-num="${s.class_num}" checked>
+                    <span class="text-xs font-medium">${s.class_num}번 ${s.member_name}</span>`;
+                checkList.appendChild(label);
+            });
+            checkList.classList.remove('hidden');
+            updateStudentCount();
+        }
+    } catch (e) { console.error('학생 목록 로드 실패:', e); }
+}
+
+function toggleAllStudents() {
+    const checks = document.querySelectorAll('.stu-check');
+    if (!checks.length) return;
+    const allChecked = [...checks].every(c => c.checked);
+    checks.forEach(c => c.checked = !allChecked);
+    updateStudentCount();
+}
+
+function updateStudentCount() {
+    const checks = document.querySelectorAll('.stu-check');
+    const checked = document.querySelectorAll('.stu-check:checked');
+    document.getElementById('selStudentCount').textContent = checks.length > 0 ? `${checked.length}/${checks.length}명 선택` : '';
+}
+
+document.addEventListener('change', e => { if (e.target.classList.contains('stu-check')) updateStudentCount(); });
+
+async function renderStudentSingle(area, titleEl) {
+    const grade = document.getElementById('selStuGrade').value;
+    const classNo = document.getElementById('selStuClass').value;
+    const checked = document.querySelectorAll('.stu-check:checked');
+
+    if (!grade || !classNo || checked.length === 0) {
+        area.innerHTML = '<p class="text-slate-400 py-20 text-center"><i class="fas fa-hand-pointer text-3xl mb-3 block"></i>학년, 반을 선택하고 출력할 학생을 체크하세요.</p>';
+        return;
+    }
+
+    titleEl.textContent = `${memberSchool} — ${grade}학년 ${classNo}반 학생 시간표 (${checked.length}명)`;
+    area.innerHTML = '<div class="py-20 text-center"><i class="fas fa-spinner fa-spin text-4xl text-blue-400 mb-4 block"></i><p class="text-slate-500 font-bold">학생 시간표 로딩 중... (${checked.length}명)</p></div>';
+
+    try {
+        const stuList = [...checked].map(chk => ({
+            stu_id: chk.value,
+            member_id: chk.dataset.memberId || '',
+            name: chk.dataset.name || '',
+            class_num: chk.dataset.num || ''
+        }));
+        const res = await fetch('/api/timetable/student/week-batch', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ school_id: schoolId, grade, class_no: classNo, students: stuList })
+        });
+        const data = await res.json();
+        if (!data.success) { area.innerHTML = `<p class="text-red-500 py-20 text-center">${data.message}</p>`; return; }
+
+        let html = '<div class="max-w-3xl mx-auto">';
+        data.results.forEach(stu => {
+            const name = stu.student_name || '학생';
+            const num = stu.class_num || '';
+            const rows = stu.timetable || [];
+            const electiveCount = rows.filter(r => r.is_elective).length;
+            html += `
+                <div class="print-card">
+                    <div class="print-card-header">
+                        <div>
+                            <span class="print-card-name"><i class="fas fa-user-graduate mr-2 text-purple-500"></i>${grade}학년 ${classNo}반 ${num ? num + '번 ' : ''}${name}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${electiveCount > 0 ? `<span class="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full font-bold">이동수업 ${electiveCount}시간</span>` : ''}
+                            <span class="print-card-badge">주 ${rows.length}시간</span>
+                        </div>
+                    </div>
+                    ${buildStudentGrid(rows)}
+                    <div class="print-card-footer">${buildClassSummary(rows)}</div>
+                </div>`;
+        });
+        html += '</div>';
+        area.innerHTML = html;
+    } catch (e) {
+        area.innerHTML = `<p class="text-red-500 py-20 text-center">시간표 로드 실패: ${e.message}</p>`;
+    }
+}
+
+// ========== 학생 전용 그리드 (이동수업 표시) ==========
+function buildStudentGrid(rows) {
+    const map = {};
+    rows.forEach(r => {
+        const di = DAY_MAP[r.day_of_week];
+        if (di === undefined) return;
+        map[`${di}_${r.period}`] = r;
+    });
+
+    let html = '<div class="tt-grid">';
+    html += '<div class="tt-head"></div>';
+    DAYS.forEach(d => { html += `<div class="tt-head">${d}</div>`; });
+
+    for (let p = 1; p <= MAX_PERIOD; p++) {
+        html += `<div class="period-badge">${p}</div>`;
+        for (let d = 0; d < 5; d++) {
+            const e = map[`${d}_${p}`];
+            if (!e) {
+                html += '<div class="tt-cell empty-cell"></div>';
+            } else if (e.is_elective) {
+                const color = getSubjColor(e.subject);
+                html += `<div class="tt-cell elective-cell">
+                    <span class="subject-name ${color}">${truncate(e.subject, 7)}</span>
+                    <span class="sub-info">${e.member_name}</span>
+                    <span class="elective-tag">${e.group_no || ''}반 이동</span>
+                </div>`;
+            } else {
+                const color = getSubjColor(e.subject);
+                html += `<div class="tt-cell">
+                    <span class="subject-name ${color}">${truncate(e.subject, 7)}</span>
+                    <span class="sub-info">${e.member_name}</span>
+                </div>`;
+            }
+        }
+    }
+    html += '</div>';
+    return html;
 }
 
 // ========== 그리드 ==========

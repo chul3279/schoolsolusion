@@ -340,7 +340,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                         <div class="p-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
                             <div class="flex items-center justify-between">
                                 <div><p class="text-xs text-white/70 font-medium">오늘</p><p class="text-lg font-black" id="today-day">-</p></div>
-                                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><i class="fas fa-calendar-day"></i></div>
+                                <a href="st/timetableprint.html" class="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition" title="시간표 인쇄"><i class="fas fa-print"></i></a>
                             </div>
                         </div>
                         <div class="flex-1 p-4 overflow-auto bg-white"><div id="today-timetable" class="space-y-2"></div></div>
@@ -619,7 +619,8 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                             if (lesson) {
                                 if (lesson.changed) {
                                     const reason = lesson.change_reason || '변경';
-                                    html += `<div class="flex items-center gap-3 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200"><div class="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center font-bold text-sm">${i}</div><div class="flex-1"><p class="font-bold text-orange-700">${lesson.subject} <span class="text-xs font-normal bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full ml-1">${reason}</span></p><p class="text-xs text-orange-400">${lesson.member_name || ''}</p></div></div>`;
+                                    const origSubj = lesson.original_subject && lesson.original_subject !== lesson.subject ? `<span class="line-through text-orange-300 mr-1">${lesson.original_subject}</span>→ ` : '';
+                                    html += `<div class="flex items-center gap-3 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200"><div class="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center font-bold text-sm">${i}</div><div class="flex-1"><p class="font-bold text-orange-700">${origSubj}${lesson.subject} <span class="text-xs font-normal bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full ml-1">${reason}</span></p><p class="text-xs text-orange-400">${lesson.member_name || ''}</p></div></div>`;
                                 } else if (lesson.is_elective) {
                                     const label = lesson.subject_label || lesson.subject;
                                     html += `<div class="flex items-center gap-3 p-3 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200"><div class="w-8 h-8 bg-violet-500 text-white rounded-lg flex items-center justify-center font-bold text-sm">${i}</div><div class="flex-1"><p class="font-bold text-violet-800">${label} <span class="text-[10px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded-full ml-1">이동수업</span></p><p class="text-xs text-violet-500">${lesson.member_name || ''}</p></div></div>`;

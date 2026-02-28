@@ -49,7 +49,7 @@ def get_subject_students():
 
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT member_id, member_name, class_grade, class_no, class_num
+            SELECT id, member_id, member_name, class_grade, class_no, class_num
             FROM stu_all
             WHERE school_id = %s AND class_grade = %s AND class_no = %s
             ORDER BY CAST(class_num AS UNSIGNED)
@@ -58,6 +58,7 @@ def get_subject_students():
         students = []
         for row in cursor.fetchall():
             students.append({
+                'id': row['id'],
                 'member_id': row['member_id'],
                 'member_name': row['member_name'],
                 'class_grade': row['class_grade'],

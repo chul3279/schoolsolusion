@@ -299,9 +299,9 @@ def add_student():
             return jsonify({'success': True, 'message': f'{member_name} 학생이 반에 배정되었습니다. (기존 학생)', 'is_new': False})
         else:
             cursor.execute("""
-                INSERT INTO stu_all (school_id, member_school, member_name, member_birth, member_tel, class_grade, class_no, class_num, created_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
-            """, (school_id, member_school, member_name, member_birth or None, member_tel or None, class_grade, class_no, class_num or None))
+                INSERT INTO stu_all (member_id, school_id, member_school, member_name, member_birth, member_tel, class_grade, class_no, class_num, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+            """, ('', school_id, member_school, member_name, member_birth or None, member_tel or None, class_grade, class_no, class_num or None))
             conn.commit()
             return jsonify({'success': True, 'message': f'{member_name} 학생이 새로 등록되었습니다.', 'is_new': True})
 
@@ -461,9 +461,9 @@ def upload_students():
                     cursor.execute(f"UPDATE stu_all SET {', '.join(update_parts)} WHERE id = %s", update_params)
                     updated += 1
                 else:
-                    cursor.execute("""INSERT INTO stu_all (school_id, member_school, member_name, member_birth, member_tel, class_grade, class_no, class_num, created_at)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
-                        (school_id, member_school, member_name, member_birth, member_tel, row_class_grade, row_class_no, row_class_num))
+                    cursor.execute("""INSERT INTO stu_all (member_id, school_id, member_school, member_name, member_birth, member_tel, class_grade, class_no, class_num, created_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())""",
+                        ('', school_id, member_school, member_name, member_birth, member_tel, row_class_grade, row_class_no, row_class_num))
                     added += 1
             except Exception as row_err:
                 errors.append(f'{row_idx}행: {str(row_err)}'); skipped += 1
