@@ -600,6 +600,28 @@ body { font-family: 'Noto Sans KR', sans-serif; }
         </div>
     </div>
 
+    <!-- ★ 동명이인 시간표 매칭 모달 ★ -->
+    <div id="timetable-match-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeTimetableMatch()"></div>
+        <div class="modal-content glass-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden border border-white/50">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white">
+                <button onclick="closeTimetableMatch()" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center"><i class="fas fa-user-check text-2xl"></i></div>
+                    <div><h2 class="text-xl font-black">시간표 데이터 확인</h2><p class="text-sm text-white/80">본인의 수업을 선택해 주세요</p></div>
+                </div>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-slate-600 mb-4">같은 이름의 교사가 여러 명 있습니다.<br>아래에서 본인이 담당하는 수업을 선택해 주세요.</p>
+                <div id="match-entries" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="closeTimetableMatch()" class="flex-1 py-3 rounded-xl border-2 border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all">나중에</button>
+                    <button onclick="submitTimetableMatch()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold shadow-lg hover:shadow-xl transition-all">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ★ 학교 계약 안내 팝업 ★ -->
     <div id="announce-popup" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeAnnouncePopup(false)"></div>
@@ -666,6 +688,9 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             
             // 안내 팝업 표시 (0.5초 후)
             setTimeout(showAnnouncePopup, 500);
+
+            // 동명이인 시간표 매칭 확인 (1초 후)
+            setTimeout(checkTimetableMatch, 1000);
         });
 
         // ============================================
@@ -1367,6 +1392,63 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                 console.error('저장 오류:', e);
                 alert('저장 중 오류가 발생했습니다.');
             }
+        }
+
+        // ============================================
+        // 동명이인 시간표 매칭
+        // ============================================
+        let _matchEntries = [];
+
+        async function checkTimetableMatch() {
+            if (localStorage.getItem('schoolus_match_skip')) return;
+            try {
+                const res = await fetch('/api/teacher/timetable-match-check');
+                const data = await res.json();
+                if (!data.success || !data.needs_match) return;
+                _matchEntries = data.entries;
+                const container = document.getElementById('match-entries');
+                container.innerHTML = _matchEntries.map((e, i) => `
+                    <label class="flex items-center gap-3 p-3 rounded-xl border-2 border-slate-200 hover:border-amber-400 cursor-pointer transition-all">
+                        <input type="checkbox" value="${i}" class="w-5 h-5 rounded text-amber-500 focus:ring-amber-400">
+                        <div class="flex-1">
+                            <span class="font-bold text-slate-700">${e.subject}</span>
+                            <span class="text-sm text-slate-500 ml-2">(${e.grade}학년 ${e.classes.join(',')}반)</span>
+                        </div>
+                        <span class="text-xs text-slate-400">${e.hours}시간</span>
+                    </label>
+                `).join('');
+                document.getElementById('timetable-match-modal').classList.remove('hidden');
+            } catch (err) { console.error('매칭 확인 오류:', err); }
+        }
+
+        async function submitTimetableMatch() {
+            const checks = document.querySelectorAll('#match-entries input[type=checkbox]:checked');
+            if (checks.length === 0) { alert('본인의 수업을 선택해 주세요.'); return; }
+            const selected = Array.from(checks).map(cb => {
+                const e = _matchEntries[parseInt(cb.value)];
+                return { subject: e.subject, grade: e.grade };
+            });
+            try {
+                const res = await fetch('/api/teacher/timetable-match', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ selected })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('timetable-match-modal').classList.add('hidden');
+                    localStorage.removeItem('schoolus_match_skip');
+                    showToast(`시간표 매칭 완료 (${data.matched_count}건)`);
+                    loadTodayTimetable('my');
+                } else {
+                    alert(data.message || '매칭 처리 중 오류가 발생했습니다.');
+                }
+            } catch (err) { alert('매칭 처리 중 오류가 발생했습니다.'); }
+        }
+
+        function closeTimetableMatch() {
+            document.getElementById('timetable-match-modal').classList.add('hidden');
+            localStorage.setItem('schoolus_match_skip', Date.now());
         }
 
         function openSettingsPopup() { location.href = 'mypage.html'; }

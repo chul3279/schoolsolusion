@@ -6,6 +6,50 @@ from utils.email_util import generate_temp_password, send_temp_password_email, m
 
 auth_bp = Blueprint('auth', __name__)
 
+
+def _match_timetable_tea(cursor, school_id, member_id, member_name, member_birth=None):
+    """편제표(timetable_tea) 자동 매칭.
+    - tea_all에 같은 이름 + 다른 생년월일(동명이인) 없으면 → 자동 매칭
+    - 동명이인 감지 시 → 매칭 안 하고 안내 메시지 반환
+    """
+    if not school_id or not member_name:
+        return None
+
+    # 미매칭 편제표 확인
+    cursor.execute("""
+        SELECT COUNT(*) as cnt FROM timetable_tea
+        WHERE school_id=%s AND member_name=%s
+        AND (member_id IS NULL OR member_id='')
+    """, (school_id, member_name))
+    if cursor.fetchone()['cnt'] == 0:
+        return None
+
+    # 동명이인 확인: tea_all에 같은 학교·이름·다른 사람이 있는지
+    cursor.execute("""
+        SELECT member_birth FROM tea_all
+        WHERE school_id=%s AND member_name=%s AND member_id != %s
+    """, (school_id, member_name, member_id))
+    others = cursor.fetchall()
+
+    if others:
+        my_birth = (member_birth or '').strip()
+        for other in others:
+            other_birth = (other.get('member_birth') or '').strip()
+            # 생년월일 같으면 동일인 → 매칭 진행
+            if my_birth and other_birth and my_birth == other_birth:
+                continue
+            # 생년월일 다르거나 정보 부족 → 동명이인
+            return '동명이인이 있습니다. 추가 정보를 확인부탁드립니다.'
+
+    # 자동 매칭
+    cursor.execute("""
+        UPDATE timetable_tea SET member_id=%s
+        WHERE school_id=%s AND member_name=%s
+        AND (member_id IS NULL OR member_id='')
+    """, (member_id, school_id, member_name))
+    return None
+
+
 @auth_bp.route('/')
 def index():
     return render_template('index.html')
@@ -206,6 +250,9 @@ def signup():
                     VALUES (%s, %s, %s, %s, %s, %s)
                 """, (login_id, member_name, member_school, school_id, member_birth, member_tel))
 
+            # 편제표(timetable_tea) 자동 매칭
+            timetable_notice = _match_timetable_tea(cursor, school_id, login_id, member_name, member_birth)
+
         if 'student' in roles:
             cursor.execute("SELECT id FROM stu_all WHERE member_id = %s", (login_id,))
             existing = cursor.fetchone()
@@ -261,8 +308,12 @@ def signup():
                       c_grade, c_class, c_number))
 
         conn.commit()
-        return jsonify({'success': True, 'message': '회원가입이 완료되었습니다.'})
-        
+
+        result = {'success': True, 'message': '회원가입이 완료되었습니다.'}
+        if 'teacher' in roles and timetable_notice:
+            result['timetable_notice'] = timetable_notice
+        return jsonify(result)
+
     except Exception as e:
         if conn:
             try: conn.rollback()
@@ -1211,9 +1262,12 @@ def update_member_info():
                 except Exception:
                     pass
 
+            # 편제표(timetable_tea) 매칭 (동명이인 추가정보 입력 후 매칭)
+            _match_timetable_tea(cursor, school_id, member_id, member_name, member_birth)
+
         if 'student' in roles:
             cursor.execute("""
-                UPDATE stu_all 
+                UPDATE stu_all
                 SET member_name = %s, member_birth = %s, member_tel = %s,
                     member_school = %s, school_id = %s,
                     class_grade = %s, class_no = %s, class_num = %s
@@ -1221,7 +1275,7 @@ def update_member_info():
             """, (member_name, member_birth, member_tel,
                   member_school, school_id,
                   class_grade, class_no, class_num, member_id))
-                  
+
         if 'parent' in roles:
             cursor.execute("""
                 UPDATE fm_all 
@@ -1277,8 +1331,8 @@ def update_teacher_class_info():
 
         cursor = conn.cursor()
 
-        # tea_all에 해당 교사가 있는지 확인
-        cursor.execute("SELECT id FROM tea_all WHERE member_id = %s", (member_id,))
+        # tea_all에 해당 교사 정보 조회
+        cursor.execute("SELECT id, member_name, member_birth, school_id FROM tea_all WHERE member_id = %s", (member_id,))
         existing = cursor.fetchone()
 
         if not existing:
@@ -1291,15 +1345,19 @@ def update_teacher_class_info():
             WHERE member_id = %s
         """, (department, department_position, class_grade, class_no, member_id))
 
+        teacher_school_id = existing.get('school_id') or session.get('school_id', '')
+
         # 담임 변경 시 시간표의 창체 등 고정교과 교사 자동 갱신
-        if class_grade and class_no:
-            school_id = session.get('school_id', '')
-            if school_id:
-                try:
-                    from utils.timetable_engine import refresh_homeroom_timetable
-                    refresh_homeroom_timetable(cursor, school_id)
-                except Exception:
-                    pass  # 시간표 미생성 상태에서는 무시
+        if class_grade and class_no and teacher_school_id:
+            try:
+                from utils.timetable_engine import refresh_homeroom_timetable
+                refresh_homeroom_timetable(cursor, teacher_school_id)
+            except Exception:
+                pass  # 시간표 미생성 상태에서는 무시
+
+        # 편제표(timetable_tea) 매칭 (동명이인 추가정보 입력 후 매칭)
+        _match_timetable_tea(cursor, teacher_school_id, member_id,
+                            existing.get('member_name', ''), existing.get('member_birth'))
 
         conn.commit()
         return jsonify({'success': True, 'message': '저장되었습니다.'})
@@ -1307,6 +1365,108 @@ def update_teacher_class_info():
     except Exception as e:
         if conn: conn.rollback()
         return jsonify({'success': False, 'message': '저장 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@auth_bp.route('/api/teacher/timetable-match-check', methods=['GET'])
+def timetable_match_check():
+    """동명이인 편제표 매칭 확인 — 미매칭 데이터 조회"""
+    if session.get('user_role') != 'teacher':
+        return jsonify({'success': False, 'message': '교사만 조회할 수 있습니다.'}), 403
+
+    conn = None
+    cursor = None
+    try:
+        member_id = session.get('user_id')
+        member_name = session.get('user_name', '')
+        school_id = session.get('school_id', '')
+
+        if not member_id or not school_id:
+            return jsonify({'success': True, 'needs_match': False})
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 미매칭 편제표 조회 (같은 학교·이름, member_id NULL)
+        cursor.execute("""
+            SELECT grade, subject, class_no, hours
+            FROM timetable_tea
+            WHERE school_id=%s AND member_name=%s
+            AND (member_id IS NULL OR member_id='')
+            ORDER BY grade, subject, CAST(class_no AS UNSIGNED)
+        """, (school_id, member_name))
+        rows = cursor.fetchall()
+
+        if not rows:
+            return jsonify({'success': True, 'needs_match': False})
+
+        # 과목별 그룹화
+        groups = {}
+        for r in rows:
+            key = f"{r['grade']}_{r['subject']}"
+            if key not in groups:
+                groups[key] = {
+                    'subject': r['subject'], 'grade': r['grade'],
+                    'classes': [], 'hours': r['hours'] or 0
+                }
+            groups[key]['classes'].append(r['class_no'])
+
+        return jsonify({
+            'success': True,
+            'needs_match': True,
+            'entries': list(groups.values())
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': '조회 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@auth_bp.route('/api/teacher/timetable-match', methods=['POST'])
+def timetable_match():
+    """동명이인 편제표 매칭 처리 — 선택된 항목에 member_id 연결"""
+    if session.get('user_role') != 'teacher':
+        return jsonify({'success': False, 'message': '교사만 수정할 수 있습니다.'}), 403
+
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json()
+        selected = data.get('selected', [])
+
+        member_id = session.get('user_id')
+        member_name = session.get('user_name', '')
+        school_id = session.get('school_id', '')
+
+        if not member_id or not school_id or not selected:
+            return jsonify({'success': False, 'message': '필수 정보가 부족합니다.'})
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        total = 0
+        for item in selected:
+            subject = sanitize_input(item.get('subject'), 100)
+            grade = sanitize_input(item.get('grade'), 10)
+            if not subject or not grade:
+                continue
+            cursor.execute("""
+                UPDATE timetable_tea SET member_id=%s
+                WHERE school_id=%s AND member_name=%s AND grade=%s AND subject=%s
+                AND (member_id IS NULL OR member_id='')
+            """, (member_id, school_id, member_name, grade, subject))
+            total += cursor.rowcount
+
+        conn.commit()
+        return jsonify({'success': True, 'matched_count': total})
+
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({'success': False, 'message': '매칭 처리 중 오류가 발생했습니다.'})
     finally:
         if cursor: cursor.close()
         if conn: conn.close()
