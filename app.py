@@ -161,6 +161,13 @@ _TEACHER_ONLY_APIS = {
     '/api/afterschool/attendance/save',
     '/api/afterschool/attendance/sheet',
     '/api/afterschool/attendance/full',
+    # 학급투표
+    '/api/class-vote/list',
+    '/api/class-vote/create',
+    '/api/class-vote/update',
+    '/api/class-vote/delete',
+    '/api/class-vote/start',
+    '/api/class-vote/close',
 }
 
 # ── 브루트포스 방어 설정 (DB 기반) ──
@@ -424,6 +431,7 @@ from routes.survey import survey_bp
 from routes.afterschool import afterschool_bp
 from routes.timetable_pipeline import timetable_pipeline_bp
 from routes.messenger import messenger_bp
+from routes.class_vote import class_vote_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(teacher_bp)
@@ -451,6 +459,7 @@ app.register_blueprint(survey_bp)
 app.register_blueprint(afterschool_bp)
 app.register_blueprint(timetable_pipeline_bp)
 app.register_blueprint(messenger_bp)
+app.register_blueprint(class_vote_bp)
 
 
 # ============================================

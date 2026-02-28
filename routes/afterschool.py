@@ -114,6 +114,13 @@ def create_program():
         if not school_id or not program_name or not start_date or not end_date:
             return jsonify({'success': False, 'message': '필수 항목을 입력해주세요.'})
 
+        if max_students <= 0:
+            return jsonify({'success': False, 'message': '정원은 1명 이상이어야 합니다.'})
+        if total_sessions <= 0:
+            return jsonify({'success': False, 'message': '총 회차는 1회 이상이어야 합니다.'})
+        if start_date >= end_date:
+            return jsonify({'success': False, 'message': '시작일은 종료일보다 앞서야 합니다.'})
+
         conn = get_db_connection()
         if not conn:
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
@@ -242,6 +249,11 @@ def update_program():
 
         if not program_id or not program_name:
             return jsonify({'success': False, 'message': '필수 항목을 입력해주세요.'})
+
+        if max_students <= 0:
+            return jsonify({'success': False, 'message': '정원은 1명 이상이어야 합니다.'})
+        if start_date and end_date and start_date >= end_date:
+            return jsonify({'success': False, 'message': '시작일은 종료일보다 앞서야 합니다.'})
 
         conn = get_db_connection()
         if not conn:
@@ -515,9 +527,14 @@ def apply_program():
         if current >= p['max_students']:
             return jsonify({'success': False, 'message': '정원이 초과되었습니다.'})
 
-        # 중복 신청 확인
-        cursor.execute("SELECT id FROM afterschool_enrollment WHERE program_id=%s AND student_id=%s", (program_id, user_id))
-        if cursor.fetchone():
+        # 중복 신청 확인 (withdrawn/rejected 제외)
+        cursor.execute("SELECT id, status FROM afterschool_enrollment WHERE program_id=%s AND student_id=%s", (program_id, user_id))
+        existing = cursor.fetchone()
+        if existing:
+            if existing['status'] in ('withdrawn', 'rejected'):
+                # 기존 레코드를 재활성화
+                cursor.execute("UPDATE afterschool_enrollment SET status='applied', applied_at=NOW() WHERE id=%s", (existing['id'],))
+                return jsonify({'success': True, 'message': '신청이 완료되었습니다.'})
             return jsonify({'success': False, 'message': '이미 신청한 프로그램입니다.'})
 
         # 학생 정보 조회
@@ -617,6 +634,7 @@ def my_programs():
     try:
         user_id = session.get('user_id')
         school_id = session.get('school_id')
+        user_role = session.get('user_role')
 
         if not user_id:
             return jsonify({'success': False, 'message': '로그인이 필요합니다.'})
@@ -626,6 +644,26 @@ def my_programs():
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
         cursor = conn.cursor()
 
+        # 학부모인 경우 자녀의 member_id로 조회
+        lookup_id = user_id
+        if user_role == 'parent':
+            cursor.execute("""
+                SELECT child_name, class_grade, class_no FROM fm_all
+                WHERE member_id = %s AND school_id = %s LIMIT 1
+            """, (user_id, school_id))
+            parent = cursor.fetchone()
+            if parent and parent.get('child_name') and parent.get('class_grade') and parent.get('class_no'):
+                cursor.execute("""
+                    SELECT sa.member_id FROM stu_all sa
+                    JOIN member m ON sa.member_id = m.member_id
+                    WHERE sa.school_id = %s AND sa.class_grade = %s AND sa.class_no = %s
+                      AND m.member_name = %s
+                    LIMIT 1
+                """, (school_id, parent['class_grade'], parent['class_no'], parent['child_name']))
+                stu = cursor.fetchone()
+                if stu:
+                    lookup_id = stu['member_id']
+
         cursor.execute("""
             SELECT ap.id, ap.program_name, ap.instructor_name, ap.day_of_week, ap.time_slot,
                    ap.start_date, ap.end_date, ap.status AS program_status,
@@ -634,7 +672,7 @@ def my_programs():
             JOIN afterschool_program ap ON ae.program_id = ap.id
             WHERE ae.student_id = %s AND ap.school_id = %s
             ORDER BY ae.applied_at DESC
-        """, (user_id, school_id))
+        """, (lookup_id, school_id))
 
         programs = []
         for r in cursor.fetchall():
@@ -736,6 +774,14 @@ def save_attendance():
             enrollment_id = sanitize_input(rec.get('enrollment_id'), 20)
             status = rec.get('status', 'present')
             memo = sanitize_input(rec.get('memo', ''), 200)
+
+            # enrollment_id 없으면 student_id로 조회
+            if not enrollment_id and rec.get('student_id'):
+                sid = sanitize_input(rec.get('student_id'), 50)
+                cursor.execute("SELECT id FROM afterschool_enrollment WHERE program_id=%s AND student_id=%s AND status='approved'", (program_id, sid))
+                found = cursor.fetchone()
+                if found:
+                    enrollment_id = str(found['id'])
 
             if not enrollment_id or status not in valid_statuses:
                 continue
@@ -902,6 +948,232 @@ def get_full_attendance():
     except Exception as e:
         print(f"방과후 전체 출석부 오류: {e}")
         return jsonify({'success': False, 'message': '전체 출석부 조회 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 개별 수강 승인/거절
+# ============================================
+@afterschool_bp.route('/api/afterschool/enrollment/update', methods=['POST'])
+def update_enrollment():
+    conn = None
+    cursor = None
+    try:
+        user_role = session.get('user_role')
+        if user_role != 'teacher':
+            return jsonify({'success': False, 'message': '교사만 사용할 수 있습니다.'})
+
+        data = request.get_json()
+        enrollment_id = sanitize_input(data.get('enrollment_id'), 20)
+        new_status = data.get('status', '')
+
+        if not enrollment_id:
+            return jsonify({'success': False, 'message': '수강 ID가 필요합니다.'})
+        if new_status not in ('approved', 'rejected'):
+            return jsonify({'success': False, 'message': '상태는 approved 또는 rejected만 가능합니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM afterschool_enrollment WHERE id = %s", (enrollment_id,))
+        enrollment = cursor.fetchone()
+        if not enrollment:
+            return jsonify({'success': False, 'message': '수강 내역을 찾을 수 없습니다.'})
+
+        if new_status == 'approved':
+            # 정원 확인
+            cursor.execute("""
+                SELECT ap.max_students,
+                       (SELECT COUNT(*) FROM afterschool_enrollment WHERE program_id=ap.id AND status='approved') AS approved_count
+                FROM afterschool_program ap WHERE ap.id = %s
+            """, (enrollment['program_id'],))
+            prog = cursor.fetchone()
+            if prog and int(prog['approved_count'] or 0) >= prog['max_students']:
+                return jsonify({'success': False, 'message': '정원이 초과되어 승인할 수 없습니다.'})
+            cursor.execute("UPDATE afterschool_enrollment SET status='approved', approved_at=NOW() WHERE id=%s", (enrollment_id,))
+        else:
+            cursor.execute("UPDATE afterschool_enrollment SET status='rejected' WHERE id=%s", (enrollment_id,))
+
+        status_text = '승인' if new_status == 'approved' else '거절'
+        return jsonify({'success': True, 'message': f'수강이 {status_text}되었습니다.'})
+
+    except Exception as e:
+        print(f"수강 상태 변경 오류: {e}")
+        return jsonify({'success': False, 'message': '수강 상태 변경 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 교사 대리 등록 (학생 검색 + 등록)
+# ============================================
+@afterschool_bp.route('/api/afterschool/enroll', methods=['POST'])
+def enroll_student():
+    conn = None
+    cursor = None
+    try:
+        user_role = session.get('user_role')
+        if user_role != 'teacher':
+            return jsonify({'success': False, 'message': '교사만 사용할 수 있습니다.'})
+
+        data = request.get_json()
+        program_id = sanitize_input(data.get('program_id'), 20)
+        student_id = sanitize_input(data.get('student_id'), 50)
+        auto_approve = data.get('auto_approve', True)
+
+        if not program_id or not student_id:
+            return jsonify({'success': False, 'message': '프로그램 ID와 학생 ID가 필요합니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        # 프로그램 확인
+        cursor.execute("SELECT * FROM afterschool_program WHERE id = %s", (program_id,))
+        p = cursor.fetchone()
+        if not p:
+            return jsonify({'success': False, 'message': '프로그램을 찾을 수 없습니다.'})
+        if p['status'] not in ('recruiting', 'confirmed'):
+            return jsonify({'success': False, 'message': '모집중 또는 확정 상태의 프로그램만 등록 가능합니다.'})
+
+        # 학생 정보 조회
+        cursor.execute("SELECT member_id, member_name, class_grade, class_no, class_num FROM stu_all WHERE member_id=%s AND school_id=%s", (student_id, p['school_id']))
+        stu = cursor.fetchone()
+        if not stu:
+            return jsonify({'success': False, 'message': '해당 학생을 찾을 수 없습니다.'})
+
+        # 대상 학년 확인
+        if p['target_grades'] not in ('all', '전체'):
+            allowed = [g.strip() for g in p['target_grades'].split(',')]
+            if str(stu.get('class_grade', '')) not in allowed:
+                return jsonify({'success': False, 'message': f"대상 학년이 아닙니다. (대상: {p['target_grades']}학년)"})
+
+        # 정원 확인
+        cursor.execute("SELECT COUNT(*) AS cnt FROM afterschool_enrollment WHERE program_id=%s AND status IN ('applied','approved')", (program_id,))
+        current = int(cursor.fetchone()['cnt'] or 0)
+        if current >= p['max_students']:
+            return jsonify({'success': False, 'message': '정원이 초과되었습니다.'})
+
+        # 중복 확인
+        cursor.execute("SELECT id, status FROM afterschool_enrollment WHERE program_id=%s AND student_id=%s", (program_id, student_id))
+        existing = cursor.fetchone()
+        if existing:
+            if existing['status'] in ('withdrawn', 'rejected'):
+                new_st = 'approved' if auto_approve else 'applied'
+                cursor.execute("UPDATE afterschool_enrollment SET status=%s, applied_at=NOW(), approved_at=NOW() WHERE id=%s", (new_st, existing['id']))
+                return jsonify({'success': True, 'message': f'{stu["member_name"]} 학생이 등록되었습니다.'})
+            return jsonify({'success': False, 'message': '이미 신청/등록된 학생입니다.'})
+
+        enroll_status = 'approved' if auto_approve else 'applied'
+        cursor.execute("""
+            INSERT INTO afterschool_enrollment (program_id, student_id, student_name, class_grade, class_no, class_num, status, applied_at, approved_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+        """, (program_id, student_id, stu['member_name'], stu.get('class_grade',''), stu.get('class_no',''), stu.get('class_num',''), enroll_status))
+
+        return jsonify({'success': True, 'message': f'{stu["member_name"]} 학생이 등록되었습니다.'})
+
+    except Exception as e:
+        print(f"교사 대리 등록 오류: {e}")
+        return jsonify({'success': False, 'message': '학생 등록 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 학생 검색 (교사용 - 대리 등록 시 사용)
+# ============================================
+@afterschool_bp.route('/api/afterschool/search-students', methods=['GET'])
+def search_students():
+    conn = None
+    cursor = None
+    try:
+        user_role = session.get('user_role')
+        if user_role != 'teacher':
+            return jsonify({'success': False, 'message': '교사만 사용할 수 있습니다.'})
+
+        school_id = session.get('school_id')
+        keyword = sanitize_input(request.args.get('q', ''), 50)
+        grade = sanitize_input(request.args.get('grade', ''), 5)
+
+        if not school_id:
+            return jsonify({'success': False, 'message': '학교 정보가 필요합니다.'})
+        if not keyword and not grade:
+            return jsonify({'success': False, 'message': '검색어 또는 학년을 입력해주세요.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        query = "SELECT member_id, member_name, class_grade, class_no, class_num FROM stu_all WHERE school_id=%s"
+        params = [school_id]
+
+        if keyword:
+            query += " AND member_name LIKE %s"
+            params.append(f'%{keyword}%')
+        if grade:
+            query += " AND class_grade = %s"
+            params.append(grade)
+
+        query += " ORDER BY class_grade, class_no, CAST(class_num AS UNSIGNED) LIMIT 50"
+        cursor.execute(query, params)
+
+        students = []
+        for s in cursor.fetchall():
+            students.append({
+                'member_id': s['member_id'],
+                'member_name': s['member_name'],
+                'class_grade': s.get('class_grade', ''),
+                'class_no': s.get('class_no', ''),
+                'class_num': s.get('class_num', '')
+            })
+
+        return jsonify({'success': True, 'students': students})
+
+    except Exception as e:
+        print(f"학생 검색 오류: {e}")
+        return jsonify({'success': False, 'message': '학생 검색 중 오류가 발생했습니다.'})
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+# ============================================
+# 교사 목록 (강사 선택용)
+# ============================================
+@afterschool_bp.route('/api/afterschool/teachers', methods=['GET'])
+def list_teachers():
+    conn = None
+    cursor = None
+    try:
+        user_role = session.get('user_role')
+        if user_role != 'teacher':
+            return jsonify({'success': False, 'message': '교사만 사용할 수 있습니다.'})
+
+        school_id = session.get('school_id')
+        if not school_id:
+            return jsonify({'success': False, 'message': '학교 정보가 필요합니다.'})
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT member_name FROM tea_all WHERE school_id=%s ORDER BY member_name", (school_id,))
+        teachers = [r['member_name'] for r in cursor.fetchall() if r.get('member_name')]
+
+        return jsonify({'success': True, 'teachers': teachers})
+
+    except Exception as e:
+        print(f"교사 목록 오류: {e}")
+        return jsonify({'success': False, 'message': '교사 목록 조회 중 오류가 발생했습니다.'})
     finally:
         if cursor: cursor.close()
         if conn: conn.close()
