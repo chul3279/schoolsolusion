@@ -1556,44 +1556,60 @@ def get_school_all_timetable():
             return jsonify({'success': False, 'message': '데이터베이스 연결 오류'})
         cursor = conn.cursor()
 
+        # 1) timetable 테이블 (자동생성 시간표)
         cursor.execute("""
             SELECT day_of_week, period, subject, grade, class_no, member_name, member_id
             FROM timetable
             WHERE school_id = %s AND day_of_week IN ('월','화','수','목','금')
             ORDER BY grade, class_no, FIELD(day_of_week,'월','화','수','목','금'), period
         """, (school_id,))
-        timetable = cursor.fetchall()
+        tt_rows = cursor.fetchall()
 
-        # timetable에 없으면 timetable_tea(교사 수동 입력)에서 조회
-        if not timetable:
-            cursor.execute("""
-                SELECT day_of_week, period, subject, grade, class_no, member_name, member_id
-                FROM timetable_tea
-                WHERE school_id = %s AND day_of_week IN ('월','화','수','목','금')
-                ORDER BY grade, class_no, FIELD(day_of_week,'월','화','수','목','금'), period
-            """, (school_id,))
-            timetable = cursor.fetchall()
-
-        # 교사별 시간표 (timetable_tea — 밴드 수업 포함)
+        # 2) timetable_tea 테이블 (교사 수동 입력, 밴드 수업 포함)
         cursor.execute("""
             SELECT day_of_week, period, subject, grade, class_no, member_name, member_id
             FROM timetable_tea
             WHERE school_id = %s AND day_of_week IN ('월','화','수','목','금')
-            ORDER BY member_name, FIELD(day_of_week,'월','화','수','목','금'), period
+            ORDER BY grade, class_no, FIELD(day_of_week,'월','화','수','목','금'), period
         """, (school_id,))
-        teacher_timetable = cursor.fetchall()
+        tea_rows = cursor.fetchall()
 
-        # 교사 목록 (부서 포함)
+        # 3) 교사 목록 (member_id 보정용 + 프론트 반환용)
         cursor.execute("""
             SELECT member_id, member_name, department
             FROM tea_all WHERE school_id = %s
         """, (school_id,))
         teachers = cursor.fetchall()
 
+        # 교사명→member_id 매핑 (member_id 보정용)
+        name_to_id = {}
+        for t in teachers:
+            if t.get('member_id') and t.get('member_name'):
+                name_to_id[t['member_name']] = t['member_id']
+
+        # 4) 두 테이블 병합: timetable_tea 우선 (교사가 직접 입력한 것이 더 정확)
+        #    key = (day_of_week, period, grade, class_no)
+        merged = {}
+        for r in tt_rows:
+            key = (r['day_of_week'], r['period'], r['grade'], r['class_no'])
+            merged[key] = dict(r)
+        for r in tea_rows:
+            key = (r['day_of_week'], r['period'], r['grade'], r['class_no'])
+            merged[key] = dict(r)  # timetable_tea가 덮어씀
+
+        # 5) member_id 보정: NULL이면 tea_all에서 이름으로 매칭
+        timetable = []
+        for r in merged.values():
+            if not r.get('member_id') and r.get('member_name'):
+                matched_id = name_to_id.get(r['member_name'])
+                if matched_id:
+                    r['member_id'] = matched_id
+            timetable.append(r)
+
         return jsonify({
             'success': True,
             'timetable': timetable,
-            'teacher_timetable': teacher_timetable,
+            'teacher_timetable': tea_rows,
             'teachers': teachers,
             'count': len(timetable)
         })

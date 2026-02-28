@@ -156,6 +156,25 @@ highschool/tea/subject.js (66.5KB)
   → 교과+동아리+과제 전체 로직 포함
   → 수정 시 캐시 버스팅 필수 (?v= 업데이트)
 
+highschool/tea/homeroom-*.js (5개 모듈, 총 92KB)
+  → homeroom-core.js: 전역변수, init, switchTab, 유틸
+  → homeroom-students.js: 학생/학부모 탭, 학생추가 모달
+  → homeroom-counsel.js: 공지, 상담, 기록, 공통활동, 파일업로드
+  → homeroom-timetable.js: 시간표, 출결
+  → homeroom-vote.js: 투표 + switchTab 오버라이드 (반드시 마지막 로드!)
+  → highschool/tea/homeroom.html 에서만 로드
+  → 수정 시 캐시 버스팅 필수 (?v= 업데이트)
+  → middleschool/tea/ 에 동일 파일 존재 (양쪽 동기화 필요)
+
+highschool/tea/schooladmin-*.js (4개 모듈, 총 72KB)
+  → schooladmin-core.js: 전역변수, init, switchTab, 공지/급식 모달
+  → schooladmin-survey.js: 설문 탭 전체
+  → schooladmin-afterschool.js: 방과후 탭 전체
+  → schooladmin-letter.js: 가정통신문 + 관리 탭
+  → highschool/tea/schooladmin.html 에서만 로드
+  → 수정 시 캐시 버스팅 필수 (?v= 업데이트)
+  → middleschool/tea/ 에 동일 파일 존재 (양쪽 동기화 필요)
+
 highschool/admission/js/*.js (5개 모듈)
   → highschool/admission/admission.html 에서만 로드
 ```
@@ -168,9 +187,11 @@ highschool/admission/js/*.js (5개 모듈)
   highschool/st.html           ↔ middleschool/st.html
   highschool/fm.html           ↔ middleschool/fm.html
   highschool/tea/homeroom.html ↔ middleschool/tea/homeroom.html
+  highschool/tea/homeroom-*.js ↔ middleschool/tea/homeroom-*.js (5개)
   highschool/tea/subject.html  ↔ middleschool/tea/subject.html
   highschool/tea/subject.js    ↔ middleschool/tea/subject.js
-  highschool/tea/schooladmin   ↔ middleschool/tea/schooladmin
+  highschool/tea/schooladmin.html ↔ middleschool/tea/schooladmin.html
+  highschool/tea/schooladmin-*.js ↔ middleschool/tea/schooladmin-*.js (4개)
   highschool/tea/message.html  ↔ middleschool/tea/message.html
   ... (나머지 동일 구조 파일들)
 

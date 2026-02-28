@@ -118,10 +118,10 @@ def generate_timetable():
         cursor = conn.cursor()
 
         teachers = load_teachers(cursor, school_id)
-        st_map, sd_map, cd_map = load_timetable_data(cursor, school_id)
+        st_map, sd_map, cd_map, bg_map = load_timetable_data(cursor, school_id)
         constraints = load_constraints(cursor, school_id)
         fixed_subjects = load_fixed_subjects(cursor, school_id)
-        blocks = build_blocks(teachers, st_map, sd_map, cd_map, fixed_subjects)
+        blocks = build_blocks(teachers, st_map, sd_map, cd_map, bg_map, fixed_subjects)
 
         if not blocks:
             return jsonify({'success': False, 'message': '생성할 블록이 없습니다. 교사 편성을 확인하세요.'})

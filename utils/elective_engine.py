@@ -192,21 +192,15 @@ def assign_groups_to_bands(groups, subject_groups, subject_band_map=None, home_c
 
     band_idx = 0  # 전역 밴드 라벨 인덱스 (A, B, C, ... 순차 사용)
 
-    for bg in sorted(bg_subjects.keys()):
-        subs = bg_subjects[bg]
-        total = sum(len(subject_groups[s]) for s in subs)
-        num_bands = max(1, total // home_classes)
-
-        band_labels = BAND_NAMES[band_idx:band_idx + num_bands]
-        band_idx += num_bands
-
-        # 과목별로 정렬 후 round-robin → 동일 과목의 반이 서로 다른 밴드에 분산
-        bg_groups = []
-        for sub in sorted(subs):
-            bg_groups.extend(subject_groups[sub])
-
-        for i, g in enumerate(bg_groups):
-            base = i % num_bands
+    def _assign_to_bands(group_list, band_labels, num_bands):
+        """그룹을 밴드에 분산 배정 (교사 충돌 최소화).
+        제약이 많은 교사(그룹 수가 많은)를 먼저 배정하여 충돌 회피율을 높임."""
+        # 교사 제약이 많은 그룹을 먼저 처리
+        sorted_groups = sorted(group_list,
+                               key=lambda g: -len(teacher_gids[g['teacher_id']]))
+        for g in sorted_groups:
+            base = group_list.index(g) % num_bands
+            assigned = False
             for attempt in range(num_bands):
                 candidate = band_labels[(base + attempt) % num_bands]
                 conflict = any(
@@ -215,9 +209,32 @@ def assign_groups_to_bands(groups, subject_groups, subject_band_map=None, home_c
                 )
                 if not conflict:
                     g['band'] = candidate
+                    assigned = True
                     break
-            else:
-                g['band'] = band_labels[base]
+            if not assigned:
+                # 충돌 최소화: 가장 충돌이 적은 밴드 선택
+                conflict_counts = []
+                for ci in range(num_bands):
+                    cand = band_labels[(base + ci) % num_bands]
+                    cnt = sum(1 for og in teacher_gids[g['teacher_id']]
+                              if og['id'] != g['id'] and og.get('band') == cand)
+                    conflict_counts.append((cnt, cand))
+                conflict_counts.sort()
+                g['band'] = conflict_counts[0][1]
+
+    for bg in sorted(bg_subjects.keys()):
+        subs = bg_subjects[bg]
+        total = sum(len(subject_groups[s]) for s in subs)
+        num_bands = max(1, total // home_classes)
+
+        band_labels = BAND_NAMES[band_idx:band_idx + num_bands]
+        band_idx += num_bands
+
+        bg_groups = []
+        for sub in sorted(subs):
+            bg_groups.extend(subject_groups[sub])
+
+        _assign_to_bands(bg_groups, band_labels, num_bands)
 
     # band_group 미지정 과목: 남은 밴드 라벨 사용
     if unassigned:
@@ -228,19 +245,7 @@ def assign_groups_to_bands(groups, subject_groups, subject_band_map=None, home_c
         if num_fallback < 1:
             num_fallback = 1
         fallback_labels = BAND_NAMES[band_idx:band_idx + num_fallback]
-        for i, g in enumerate(un_groups):
-            base = i % num_fallback
-            for attempt in range(num_fallback):
-                candidate = fallback_labels[(base + attempt) % num_fallback]
-                conflict = any(
-                    og['id'] != g['id'] and og.get('band') == candidate
-                    for og in teacher_gids[g['teacher_id']]
-                )
-                if not conflict:
-                    g['band'] = candidate
-                    break
-            else:
-                g['band'] = fallback_labels[base]
+        _assign_to_bands(un_groups, fallback_labels, num_fallback)
 
 
 def assign_students_to_groups(students, subject_groups, group_by_id, seed=None):
@@ -381,12 +386,15 @@ def save_results(cursor, school_id, grade, groups, students, slot_positions, gro
     ms_row = cursor.fetchone()
     ms = ms_row['member_school'] if ms_row else ''
 
-    # 기존 선택 슬롯 삭제
+    # 기존 선택 슬롯 삭제 (파라미터 바인딩으로 SQL 인젝션 방지)
     if slot_positions:
-        conds = [f"(day_of_week='{d}' AND period='{p}')" for d, p in slot_positions]
+        conds = ' OR '.join(['(day_of_week=%s AND period=%s)'] * len(slot_positions))
+        params = [school_id, grade]
+        for d, p in slot_positions:
+            params.extend([d, str(p)])
         cursor.execute(
-            f"DELETE FROM timetable WHERE school_id=%s AND grade=%s AND ({' OR '.join(conds)})",
-            (school_id, grade))
+            f"DELETE FROM timetable WHERE school_id=%s AND grade=%s AND ({conds})",
+            tuple(params))
 
     # 새 시간표 삽입
     homerooms = sorted(set(s['class_no'] for s in students))

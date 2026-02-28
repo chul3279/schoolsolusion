@@ -1192,17 +1192,25 @@ def update_member_info():
         
         if 'teacher' in roles:
             cursor.execute("""
-                UPDATE tea_all 
+                UPDATE tea_all
                 SET member_name = %s, member_birth = %s, member_tel = %s,
                     member_school = %s, school_id = %s,
-                    department = %s, department_position = %s, 
+                    department = %s, department_position = %s,
                     class_grade = %s, class_no = %s
                 WHERE member_id = %s
-            """, (member_name, member_birth, member_tel, 
+            """, (member_name, member_birth, member_tel,
                   member_school, school_id,
-                  department, department_position, 
+                  department, department_position,
                   class_grade, class_no, member_id))
-                  
+
+            # 담임 변경 시 시간표의 창체 등 고정교과 교사 자동 갱신
+            if class_grade and class_no and school_id:
+                try:
+                    from utils.timetable_engine import refresh_homeroom_timetable
+                    refresh_homeroom_timetable(cursor, school_id)
+                except Exception:
+                    pass
+
         if 'student' in roles:
             cursor.execute("""
                 UPDATE stu_all 
@@ -1282,6 +1290,16 @@ def update_teacher_class_info():
                 class_grade = %s, class_no = %s
             WHERE member_id = %s
         """, (department, department_position, class_grade, class_no, member_id))
+
+        # 담임 변경 시 시간표의 창체 등 고정교과 교사 자동 갱신
+        if class_grade and class_no:
+            school_id = session.get('school_id', '')
+            if school_id:
+                try:
+                    from utils.timetable_engine import refresh_homeroom_timetable
+                    refresh_homeroom_timetable(cursor, school_id)
+                except Exception:
+                    pass  # 시간표 미생성 상태에서는 무시
 
         conn.commit()
         return jsonify({'success': True, 'message': '저장되었습니다.'})

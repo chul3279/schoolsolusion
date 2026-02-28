@@ -207,9 +207,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             <ul class="space-y-1">
                 <li><a href="../tea.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-desktop w-6 mr-3"></i> 나의 대시보드</a></li>
                 <li class="px-6 pt-6 pb-2 text-xs font-bold uppercase text-slate-500">반편성 · 시간표</li>
-                <li><a href="classtime_maker_base.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-database w-6 mr-3"></i> 기초데이터 관리</a></li>
-                <li><a href="class_maker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-layer-group w-6 mr-3"></i> 반편성</a></li>
-                <li><a href="timetablemaker.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-edit w-6 mr-3"></i> 시간표 작성</a></li>
+                <li><a href="timetable_workflow.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-project-diagram w-6 mr-3"></i> 시간표 작성 및 반편성</a></li>
                 <li><a href="#" class="flex items-center px-6 py-3 bg-slate-800 text-white border-l-4 border-blue-500"><i class="fas fa-calendar-alt w-6 mr-3 text-green-400"></i> <span class="font-medium">시간표 조회/변경</span></a></li>
                 <li><a href="timetableprint.html" class="flex items-center px-6 py-3 hover:bg-slate-800 transition"><i class="fas fa-print w-6 mr-3"></i> 시간표 출력</a></li>
             </ul>
@@ -928,14 +926,19 @@ body { font-family: 'Noto Sans KR', sans-serif; }
         }
 
         // --- 전체 시간표 로드 ---
-        async function loadSchoolFullTimetable() {
-            if (schoolFullTimetable) return schoolFullTimetable;
+        async function loadSchoolFullTimetable(forceReload) {
+            if (schoolFullTimetable && !forceReload) return schoolFullTimetable;
             try {
                 const url = `/api/timetable/school/all?school_id=${encodeURIComponent(currentUser.school_id)}`;
                 const res = await fetch(url);
                 const data = await res.json();
                 if (!data.success) throw new Error(data.message);
                 schoolFullTimetable = data.timetable || [];
+                console.log(`[교환] 시간표 로드: ${schoolFullTimetable.length}건, myId=${currentUser.member_id||currentUser.member_name}`);
+                // 내 수업 수 확인
+                const myId = currentUser.member_id || currentUser.member_name;
+                const myCount = schoolFullTimetable.filter(r => (r.member_id||r.member_name) === myId).length;
+                console.log(`[교환] 내 수업: ${myCount}건 (id=${myId})`);
                 return schoolFullTimetable;
             } catch (e) { alert('전체 시간표 로드 실패: ' + e.message); return []; }
         }
@@ -989,7 +992,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             if (!exWeekMonday) exWeekMonday = getWeekMonday(new Date());
             updateWeekLabel();
 
-            const tt = await loadSchoolFullTimetable();
+            const tt = await loadSchoolFullTimetable(true);  // 항상 최신 데이터 로드
             if (!tt.length) return;
 
             dayIndices = {};
@@ -1011,6 +1014,13 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             const myId = currentUser.member_id || currentUser.member_name;
             const body = document.getElementById('exWeekBody');
             let html = '';
+            // 디버그: 각 요일별 내 수업 수
+            const debugDays = {};
+            DAYS.forEach(d => {
+                const tp = dayIndices[d]?.teacherToPeriod[myId] || {};
+                debugDays[d] = Object.keys(tp).length;
+            });
+            console.log(`[교환] 그리드 렌더: myId=${myId}, 요일별 수업교시:`, debugDays);
 
             for (let p = 1; p <= PERIODS; p++) {
                 // 교시 번호
@@ -1140,7 +1150,9 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             const myPeriods = idx.teacherToPeriod[myId] || {};
             if (!myPeriods[period]) return;
 
-            exSelectedSource = { period, dayName, classes: myPeriods[period], teacherId: myId, teacherName: currentUser.member_name };
+            const classes = myPeriods[period];
+            console.log(`[교환] 소스 선택: ${dayName} ${period}교시, 수업:`, classes.map(c => `${c.grade}-${c.classNo} ${c.subject}`));
+            exSelectedSource = { period, dayName, classes, teacherId: myId, teacherName: currentUser.member_name };
             exSelectedTarget = null;
             exCurrentChain = null;
             document.getElementById('chainResultCard').classList.add('hidden');
@@ -1151,6 +1163,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
         // --- 공강 호버/클릭 → 연쇄 교환 계산 ---
         function onFreeHover(dayName, targetPeriod) {
             if (!exSelectedSource) return;
+            if (exSelectedTarget) return;  // 타겟이 이미 선택된 상태에서는 호버로 체인을 덮어쓰지 않음
             const di = DAY_IDX[dayName];
             const el = document.getElementById(`ex-cell-${di}-${targetPeriod}`);
             if (el) { el.style.borderColor = '#16a34a'; el.style.background = '#dcfce7'; el.style.animation = 'none'; el.style.boxShadow = '0 0 0 3px rgba(34,197,94,0.4)'; }
@@ -1170,6 +1183,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
         }
 
         function onFreeLeave(dayName, targetPeriod) {
+            if (exSelectedTarget) return;
             const di = DAY_IDX[dayName];
             const el = document.getElementById(`ex-cell-${di}-${targetPeriod}`);
             if (el) { el.style.borderColor = '#22c55e'; el.style.background = '#f0fdf4'; el.style.animation = 'pulse-green 1.5s ease-in-out infinite'; el.style.boxShadow = ''; }
@@ -1213,6 +1227,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             const processedClasses = new Set();
             const visitedTeachers = new Set([myId]);
             const expandedBands = new Set();
+            let hasConflicts = false;
 
             // ★ 소스교시 밴드 확장: 같은 밴드 교사 전체 포함
             const allSrcClasses = [...srcClasses];
@@ -1226,7 +1241,15 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                         // 밴드 교사도 대상 요일 targetPeriod에 공강인지 확인
                         const btClasses = tgtIdx.teacherToPeriod[bc.teacherId]?.[targetPeriod] || [];
                         if (btClasses.length > 0) {
-                            return { valid: false, reason: `같은 밴드(${bp}) ${bc.teacherName} 선생님이 ${targetDayName}요일 ${targetPeriod}교시에 수업이 있어 교차 요일 교환이 어렵습니다.`, steps: [], teacherCount: 0, teachers: new Set(), crossDay: true };
+                            hasConflicts = true;
+                            const freeP = [];
+                            for (let fp = 1; fp <= 7; fp++) {
+                                if (fp === targetPeriod) continue;
+                                if (!(tgtIdx.teacherToPeriod[bc.teacherId]?.[fp]?.length > 0)) freeP.push(fp);
+                            }
+                            for (const btc of btClasses) {
+                                allSteps.push({ type: 'needs_move', classKey: `${btc.grade}-${btc.classNo}`, teacherId: bc.teacherId, teacherName: bc.teacherName, subject: btc.subject, fromDay: targetDayName, fromPeriod: targetPeriod, freePeriods: freeP });
+                            }
                         }
                         if (!visitedTeachers.has(bc.teacherId)) { visitedTeachers.add(bc.teacherId); involvedTeachers.add(bc.teacherId); }
                         allSrcClasses.push({ grade: bc.grade, classNo: bc.classNo, subject: bc.subject, teacherId: bc.teacherId, teacherName: bc.teacherName });
@@ -1255,7 +1278,15 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                         allSteps.push({ type: 'swap', classKey, fromTeacherId: srcTeacherId, fromTeacherName: srcTeacherName, fromSubject: srcClass.subject, displacedTeacherId: displacedId, displacedTeacherName: displacedName, displacedSubject, period1: source.period, period2: targetPeriod, fromDay: source.dayName, toDay: targetDayName });
                     } else {
                         allSteps.push({ type: 'swap', classKey, fromTeacherId: srcTeacherId, fromTeacherName: srcTeacherName, fromSubject: srcClass.subject, displacedTeacherId: displacedId, displacedTeacherName: displacedName, displacedSubject, period1: source.period, period2: targetPeriod, fromDay: source.dayName, toDay: targetDayName });
-                        return { valid: false, reason: `${displacedName} 선생님이 ${source.dayName}요일 ${source.period}교시에 수업(${displacedOnSrcDay.map(c=>c.subject+'('+c.grade+'-'+c.classNo+')').join(',')})이 있어 교차 요일 교환이 어렵습니다.`, steps: allSteps, teacherCount: involvedTeachers.size, teachers: involvedTeachers, crossDay: true };
+                        hasConflicts = true;
+                        const freeP2 = [];
+                        for (let fp = 1; fp <= 7; fp++) {
+                            if (fp === source.period) continue;
+                            if (!(srcIdx.teacherToPeriod[displacedId]?.[fp]?.length > 0)) freeP2.push(fp);
+                        }
+                        for (const dc of displacedOnSrcDay) {
+                            allSteps.push({ type: 'needs_move', classKey: `${dc.grade}-${dc.classNo}`, teacherId: displacedId, teacherName: displacedName, subject: dc.subject, fromDay: source.dayName, fromPeriod: source.period, freePeriods: freeP2 });
+                        }
                     }
 
                     // ★ 대상교시 밴드 확장: displaced teacher 과목이 밴드이면 같은 밴드 전체 처리
@@ -1287,7 +1318,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                 }
             }
 
-            return { valid: true, steps: allSteps, teacherCount: involvedTeachers.size, teachers: involvedTeachers, crossDay: true };
+            return { valid: true, steps: allSteps, teacherCount: involvedTeachers.size, teachers: involvedTeachers, crossDay: true, hasConflicts };
         }
 
         // --- 핵심: 같은 날 연쇄 교환 알고리즘 (BFS 큐 기반) ---
@@ -1295,6 +1326,7 @@ body { font-family: 'Noto Sans KR', sans-serif; }
         function findExchangeChain(teacherId, srcPeriod, tgtPeriod, idx) {
             const myClasses = idx.teacherToPeriod[teacherId]?.[srcPeriod] || [];
             if (myClasses.length === 0) return { valid: false, reason: '소스 교시에 수업이 없습니다.' };
+            console.log(`[교환] 체인 계산: ${srcPeriod}→${tgtPeriod}교시, 내 수업:`, myClasses.map(c=>`${c.grade}-${c.classNo}(${c.subject})`));
 
             const allSteps = [];
             const visited = new Set([teacherId]);
@@ -1401,6 +1433,10 @@ body { font-family: 'Noto Sans KR', sans-serif; }
             }
 
             if (safety >= 200) return { valid: false, reason: '체인이 너무 깁니다 (200단계 초과)' };
+            console.log(`[교환] 체인 결과: ${allSteps.length}단계, ${involvedTeachers.size}명`, allSteps.map(s => {
+                if (s.type==='direct_move'||s.type==='bundle_move') return `${s.classKey}: ${s.teacherName}(${s.subject}) ${s.fromPeriod}→${s.toPeriod}`;
+                return `${s.classKey}: ${s.fromTeacherName}(${s.fromSubject}) ↔ ${s.displacedTeacherName}(${s.displacedSubject})`;
+            }));
             return { valid: true, steps: allSteps, teacherCount: involvedTeachers.size, teachers: involvedTeachers };
         }
 
@@ -1423,8 +1459,12 @@ body { font-family: 'Noto Sans KR', sans-serif; }
 
             const cnt = chain.teacherCount;
             const crossLabel = chain.crossDay ? ' (교차 요일)' : '';
-            if (cnt <= 2) { badge.className = 'chain-badge-simple text-xs font-bold'; badge.textContent = `${cnt}명 직접 교환${crossLabel}`; }
-            else { badge.className = 'chain-badge-complex text-xs font-bold'; badge.textContent = `${cnt}명 연쇄 교환${crossLabel}`; }
+            if (chain.hasConflicts) {
+                badge.className = 'text-xs font-bold';
+                badge.style.cssText = 'background:#fff7ed; color:#c2410c; padding:4px 12px; border-radius:20px;';
+                badge.textContent = `${cnt}명 교환 (추가 조정 필요)${crossLabel}`;
+            } else if (cnt <= 2) { badge.className = 'chain-badge-simple text-xs font-bold'; badge.style.cssText = ''; badge.textContent = `${cnt}명 직접 교환${crossLabel}`; }
+            else { badge.className = 'chain-badge-complex text-xs font-bold'; badge.style.cssText = ''; badge.textContent = `${cnt}명 연쇄 교환${crossLabel}`; }
 
             let html = '';
             if (chain.crossDay && exSelectedSource) {
@@ -1439,7 +1479,11 @@ body { font-family: 'Noto Sans KR', sans-serif; }
                 html += `<div class="chain-step"><div class="text-xs font-bold text-slate-500 mb-2"><i class="fas fa-users mr-1"></i>${g}학년 ${c}반</div>`;
                 for (const s of steps) {
                     const dayInfo = s.fromDay && s.toDay && s.fromDay !== s.toDay ? `<span class="text-purple-500 text-xs ml-1">${s.fromDay}→${s.toDay}</span>` : '';
-                    if (s.type === 'direct_move' || s.type === 'bundle_move') {
+                    if (s.type === 'needs_move') {
+                        const freeLabel = s.freePeriods?.length > 0 ? `이동 가능: ${s.freePeriods.join(',')}교시` : '빈 교시 없음';
+                        const dayLabel = s.fromDay ? `<span class="text-purple-500 text-xs ml-1">${s.fromDay}</span>` : '';
+                        html += `<div class="swap-row" style="background:#fff7ed; border-radius:8px; padding:4px 8px;"><span class="text-orange-500"><i class="fas fa-exclamation-triangle"></i></span><span class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs font-bold">${s.fromPeriod}교시</span><span class="font-bold">${s.teacherName}</span><span class="text-slate-400">(${s.subject})</span><span class="text-orange-600 text-xs font-bold">→ 추가 이동 필요</span><span class="text-xs text-slate-400">(${freeLabel})</span>${dayLabel}</div>`;
+                    } else if (s.type === 'direct_move' || s.type === 'bundle_move') {
                         const moveLabel = s.type === 'bundle_move' ? '<span class="text-orange-500 text-xs">묶음이동</span>' : '<span class="text-green-600 text-xs">이동</span>';
                         html += `<div class="swap-row"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold">${s.fromPeriod}교시</span><span class="font-bold">${s.teacherName}</span><span class="text-slate-400">(${s.subject})</span><span class="swap-arrow">→</span><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">${s.toPeriod}교시</span>${moveLabel}${dayInfo}</div>`;
                     } else {
@@ -1451,6 +1495,9 @@ body { font-family: 'Noto Sans KR', sans-serif; }
 
             const teacherList = [...chain.teachers].map(tid => (idx || dayIndices[exSelectedSource?.dayName])?.teacherNames?.[tid] || tid);
             html += `<div class="text-xs text-slate-500 mt-3"><i class="fas fa-user-friends mr-1"></i>관련 교사: <strong>${teacherList.join(', ')}</strong></div>`;
+            if (chain.hasConflicts) {
+                html += `<div class="text-xs text-orange-600 mt-3 p-2 bg-orange-50 rounded-lg"><i class="fas fa-info-circle mr-1"></i>일부 교사의 추가 수업 이동이 필요합니다. 해당 교사와 사전 조율 후 요청해주세요.</div>`;
+            }
             area.innerHTML = html;
             actions.classList.remove('hidden');
         }
